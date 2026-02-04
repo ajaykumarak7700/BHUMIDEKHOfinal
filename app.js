@@ -900,7 +900,7 @@ function renderHome(container) {
         </div>
 
         <!-- Categories Scroll (Moved above search) -->
-        <div id="cat-scroll" style="padding: 0 0 15px 20px; margin-top: 5px; position: relative; z-index: 10; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
+        <div id="cat-scroll" style="padding: 0 0 5px 20px; margin-top: 5px; position: relative; z-index: 10; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
             <style>#cat-scroll::-webkit-scrollbar { display: none; }</style>
             ${(() => {
             const icons = {
