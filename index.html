@@ -7,6 +7,11 @@
     <title>BhumiDekho | India's #1 Real Estate App</title>
     <meta name="description"
         content="Find your dream property with BhumiDekho - India's most trusted real estate platform.">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF9933">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BhumiDekho">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -89,10 +94,17 @@
             appId: "1:258412071321:web:1ced03961683a80c3eeb08"
         };
         firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        const database = firebase.databas
     </script>
 
     <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
 </body>
 
 </html>
