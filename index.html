@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BhumiDekho | India's #1 Real Estate App</title>
+    <meta name="description"
+        content="Find your dream property with BhumiDekho - India's most trusted real estate platform.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Top Header (App Bar) -->
+    <header id="main-header" class="app-header">
+        <div class="header-top">
+            <div class="logo">
+                <img src="logo.png" alt="BhumiDekho" class="logo-img">
+                <span class="logo-text" id="app-logo-text">Bhumi<span style="color: #FF9933;">Dekho</span></span>
+            </div>
+            <div class="profile-action" id="profile-action" onclick="navigate('login')">
+                <span id="user-name-h"
+                    style="font-size: 0.85rem; font-weight: 700; color: #333; margin-right: 8px; display: none;"></span>
+                <div class="profile-circle">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+    </header>
+
+    <main id="app">
+        <!-- Dynamic Content Rendered Here -->
+    </main>
+
+    <!-- Bottom Navigation (Footer) -->
+    <footer class="nav-bottom">
+        <a href="#" class="nav-item active" data-page="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item" data-page="likes">
+            <i class="fas fa-heart"></i>
+            <span>Like</span>
+        </a>
+        <a href="#" class="nav-item" data-page="contact">
+            <i class="fas fa-info-circle"></i>
+            <span>About Us</span>
+        </a>
+        <a href="#" class="nav-item" data-page="login">
+            <div id="footer-user-icon" style="display:inline-flex; align-items:center; justify-content:center;"><i
+                    class="fas fa-user"></i></div>
+            <span id="login-text">LOGIN</span>
+        </a>
+    </footer>
+
+    <!-- Overlay / Side Panels -->
+    <div id="side-panel" class="side-panel"></div>
+    <div id="modal-container" class="modal-container"></div>
+
+    <!-- Global Loader Overlay -->
+    <div id="global-loader" class="global-loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+            <p id="loader-text">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK enabled -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Firebase Configuration enabled -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSBrVmENKDiE52iDEw9znCaxp4p8Cmamo",
+            authDomain: "bhumidekho.firebaseapp.com",
+            databaseURL: "https://bhumidekho-default-rtdb.firebaseio.com",
+            projectId: "bhumidekho",
+            storageBucket: "bhumidekho.firebasestorage.app",
+            messagingSenderId: "258412071321",
+            appId: "1:258412071321:web:1ced03961683a80c3eeb08"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
