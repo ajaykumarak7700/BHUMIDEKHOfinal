@@ -900,7 +900,7 @@ function renderHome(container) {
         </div>
 
         <!-- Categories Scroll (Moved above search) -->
-        <div id="cat-scroll" style="padding: 0 0 15px 20px; margin-top: -25px; position: relative; z-index: 10; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
+        <div id="cat-scroll" style="padding: 0 0 15px 20px; margin-top: 10px; position: relative; z-index: 10; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
             <style>#cat-scroll::-webkit-scrollbar { display: none; }</style>
             ${(() => {
             const icons = {
@@ -1301,7 +1301,11 @@ function renderAdmin(container) {
                         <button class="prop-btn" style="width:auto; padding:10px 20px; background:${State.settings.showDate ? '#138808' : '#D32F2F'};" onclick="toggleDateSetting()">
                             <i class="fas fa-eye${State.settings.showDate ? '' : '-slash'}"></i> ${State.settings.showDate ? 'Hide Date' : 'Show Date'} on Site
                         </button>
-                        <button class="prop-btn" style="width:auto; padding:10px 20px;" onclick="showPropertyModal()">+ Add Property</button>
+                        <button class="add-property-btn" onclick="showPropertyModal()">
+                            <span class="add-prop-icon"><i class="fas fa-plus"></i></span>
+                            <span class="add-prop-text">Add Property</span>
+                            <span class="add-prop-shine"></span>
+                        </button>
                     </div>
                 </div>
                 ${tab === 'dashboard' ? `<div class="stats-row">${stats.map(s => `<div class="stat-box"><div class="stat-num">${s.val}</div><div class="stat-tag">${s.label}</div></div>`).join('')}</div>` : ''}
@@ -1736,7 +1740,11 @@ function renderAgent(container) {
                 (agent.kyc.status === 'pending' ? `<button class="prop-btn" style="width:auto; padding:12px 20px; background:#FF9933;" onclick="renderProfile(document.getElementById('app'))"><i class="fas fa-clock"></i> KYC Pending</button>` :
                     `<div style="color:#138808; font-weight:700; background:#e8f5e9; padding:8px 15px; border-radius:30px; font-size:0.85rem; border:1px solid #c8e6c9;"><i class="fas fa-check-circle"></i> KYC Verified</div>`)
             }
-                        <button class="prop-btn" style="width:auto; padding:12px 25px;" onclick="showPropertyModal()">+ Add New Property</button>
+                        <button class="add-property-btn" onclick="showPropertyModal()">
+                            <span class="add-prop-icon"><i class="fas fa-plus"></i></span>
+                            <span class="add-prop-text">Add New Property</span>
+                            <span class="add-prop-shine"></span>
+                        </button>
                     </div>
                 ` : ''}
                 </header>
@@ -1917,10 +1925,15 @@ function renderDetails(container) {
                 </div>
             `;
         } else if (activeTab === 'Photos') {
+            const allImages = p.images || [p.image];
             contentHtml = `
-                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Gallery</h3>
-                <div style="background:white; padding:10px; border-radius:15px; border:1px solid #eee;">
-                    <img src="${p.image}" style="width:100%; border-radius:10px; display:block;">
+                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Gallery (${allImages.length} Photos)</h3>
+                <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+                    ${allImages.map((img, idx) => `
+                        <div style="background:white; padding:5px; border-radius:12px; border:1px solid #eee; ${idx === 0 ? 'grid-column: span 2;' : ''}">
+                            <img src="${img}" style="width:100%; height:${idx === 0 ? '200px' : '120px'}; object-fit:cover; border-radius:8px; cursor:pointer;" onclick="viewFullImage('${img}')">
+                        </div>
+                    `).join('')}
                 </div>
             `;
         } else if (activeTab === 'Video') {
@@ -1948,10 +1961,22 @@ function renderDetails(container) {
             `;
         }
 
+        const heroImages = p.images || [p.image];
+        const hasMultipleImages = heroImages.length > 1;
+
         container.innerHTML = `
             <div class="details-view">
-                <div class="details-hero">
-                    <img src="${p.image}" alt="">
+                <div class="details-hero" style="position:relative;">
+                    <div id="hero-slider-container" style="display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;">
+                        ${heroImages.map((img, idx) => `
+                            <img src="${img}" alt="" style="min-width:100%; height:280px; object-fit:cover; scroll-snap-align:start;" onclick="viewFullImage('${img}')">
+                        `).join('')}
+                    </div>
+                    ${hasMultipleImages ? `
+                        <div style="position:absolute; bottom:15px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.6); color:white; padding:5px 12px; border-radius:20px; font-size:0.8rem; font-weight:700;">
+                            <i class="fas fa-images"></i> ${heroImages.length} Photos
+                        </div>
+                    ` : ''}
                     <div style="position:absolute; top:20px; left:20px; background:rgba(255,255,255,0.9); color:#1a2a3a; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); z-index:10;" onclick="navigate('home')">
                         <i class="fas fa-arrow-left"></i>
                     </div>
@@ -1974,10 +1999,17 @@ function renderDetails(container) {
                             <i class="fab fa-whatsapp"></i> व्हाट्सएप
                         </a>
                     </div>
-                </div>
             </div>`;
     };
     window.setDetailTab = (t) => { activeTab = t; renderContent(); };
+
+    // Full screen image viewer
+    window.viewFullImage = (imgSrc) => {
+        const modal = document.getElementById('modal-container');
+        modal.style.display = 'flex';
+        modal.innerHTML = '<div style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.95);" onclick="closeModal()"><img src="' + imgSrc + '" style="max-width:95%; max-height:90%; object-fit:contain; border-radius:10px;"><div style="position:absolute; top:20px; right:20px; background:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.2rem;"><i class="fas fa-times"></i></div></div>';
+    };
+
     window.shareProperty = (id) => {
         const p = State.properties.find(x => x.id === id);
         if (!p) return;
@@ -1989,15 +2021,15 @@ function renderDetails(container) {
         const worldMap = '\u{1F5FA}\uFE0F';
         const phone = '\u{1F4DE}';
 
-        const msg = `*${p.title}*\n` +
-            `${moneyBag} Price: Rs. ${p.price}\n` +
-            `${pin} City: ${p.city}\n` +
-            `${ruler} Area: ${p.area}\n` +
-            `${clipboard} Type: ${p.category}\n\n` +
-            `*Description:* ${p.description}\n\n` +
-            (p.video ? `${tv} *Video Tour:* ${p.video}\n` : '') +
-            (p.map ? `${worldMap} *Location Map:* ${p.map}\n` : '') +
-            `${phone} *Contact:* ${p.mobile}\n\n` +
+        const msg = `* ${p.title}*\n` +
+            `${moneyBag} Price: Rs.${p.price} \n` +
+            `${pin} City: ${p.city} \n` +
+            `${ruler} Area: ${p.area} \n` +
+            `${clipboard} Type: ${p.category} \n\n` +
+            `* Description:* ${p.description} \n\n` +
+            (p.video ? `${tv} * Video Tour:* ${p.video} \n` : '') +
+            (p.map ? `${worldMap} * Location Map:* ${p.map} \n` : '') +
+            `${phone} * Contact:* ${p.mobile} \n\n` +
             `Shared via BhumiDekho`;
 
         if (navigator.share) {
@@ -2014,6 +2046,7 @@ function renderDetails(container) {
 
 function showPropertyModal() {
     window.isRealTaskRunning = false; // Reset to ensure submission works
+    window.tempPropertyImages = []; // Reset images array for new property
     const modal = document.getElementById('modal-container');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -2025,32 +2058,73 @@ function showPropertyModal() {
             </div>
             <div style="overflow-y:auto; padding:20px; flex:1;">
                 <form id="add-prop-form">
-                    <div class="form-group"><input class="editable-label" id="l-title" value="Property Title"><input id="p-title" required placeholder="Please Enter Property Title"></div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group"><input class="editable-label" id="l-city" value="City"><input id="p-city" required placeholder="Please Enter City"></div>
-                        <div class="form-group"><input class="editable-label" id="l-cat" value="Category"><select id="p-cat">
-                            <option>Plot</option>
-                            <option>Rented Room</option>
-                            <option>Agricultural Land</option>
-                            <option>Residential</option>
-                            <option>Commercial</option>
-                            <option>Villa</option>
-                            <option>Farm House</option>
-                        </select></div>
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-title" value="Property Title" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-title" required placeholder="Please Enter Property Title">
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group"><input class="editable-label" id="l-price" value="Total Price"><input id="p-price" required placeholder="Please Enter Total Price"></div>
-                        <div class="form-group"><input class="editable-label" id="l-area" value="Area (Sq.ft/Bigha)"><input id="p-area" required placeholder="Please Enter Area"></div>
+                        <div class="form-group">
+                            <div class="label-edit-wrap"><input class="editable-label" id="l-city" value="City" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                            <input id="p-city" required placeholder="Please Enter City">
+                        </div>
+                        <div class="form-group">
+                            <div class="label-edit-wrap"><input class="editable-label" id="l-cat" value="Category" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                            <select id="p-cat">
+                                <option>Plot</option>
+                                <option>Rented Room</option>
+                                <option>Agricultural Land</option>
+                                <option>Residential</option>
+                                <option>Commercial</option>
+                                <option>Villa</option>
+                                <option>Farm House</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group"><input class="editable-label" id="l-sqft" value="Price per Sq.ft"><input id="p-sqft" required placeholder="Please Enter Price per Sq.ft"></div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group"><input class="editable-label" id="l-mobile" value="Mobile Number"><input id="p-mobile" type="tel" required placeholder="Please Enter Mobile Number"></div>
-                        <div class="form-group"><input class="editable-label" id="l-whatsapp" value="WhatsApp Number"><input id="p-whatsapp" type="tel" required placeholder="Please Enter WhatsApp Number"></div>
+                        <div class="form-group">
+                            <div class="label-edit-wrap"><input class="editable-label" id="l-price" value="Total Price" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                            <input id="p-price" required placeholder="Please Enter Total Price">
+                        </div>
+                        <div class="form-group">
+                            <div class="label-edit-wrap"><input class="editable-label" id="l-area" value="Area (Sq.ft/Bigha)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                            <input id="p-area" required placeholder="Please Enter Area">
+                        </div>
                     </div>
-                    <div class="form-group"><input class="editable-label" id="l-desc" value="Description"><textarea id="p-desc" rows="3" placeholder="Please Enter Description"></textarea></div>
-                    <div class="form-group"><input class="editable-label" id="l-img" value="Property Image"><input type="file" id="p-img" accept="image/*" required></div>
-                    <div class="form-group"><input class="editable-label" id="l-video" value="YouTube Link (Optional)"><input id="p-video" placeholder="Please Enter YouTube Link"></div>
-                    <div class="form-group"><input class="editable-label" id="l-map" value="Map Link (Optional)"><input id="p-map" placeholder="Please Enter Map Link"></div>
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-sqft" value="Price per Sq.ft" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-sqft" required placeholder="Please Enter Price per Sq.ft">
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group">
+                            <div class="label-edit-wrap"><input class="editable-label" id="l-mobile" value="Mobile Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                            <input id="p-mobile" type="tel" required placeholder="Please Enter Mobile Number">
+                        </div>
+                        <div class="form-group">
+                            <div class="label-edit-wrap"><input class="editable-label" id="l-whatsapp" value="WhatsApp Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                            <input id="p-whatsapp" type="tel" required placeholder="Please Enter WhatsApp Number">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-desc" value="Description" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <textarea id="p-desc" rows="3" placeholder="Please Enter Description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-img" value="Property Images" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <div id="image-preview-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;"></div>
+                        <input type="file" id="p-img-single" accept="image/*" style="display:none;" onchange="addSingleImage(this)">
+                        <button type="button" id="add-image-btn" class="prop-btn" style="background:#e8f5e9; color:#138808; border:2px dashed #138808; margin-top:10px;" onclick="document.getElementById('p-img-single').click()">
+                            <i class="fas fa-camera"></i> Add Image (<span id="img-count">0</span>/5)
+                        </button>
+                        <p style="font-size:0.75rem; color:#666; margin-top:8px;"><i class="fas fa-info-circle"></i> पहली image मुख्य image होगी। Maximum 5 images।</p>
+                    </div>
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-video" value="YouTube Link (Optional)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-video" placeholder="Please Enter YouTube Link">
+                    </div>
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-map" value="Map Link (Optional)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-map" placeholder="Please Enter Map Link">
+                    </div>
                     
                     <div id="extra-fields-area"></div>
                     
@@ -2064,6 +2138,34 @@ function showPropertyModal() {
             </div>
         </div>`;
 }
+
+// Enable label editing when pen icon is clicked
+window.enableLabelEdit = function (iconEl) {
+    const wrapper = iconEl.parentElement;
+    const input = wrapper.querySelector('.editable-label');
+
+    if (input.hasAttribute('readonly')) {
+        // Enable editing
+        input.removeAttribute('readonly');
+        input.style.borderColor = '#138808';
+        input.style.background = '#e8f5e9';
+        input.focus();
+        input.select();
+
+        // Change icon to check
+        iconEl.className = 'fas fa-check label-edit-icon';
+        iconEl.style.color = '#138808';
+    } else {
+        // Save and disable editing
+        input.setAttribute('readonly', true);
+        input.style.borderColor = 'transparent';
+        input.style.background = 'transparent';
+
+        // Change icon back to pen
+        iconEl.className = 'fas fa-pen label-edit-icon';
+        iconEl.style.color = '#999';
+    }
+};
 
 window.addCustomField = () => {
     const container = document.getElementById('extra-fields-area');
@@ -2082,6 +2184,74 @@ window.addCustomField = () => {
 };
 
 window.showPropertyModal = showPropertyModal;
+
+// Temporary storage for images during property add
+window.tempPropertyImages = [];
+
+// Add single image function
+window.addSingleImage = function (input) {
+    if (!input.files || !input.files[0]) return;
+
+    if (window.tempPropertyImages.length >= 5) {
+        alert('Maximum 5 images allowed!');
+        input.value = '';
+        return;
+    }
+
+    const file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image too large! Maximum 5MB per image.');
+        input.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        window.tempPropertyImages.push(e.target.result);
+        updateImagePreviews();
+        updateImageCount();
+    };
+    reader.readAsDataURL(file);
+    input.value = ''; // Reset input to allow same file again
+};
+
+// Remove image from preview
+window.removePropertyImage = function (index) {
+    window.tempPropertyImages.splice(index, 1);
+    updateImagePreviews();
+    updateImageCount();
+};
+
+// Update image previews display
+window.updateImagePreviews = function () {
+    const container = document.getElementById('image-preview-container');
+    if (!container) return;
+
+    container.innerHTML = window.tempPropertyImages.map((img, idx) => `
+        <div style="position:relative; width:70px; height:70px; border-radius:10px; overflow:hidden; border:2.5px solid ${idx === 0 ? '#138808' : '#ddd'}; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            <img src="${img}" style="width:100%; height:100%; object-fit:cover;">
+            ${idx === 0 ? '<span style="position:absolute; bottom:0; left:0; right:0; background:#138808; color:white; font-size:0.55rem; text-align:center; padding:2px; font-weight:700;">MAIN</span>' : ''}
+            <div style="position:absolute; top:-5px; right:-5px; background:#D32F2F; color:white; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.7rem; box-shadow:0 2px 5px rgba(0,0,0,0.3);" onclick="removePropertyImage(${idx})">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+    `).join('');
+};
+
+// Update image count display
+window.updateImageCount = function () {
+    const countEl = document.getElementById('img-count');
+    const addBtn = document.getElementById('add-image-btn');
+    if (countEl) countEl.textContent = window.tempPropertyImages.length;
+
+    if (addBtn) {
+        if (window.tempPropertyImages.length >= 5) {
+            addBtn.style.display = 'none';
+        } else {
+            addBtn.style.display = 'block';
+        }
+    }
+};
 
 window.processPropertySubmit = async function () {
     if (window.isRealTaskRunning) return;
@@ -2111,22 +2281,18 @@ window.processPropertySubmit = async function () {
         }
     }
 
-    const imgInput = document.getElementById('p-img');
-    if (!imgInput || !imgInput.files || !imgInput.files[0]) {
-        alert("Please select a property image.");
-        return;
-    }
-
-    if (imgInput.files[0].size > 5 * 1024 * 1024) {
-        alert("Image too large. Please select an image smaller than 5MB.");
+    // Check if at least one image is added
+    if (!window.tempPropertyImages || window.tempPropertyImages.length === 0) {
+        alert("Please add at least one property image.");
         return;
     }
 
     window.isRealTaskRunning = true;
-    showGlobalLoader("प्रॉपर्टी अपलोड की जा रही है...");
+    showGlobalLoader("प्रॉपर्टी अपलोड की जा रही है... (Images: " + window.tempPropertyImages.length + ")");
 
     try {
-        const imgData = await toBase64(imgInput.files[0]);
+        // Use images from tempPropertyImages (already base64)
+        const allImages = window.tempPropertyImages;
 
         const newProp = {
             id: Date.now(),
@@ -2139,7 +2305,8 @@ window.processPropertySubmit = async function () {
             mobile: document.getElementById('p-mobile').value.trim(),
             whatsapp: document.getElementById('p-whatsapp').value.trim(),
             description: document.getElementById('p-desc').value.trim(),
-            image: imgData,
+            image: allImages[0], // Main image (backward compatibility)
+            images: allImages,   // All images array
             video: document.getElementById('p-video').value.trim(),
             map: document.getElementById('p-map').value.trim(),
             status: State.user.role === 'admin' ? 'approved' : 'pending',
@@ -2178,6 +2345,7 @@ window.processPropertySubmit = async function () {
         hideGlobalLoader("प्रॉपर्टी सफलतापूर्वक अपलोड!");
 
         setTimeout(() => {
+            window.tempPropertyImages = []; // Reset images array
             closeModal();
             render();
             if (State.user.role === 'agent') setAgentTab('properties');
@@ -2251,11 +2419,26 @@ function editProperty(id) {
         p.video = document.getElementById('pe-video').value;
         p.map = document.getElementById('pe-map').value;
 
+        // If agent edits an approved property, send it back for admin approval
+        if (State.user && State.user.role === 'agent' && p.status === 'approved') {
+            p.status = 'pending';
+            p.editedAt = new Date().toLocaleString('en-IN', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true
+            });
+            p.editedBy = State.user.name || 'Agent';
+        }
+
         showGlobalLoader("अपडेट किया जा रहा है...");
         saveGlobalData().then(() => {
             hideGlobalLoader("अपडेट सफल!");
             closeModal();
             render();
+
+            // Show appropriate message based on user role
+            if (State.user && State.user.role === 'agent') {
+                setTimeout(() => alert("Property updated! It has been sent for Admin approval again."), 200);
+            }
         }).catch(err => {
             console.error(err);
             hideGlobalLoader(null);
@@ -2267,6 +2450,11 @@ function editProperty(id) {
 function openSearchModal() {
     const modal = document.getElementById('modal-container');
     modal.style.display = 'flex';
+
+    // Get unique cities from all properties
+    const cities = [...new Set(State.properties.map(p => p.city).filter(c => c && c.trim() !== ''))];
+    const cityOptions = cities.map(city => `<option>${city}</option>`).join('');
+
     modal.innerHTML = `
         <div class="modal-content scale-in" style="max-width: 350px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -2277,18 +2465,20 @@ function openSearchModal() {
                 <label>Select City</label>
                 <select id="s-city" class="login-input">
                     <option>All Cities</option>
-                    <option>Noida</option>
-                    <option>Padrauna</option>
-                    <option>Sonipat</option>
+                    ${cityOptions}
                 </select>
             </div>
             <div class="form-group">
                 <label>Property Type</label>
                 <select id="s-type" class="login-input">
                     <option>All Types</option>
-                    <option>Residential</option>
                     <option>Plot</option>
+                    <option>Rented Room</option>
+                    <option>Agricultural Land</option>
+                    <option>Residential</option>
                     <option>Commercial</option>
+                    <option>Villa</option>
+                    <option>Farm House</option>
                 </select>
             </div>
             <button class="login-btn" onclick="closeModal()" style="background:#138808; margin-top:20px;">Apply Search</button>
