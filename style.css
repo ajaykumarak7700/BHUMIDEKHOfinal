@@ -32,10 +32,16 @@ body {
     color: var(--text-dark);
     line-height: 1.5;
     overflow-x: hidden;
-    padding-top: 78px;
-    /* Reduced Header height */
+    padding-top: 70px;
+    /* Adjusted for thinner header */
     padding-bottom: 75px;
     /* Footer height */
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-top: 68px;
+    }
 }
 
 /* Header Styles (Image 5) */
