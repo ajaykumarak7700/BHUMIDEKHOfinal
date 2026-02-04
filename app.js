@@ -225,21 +225,6 @@ function saveToLocalStorage() {
 }
 
 // --- App Initialization ---
-// Splash Screen Logic
-window.addEventListener('load', () => {
-    const splash = document.getElementById('intro-splash');
-    if (splash) {
-        setTimeout(() => {
-            splash.style.opacity = '0';
-            splash.style.visibility = 'hidden';
-            // Completely remove from DOM after fade out to avoid clicks
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 600);
-        }, 2000); // 2 Seconds display time
-    }
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     // First load from localStorage for instant display
     loadGlobalData();

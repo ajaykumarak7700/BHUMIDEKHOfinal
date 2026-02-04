@@ -20,8 +20,6 @@
     --transition: all 0.25s ease;
 }
 
-@import url('splash.css');
-
 * {
     margin: 0;
     padding: 0;
