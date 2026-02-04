@@ -530,6 +530,23 @@ function renderContactUs(container) {
                 </div>
             </div>
 
+            <div style="text-align:center; margin-bottom:40px;">
+                <h3 style="margin-bottom:20px; color:#1a2a3a; font-size:1.2rem;">Connect with us on Social Media</h3>
+                <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+                    ${(() => {
+            const s = State.settings.socialLinks || {};
+            let html = '';
+            if (s.insta) html += `<a href="${s.insta}" target="_blank" style="width:50px; height:50px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); color:#E1306C; font-size:1.5rem; text-decoration:none; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"><i class="fab fa-instagram"></i></a>`;
+            if (s.youtube) html += `<a href="${s.youtube}" target="_blank" style="width:50px; height:50px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); color:#FF0000; font-size:1.5rem; text-decoration:none; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"><i class="fab fa-youtube"></i></a>`;
+            if (s.facebook) html += `<a href="${s.facebook}" target="_blank" style="width:50px; height:50px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); color:#1877F2; font-size:1.5rem; text-decoration:none; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"><i class="fab fa-facebook"></i></a>`;
+            if (s.twitter) html += `<a href="${s.twitter}" target="_blank" style="width:50px; height:50px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); color:#000; font-size:1.5rem; text-decoration:none; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"><i class="fa-brands fa-x-twitter"></i></a>`;
+
+            if (!html) return '<div style="color:#999; font-style:italic;">Links coming soon...</div>';
+            return html;
+        })()}
+                </div>
+            </div>
+
             <div style="background:#f9f9f9; padding:25px; border-radius:15px; text-align:left; margin-bottom:40px; border:1px solid #eee;">
                 <h3 style="color:#1a2a3a; margin-bottom:15px; border-bottom:2px solid #FF9933; display:inline-block; padding-bottom:5px;">About Us</h3>
                 <p style="color:#555; font-size:1rem; line-height:1.8; white-space:pre-line;">${State.settings.aboutText || 'Welcome to BhumiDekho!\n\nWe are India\'s most trusted real estate platform, dedicated to helping you find your dream home, plot, or commercial property with ease and transparency.\n\nOur mission is to simplify the property buying and selling process for everyone.'}</p>
@@ -1645,6 +1662,14 @@ function renderAdmin(container) {
                             <h4 style="margin:15px 0 10px; color:#666;">Password Recovery Details</h4>
                             <div class="form-group"><label>Helpline Phone</label><input id="set-help-phone" value="${State.settings.contactInfo.helplinePhone || ''}" placeholder="+91..." class="login-input"></div>
                             <div class="form-group"><label>Support Email</label><input id="set-help-email" value="${State.settings.contactInfo.helplineEmail || ''}" placeholder="support@..." class="login-input"></div>
+                         </div>
+
+                         <div class="stat-box" style="padding:25px; margin-top:20px;">
+                            <h3 style="margin-bottom:15px; color:#138808;">Social Media Links</h3>
+                            <div class="form-group"><label>Instagram URL</label><input id="set-social-insta" value="${(State.settings.socialLinks && State.settings.socialLinks.insta) || ''}" class="login-input" placeholder="https://instagram.com/..."></div>
+                            <div class="form-group"><label>YouTube URL</label><input id="set-social-yt" value="${(State.settings.socialLinks && State.settings.socialLinks.youtube) || ''}" class="login-input" placeholder="https://youtube.com/..."></div>
+                            <div class="form-group"><label>Facebook URL</label><input id="set-social-fb" value="${(State.settings.socialLinks && State.settings.socialLinks.facebook) || ''}" class="login-input" placeholder="https://facebook.com/..."></div>
+                            <div class="form-group"><label>X (Twitter) URL</label><input id="set-social-x" value="${(State.settings.socialLinks && State.settings.socialLinks.twitter) || ''}" class="login-input" placeholder="https://x.com/..."></div>
                          </div>
 
                          <div class="stat-box" style="padding:25px; margin-top:20px;">
@@ -3338,6 +3363,13 @@ window.saveContactSettings = () => {
     const email = document.getElementById('set-email').value;
     const oldPass = document.getElementById('set-old-pass').value;
     const newPass = document.getElementById('set-new-pass').value;
+
+    // Social Links
+    const insta = document.getElementById('set-social-insta')?.value.trim();
+    const yt = document.getElementById('set-social-yt')?.value.trim();
+    const fb = document.getElementById('set-social-fb')?.value.trim();
+    const tw = document.getElementById('set-social-x')?.value.trim();
+    State.settings.socialLinks = { insta: insta, youtube: yt, facebook: fb, twitter: tw };
 
     const names = document.querySelectorAll('.f-name');
     const titles = document.querySelectorAll('.f-title');
