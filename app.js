@@ -329,8 +329,8 @@ function loadGlobalData() {
     if (!State.settings.appDetails) {
         State.settings.appDetails = {
             banners: [
-                "https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1200",
-                "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200",
+                "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200"
+            ]
         };
     }
 
