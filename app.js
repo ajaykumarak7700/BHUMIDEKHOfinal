@@ -159,7 +159,26 @@ function setupFirebaseListener() {
             State.withdrawalRequests = data.withdrawalRequests || State.withdrawalRequests;
             State.walletTransactions = data.walletTransactions || State.walletTransactions;
             State.adminWallet = data.adminWallet !== undefined ? data.adminWallet : State.adminWallet;
-            State.properties = data.properties || State.properties;
+            State.walletTransactions = data.walletTransactions || State.walletTransactions;
+            State.adminWallet = data.adminWallet !== undefined ? data.adminWallet : State.adminWallet;
+
+            // CRITICAL FIX: Also handle Object-to-Array conversion here for live updates
+            if (data.properties) {
+                if (Array.isArray(data.properties)) {
+                    State.properties = data.properties;
+                } else {
+                    State.properties = Object.values(data.properties);
+                }
+                State.properties = State.properties.filter(p => p != null);
+            } else {
+                // If live update sends null/undefined properties, keep existing or set empty?
+                // Usually better to trust the live data if it's explicitly null (deleted)
+                // But if it's missing from packet, we might want to keep existing.
+                // For now, let's assume if it sends data, it sends the full state.
+                if (data.hasOwnProperty('properties')) {
+                    State.properties = [];
+                }
+            }
 
             // We usually don't want to live-sync settings or customers while user is active 
             // unless we handle merge conflicts/state refresh carefully.
