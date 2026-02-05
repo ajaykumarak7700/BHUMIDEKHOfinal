@@ -117,8 +117,20 @@ function loadFromFirebase(callback) {
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
 
-                // CRITICAL: Ensure we get an array, even if empty
-                State.properties = data.properties || [];
+                // CRITICAL FIX: Firebase sometimes returns an Object instead of Array
+                if (data.properties) {
+                    if (Array.isArray(data.properties)) {
+                        State.properties = data.properties;
+                    } else {
+                        // Convert Object {1: {...}, 2: {...}} to Array [{...}, {...}]
+                        State.properties = Object.values(data.properties);
+                    }
+                } else {
+                    State.properties = [];
+                }
+
+                // Sanitization: Ensure no null/empty slots in array
+                State.properties = State.properties.filter(p => p != null);
 
                 saveToLocalStorage(); // Sync back to local storage (Settings/Session only)
                 State.isLoading = false; // DATA LOADED
