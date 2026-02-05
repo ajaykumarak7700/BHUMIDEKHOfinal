@@ -183,6 +183,7 @@ function loadFromFirebase(callback) {
 
                 saveToLocalStorage(); // Sync back to local storage (Settings/Session only)
                 State.isLoading = false; // DATA LOADED
+                render(); // Explicitly re-render to remove skeleton and show data
                 if (callback) callback(true);
             } else {
                 State.isLoading = false; // NO DATA FOUND (But loaded successfully)
