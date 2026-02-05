@@ -1567,3 +1567,39 @@ body {
     border-radius: 6px;
     margin-top: 10px;
 }
+
+/* Centered Spinner in Skeleton */
+.skeleton-card {
+    position: relative;
+    overflow: hidden;
+}
+
+/* The Spinner Circle */
+.skeleton-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin-left: -15px;
+    /* Center horizontally */
+    margin-top: -15px;
+    /* Center vertically */
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top: 3px solid #FF9933;
+    /* Orange spinner */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 5;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
