@@ -2183,12 +2183,33 @@ function showPropertyModal() {
                     </div>
                     <div class="form-group">
                         <div class="label-edit-wrap"><input class="editable-label" id="l-img" value="Property Images" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <div id="image-preview-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;"></div>
-                        <input type="file" id="p-img-single" accept="image/*" style="display:none;" onchange="addSingleImage(this)">
-                        <button type="button" id="add-image-btn" class="prop-btn" style="background:#e8f5e9; color:#138808; border:2px dashed #138808; margin-top:10px;" onclick="document.getElementById('p-img-single').click()">
-                            <i class="fas fa-camera"></i> Add Image (<span id="img-count">0</span>/5)
-                        </button>
-                        <p style="font-size:0.75rem; color:#666; margin-top:8px;"><i class="fas fa-info-circle"></i> पहली image मुख्य image होगी। Maximum 5 images।</p>
+                        
+                        <!-- Image Preview Area -->
+                        <div id="image-preview-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; min-height:80px; background:#f9f9f9; border-radius:10px; padding:10px; border:1px dashed #ddd;"></div>
+                        
+                        <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+                            <!-- Option 1: URL Input -->
+                            <div style="display:flex; gap:8px;">
+                                <input id="p-img-url-input" placeholder="Paste Image URL (e.g. from ImgBB)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;">
+                                <button type="button" class="prop-btn" style="width:auto; background:#1a2a3a; font-size:0.8rem;" onclick="addUrlImage()">
+                                    <i class="fas fa-link"></i> Add URL
+                                </button>
+                            </div>
+
+                            <div style="display:flex; align-items:center; gap:10px; color:#999; font-size:0.8rem;">
+                                <div style="flex:1; height:1px; background:#ddd;"></div> OR <div style="flex:1; height:1px; background:#ddd;"></div>
+                            </div>
+
+                            <!-- Option 2: Gallery Upload -->
+                            <input type="file" id="p-img-single" accept="image/*" style="display:none;" onchange="addSingleImage(this)">
+                            <button type="button" id="add-image-btn" class="prop-btn" style="background:#e8f5e9; color:#138808; border:2px dashed #138808;" onclick="document.getElementById('p-img-single').click()">
+                                <i class="fas fa-camera"></i> Upload from Gallery (<span id="img-count">0</span>/5)
+                            </button>
+                        </div>
+                        
+                        <p style="font-size:0.75rem; color:#666; margin-top:8px;">
+                            <i class="fas fa-info-circle"></i> Use URL loads faster. First image will be main. Max 5 images.
+                        </p>
                     </div>
                     <div class="form-group">
                         <div class="label-edit-wrap"><input class="editable-label" id="l-video" value="YouTube Link (Optional)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
@@ -2260,6 +2281,33 @@ window.showPropertyModal = showPropertyModal;
 
 // Temporary storage for images during property add
 window.tempPropertyImages = [];
+
+// NEW: Add image from URL input
+window.addUrlImage = function () {
+    const input = document.getElementById('p-img-url-input');
+    const url = input.value.trim();
+
+    if (!url) {
+        alert("Please enter a valid Image URL first.");
+        return;
+    }
+
+    if (window.tempPropertyImages.length >= 5) {
+        alert('Maximum 5 images allowed!');
+        return;
+    }
+
+    // Basic URL check
+    if (!url.match(/\.(jpeg|jpg|gif|png|webp)$/i) && !url.includes('imgur') && !url.includes('ibb')) {
+        // Just a warning, still allow it as some CDNs don't have extensions
+        console.warn('URL might not be an image');
+    }
+
+    window.tempPropertyImages.push(url);
+    updateImagePreviews();
+    updateImageCount();
+    input.value = ''; // Clear input
+};
 
 // Add single image function
 window.addSingleImage = function (input) {

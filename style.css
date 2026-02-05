@@ -1492,60 +1492,6 @@ body {
 #l-price {
     color: #138808;
     background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
-}
-
-/* Green */
-#l-area {
-    color: #00796B;
-    background: linear-gradient(135deg, #E0F2F1, #B2DFDB);
-}
-
-/* Teal */
-#l-sqft {
-    color: #FF5722;
-    background: linear-gradient(135deg, #FBE9E7, #FFCCBC);
-}
-
-/* Deep Orange */
-#l-mobile {
-    color: #1976D2;
-    background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
-}
-
-/* Blue */
-#l-whatsapp {
-    color: #388E3C;
-    background: linear-gradient(135deg, #E8F5E9, #A5D6A7);
-}
-
-/* WhatsApp Green */
-#l-desc {
-    color: #5D4037;
-    background: linear-gradient(135deg, #EFEBE9, #D7CCC8);
-}
-
-/* Brown */
-#l-img {
-    color: #F57C00;
-    background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
-}
-
-/* Orange */
-#l-video {
-    color: #D32F2F;
-    background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
-}
-
-/* Red/YouTube */
-#l-map {
-    color: #0288D1;
-    background: linear-gradient(135deg, #E1F5FE, #B3E5FC);
-}
-
-/* Light Blue */
-
-/* Label Edit Wrapper with Pen Icon */
-.label-edit-wrap {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1586,13 +1532,63 @@ body {
         margin: -15px -15px 20px -15px;
         padding: 15px;
     }
-}/* Skeleton Loading Animation */
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-.skeleton { background: #e0e0e0; background-image: linear-gradient(90deg, #e0e0e0 0px, #f8f8f8 40px, #e0e0e0 80px); background-size: 200% 100%; animation: shimmer 1.5s infinite linear; border-radius: 8px; }
-.prop-card.skeleton-card { pointer-events: none; border: none; box-shadow: none; background: #fff; }
-.prop-card.skeleton-card .prop-img-box { background: #eee; }
-.prop-card.skeleton-card .prop-body { background: #fff; }
-.sk-text { height: 12px; margin-bottom: 8px; width: 80%; }
-.sk-title { height: 18px; margin-bottom: 12px; width: 100%; }
-.sk-price { height: 16px; width: 50%; margin-bottom: 10px; }
-.sk-btn { height: 35px; width: 100%; border-radius: 6px; margin-top: 10px; }
+}
+
+/* Skeleton Loading Animation */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton {
+    background: #e0e0e0;
+    background-image: linear-gradient(90deg, #e0e0e0 0px, #f8f8f8 40px, #e0e0e0 80px);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 8px;
+}
+
+.prop-card.skeleton-card {
+    pointer-events: none;
+    border: none;
+    box-shadow: none;
+    background: #fff;
+}
+
+.prop-card.skeleton-card .prop-img-box {
+    background: #eee;
+}
+
+.prop-card.skeleton-card .prop-body {
+    background: #fff;
+}
+
+.sk-text {
+    height: 12px;
+    margin-bottom: 8px;
+    width: 80%;
+}
+
+.sk-title {
+    height: 18px;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.sk-price {
+    height: 16px;
+    width: 50%;
+    margin-bottom: 10px;
+}
+
+.sk-btn {
+    height: 35px;
+    width: 100%;
+    border-radius: 6px;
+    margin-top: 10px;
+}
