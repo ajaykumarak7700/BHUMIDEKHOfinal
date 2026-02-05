@@ -1586,4 +1586,13 @@ body {
         margin: -15px -15px 20px -15px;
         padding: 15px;
     }
-}
+}/* Skeleton Loading Animation */
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.skeleton { background: #e0e0e0; background-image: linear-gradient(90deg, #e0e0e0 0px, #f8f8f8 40px, #e0e0e0 80px); background-size: 200% 100%; animation: shimmer 1.5s infinite linear; border-radius: 8px; }
+.prop-card.skeleton-card { pointer-events: none; border: none; box-shadow: none; background: #fff; }
+.prop-card.skeleton-card .prop-img-box { background: #eee; }
+.prop-card.skeleton-card .prop-body { background: #fff; }
+.sk-text { height: 12px; margin-bottom: 8px; width: 80%; }
+.sk-title { height: 18px; margin-bottom: 12px; width: 100%; }
+.sk-price { height: 16px; width: 50%; margin-bottom: 10px; }
+.sk-btn { height: 35px; width: 100%; border-radius: 6px; margin-top: 10px; }

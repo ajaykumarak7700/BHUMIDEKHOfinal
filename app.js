@@ -227,20 +227,23 @@ function saveToLocalStorage() {
 // --- App Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     // First load from localStorage for instant display
-    loadGlobalData();
-    updateUIForUser();
-    render();
+    // Use setTimeout to allow the browser to paint the HTML skeleton FIRST
+    setTimeout(() => {
+        loadGlobalData();
+        updateUIForUser();
+        render(); // This will replace the skeleton with real content
 
-    // Firebase loading enabled
-    loadFromFirebase((success) => {
-        if (success) {
-            console.log('?? Synced with Firebase cloud data!');
-            render();
-        } else {
-            console.log('?? Using local data (Firebase unavailable)');
-        }
-        setupFirebaseListener();
-    });
+        // Firebase loading enabled - Background Sync
+        loadFromFirebase((success) => {
+            if (success) {
+                console.log('?? Synced with Firebase cloud data!');
+                render();
+            } else {
+                console.log('?? Using local data (Firebase unavailable)');
+            }
+            setupFirebaseListener();
+        });
+    }, 50);
 
     window.addEventListener('popstate', (e) => {
         if (e.state) { State.view = e.state.view; render(); }
