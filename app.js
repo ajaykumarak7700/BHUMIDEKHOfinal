@@ -1482,6 +1482,10 @@ function renderAdmin(container) {
                                                 ${a.status === 'approved' ? `<button style="background:#1a2a3a; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="blockAgent(${a.id})">Block</button>` : ''}
                                                  ${a.status === 'blocked' ? `<button style="background:#FF9933; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="approveAgent(${a.id})">Unblock</button>` : ''}
                                                  <button style="background:#138808; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="manageWallet(${a.id})"><i class="fas fa-wallet"></i></button>
+                                                 <button style="background:${(a.membershipStatus === 'active') ? '#e8f5e9' : '#fafafa'}; color:${(a.membershipStatus === 'active') ? '#2e7d32' : '#999'}; border:1px solid #ddd; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px; font-size:0.75rem;" onclick="toggleMembership(${a.id})">
+                                                    <i class="fas fa-${(a.membershipStatus === 'active') ? 'check-circle' : 'circle'}"></i> 
+                                                    ${(a.membershipStatus === 'active') ? 'Active' : 'Membership'}
+                                                 </button>
                                                  <button style="background:#eee; color:#1a2a3a; border:1px solid #ddd; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="editAgent(${a.id})"><i class="fas fa-edit"></i></button>
                                                  <button style="background:none; border:1px solid #D32F2F; color:#D32F2F; padding:5px 10px; border-radius:6px; font-weight:600; cursor:pointer;" onclick="rejectAgent(${a.id})"><i class="fas fa-trash"></i></button>
                                                 </div>
@@ -1821,11 +1825,10 @@ function renderAgent(container) {
                 (agent.kyc.status === 'pending' ? `<button class="prop-btn" style="width:auto; padding:12px 20px; background:#FF9933;" onclick="renderProfile(document.getElementById('app'))"><i class="fas fa-clock"></i> KYC Pending</button>` :
                     `<div style="color:#138808; font-weight:700; background:#e8f5e9; padding:8px 15px; border-radius:30px; font-size:0.85rem; border:1px solid #c8e6c9;"><i class="fas fa-check-circle"></i> KYC Verified</div>`)
             }
-                        <button class="add-property-btn" onclick="showPropertyModal()">
-                            <span class="add-prop-icon"><i class="fas fa-plus"></i></span>
-                            <span class="add-prop-text">Add New Property</span>
-                            <span class="add-prop-shine"></span>
-                        </button>
+                        <div style="padding:8px 15px; border-radius:30px; font-size:0.85rem; font-weight:700; border:1px solid #ddd; background:${(agent.membershipStatus === 'active') ? '#e8f5e9' : '#ffebee'}; color:${(agent.membershipStatus === 'active') ? '#2e7d32' : '#D32F2F'}; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-${(agent.membershipStatus === 'active') ? 'check-circle' : 'times-circle'}"></i> 
+                            MEMBERSHIP: ${(agent.membershipStatus === 'active') ? 'ACTIVE' : 'INACTIVE'}
+                        </div>
                     </div>
                 ` : ''}
                 </header>
@@ -3639,4 +3642,15 @@ window.addExtraImageField = function () {
     div.innerHTML = '<label>New Image URL</label><input class="pe-img-extra" placeholder="Image URL">';
     const container = document.getElementById('pe-extra-images');
     if (container) container.appendChild(div);
+};
+// --- Membership Toggle (Admin) ---
+window.toggleMembership = async function (id) {
+    const agent = State.agents.find(a => a.id === id);
+    if (!agent) return;
+
+    // Toggle status
+    agent.membershipStatus = (agent.membershipStatus === 'active') ? 'inactive' : 'active';
+
+    await saveGlobalData();
+    render(); // Re-render to show updated button state
 };
