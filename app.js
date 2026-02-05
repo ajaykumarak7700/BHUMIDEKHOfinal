@@ -2495,6 +2495,11 @@ function editProperty(id) {
     const modal = document.getElementById('modal-container');
     if (!modal) return;
     modal.style.display = 'flex';
+
+    // Check for admin role
+    const isAdmin = State.user && State.user.role === 'admin';
+    const allImages = p.images || [p.image]; // Fallback to single image if array missing
+
     modal.innerHTML = `
 
         <div class="modal-content scale-in" style="display:flex; flex-direction:column; padding:0 !important; max-height:85vh; overflow:hidden;">
@@ -2528,6 +2533,26 @@ function editProperty(id) {
                     <div class="form-group"><label>Description</label><textarea id="pe-desc" rows="3">${p.description}</textarea></div>
                     <div class="form-group"><label>YouTube Link</label><input id="pe-video" value="${p.video || ''}"></div>
                     <div class="form-group"><label>Map Link</label><input id="pe-map" value="${p.map || ''}"></div>
+
+                    ${isAdmin ? `
+                        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #eee;">
+                            <h4 style="margin-bottom:10px; color:#D32F2F;">Admin: Edit Images</h4>
+                            <div class="form-group">
+                                <label>Main Image URL</label>
+                                <input id="pe-img-main" value="${allImages[0] || ''}" placeholder="Main Image URL">
+                            </div>
+                            <div id="pe-extra-images">
+                                ${allImages.slice(1).map((img, idx) => `
+                                    <div class="form-group">
+                                        <label>Image ${idx + 2} URL</label>
+                                        <input class="pe-img-extra" value="${img}" placeholder="Image URL">
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" class="prop-btn" style="background:#eee; color:#333; margin-top:5px;" onclick="addExtraImageField()">+ Add Another Image</button>
+                        </div>
+                    ` : ''}
+
                     <button type="submit" class="login-btn">Update Details</button>
                     <button type="button" class="prop-btn" style="background:#D32F2F; color:white; margin-top:10px; padding:15px; font-weight:800; border-radius:12px;" onclick="closeModal()">CLOSE</button>
                 </form>
@@ -2546,6 +2571,20 @@ function editProperty(id) {
         p.description = document.getElementById('pe-desc').value;
         p.video = document.getElementById('pe-video').value;
         p.map = document.getElementById('pe-map').value;
+
+        // Admin Image Update Logic
+        if (isAdmin) {
+            const mainImg = document.getElementById('pe-img-main').value.trim();
+            const extraImgs = Array.from(document.querySelectorAll('.pe-img-extra')).map(i => i.value.trim()).filter(x => x);
+
+            if (mainImg) {
+                p.image = mainImg;
+                p.images = [mainImg, ...extraImgs];
+            } else if (extraImgs.length > 0) {
+                p.image = extraImgs[0];
+                p.images = extraImgs;
+            }
+        }
 
         // If agent edits an approved property, send it back for admin approval
         if (State.user && State.user.role === 'agent' && p.status === 'approved') {
@@ -3587,3 +3626,11 @@ function downloadCSV(csvContent, filename) {
     link.click();
     document.body.removeChild(link);
 }
+// --- Helper for Edit Property Modal (Admin) ---
+window.addExtraImageField = function () {
+    const div = document.createElement('div');
+    div.className = 'form-group';
+    div.innerHTML = '<label>New Image URL</label><input class="pe-img-extra" placeholder="Image URL">';
+    const container = document.getElementById('pe-extra-images');
+    if (container) container.appendChild(div);
+};
