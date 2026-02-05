@@ -969,7 +969,17 @@ function renderHome(container) {
         </div>
 
         <div class="property-grid" id="home-prop-grid">
-            ${initialProps.length > 0 ? initialProps.map(p => renderPropertyCard(p)).join('') : '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No properties found in this category.</div>'}
+            ${initialProps.length > 0
+            ? initialProps.map(p => renderPropertyCard(p)).join('')
+            : (State.properties.length === 0
+                ? `<!-- Skeleton Loading When Data is Fetching -->
+                       <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
+                       <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
+                       <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
+                       <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>`
+                : '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No properties found in this category.</div>'
+            )
+        }
         </div>
         
         ${hasMore ? `
