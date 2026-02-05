@@ -35,14 +35,12 @@ window.hideGlobalLoader = (message = "सफलतापूर्वक सं�
 // --- State Management ---
 const State = {
     view: 'home', // home, likes, login, admin, agent, details, signup
-    isLoading: true, // NEW: Tracks if we are waiting for data
+    isLoading: true, // Tracks if we are waiting for data
+    isDataLoaded: false, // SAFETY FLAG: Prevents saving empty data before correct load
     user: null,
     selectedPropertyId: null,
     likes: [],
-    selectedPropertyId: null,
-    likes: [],
     properties: [], // Cloud-First: Init empty, wait for Firebase
-    withdrawalRequests: [],
     withdrawalRequests: [],
     agents: [
         { id: 101, name: "John Agent", email: "john.agent@bhumidekho.com", password: "admin123", phone: "9876543210", status: "approved", wallet: 5000 }
@@ -71,7 +69,7 @@ const State = {
         }
     },
     walletTransactions: [],
-    adminWallet: 100000, // Initial admin balance
+    adminWallet: 100000,
     customers: [
         { id: 201, name: "Rahul Sharma", phone: "9800012345", email: "rahul@gmail.com", password: "123", status: "active", joinedAt: "01/01/2026" },
         { id: 202, name: "Priya Singh", phone: "9800054321", email: "priya@gmail.com", password: "123", status: "active", joinedAt: "15/01/2026" }
@@ -81,6 +79,13 @@ const State = {
 // --- Firebase Helper Functions ---
 function saveToFirebase() {
     if (typeof database === 'undefined' || !database) return Promise.resolve();
+
+    // SAFETY CHECK: Never save if we haven't loaded data yet!
+    // This prevents overwriting the DB with empty/default state on startup.
+    if (!State.isDataLoaded) {
+        console.warn("?? Safety Block: Attempted to save before data load. Operation cancelled.");
+        return Promise.resolve();
+    }
 
     const dataToSync = {
         agents: State.agents,
@@ -109,6 +114,10 @@ function loadFromFirebase(callback) {
     database.ref('bhumi_v2').once('value')
         .then(snapshot => {
             const data = snapshot.val();
+
+            // Mark data as loaded successfully, allowing future saves
+            State.isDataLoaded = true;
+
             if (data) {
                 if (data.agents) State.agents = data.agents;
                 if (data.settings) State.settings = data.settings;
@@ -140,6 +149,7 @@ function loadFromFirebase(callback) {
                 State.isLoading = false; // NO DATA FOUND (But loaded successfully)
                 if (callback) callback(false);
             }
+
         })
         .catch(err => {
             console.error("Firebase Load Error:", err);
