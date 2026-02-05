@@ -280,6 +280,12 @@ function loadGlobalData() {
     } catch (e) {
         // Defaults if no data found or corrupted
         console.warn("Resetting state due to error/missing:", e);
+
+        // Alert only if it was a corruption error (savedState existed but failed to load)
+        if (e.message !== "No saved state") {
+            alert("Warning: Saved data was corrupted and has been reset. This can happen if storage was full.");
+        }
+
         State.settings = { showDate: true };
         State.adminWallet = 100000;
         State.agents = [];
@@ -349,7 +355,10 @@ function saveGlobalData() {
     try {
         saveToLocalStorage();
     } catch (e) {
-        console.warn("Local storage limit reached.");
+        console.error("Storage Error:", e);
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+            alert("Storage Full! Some data may not be saved locally. Please delete old properties or images.");
+        }
     }
 
     // Trigger Firebase sync in background
@@ -839,7 +848,7 @@ function renderPropertyCard(p) {
     return `
         <div class="prop-card" onclick="navigate('details', ${p.id})">
             <div class="prop-img-box">
-                <img src="${p.image}" alt="">
+                <img src="${p.image}" alt="" loading="lazy">
                 <div class="prop-like-btn" onclick="toggleLike(event, ${p.id})">
                     <i class="${isLiked ? 'fas' : 'far'} fa-heart" style="color:${isLiked ? '#D32F2F' : 'white'}"></i>
                 </div>
@@ -899,12 +908,16 @@ function renderHome(container) {
         return matchesSearch && matchesCat;
     });
 
+    const initialLoadCount = 8;
+    const initialProps = filteredProps.slice(0, initialLoadCount);
+    const hasMore = filteredProps.length > initialLoadCount;
+
     container.innerHTML = `
         <div class="hero-slider" id="hero-slider">
             <div class="slider-track" id="slider-track">
                 ${banners.map(b => `
                     <div class="slide">
-                        <img src="${b.img}" alt="">
+                        <img src="${b.img}" alt="" loading="lazy">
                         <div class="slide-content">
                             <h2 style="font-size:1.5rem; color:white;">${b.title}</h2>
                         </div>
@@ -953,11 +966,43 @@ function renderHome(container) {
         </div>
 
         <div class="property-grid" id="home-prop-grid">
-            ${filteredProps.length > 0 ? filteredProps.map(p => renderPropertyCard(p)).join('') : '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No properties found in this category.</div>'}
+            ${initialProps.length > 0 ? initialProps.map(p => renderPropertyCard(p)).join('') : '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No properties found in this category.</div>'}
         </div>
+        
+        ${hasMore ? `
+            <div style="text-align:center; padding-bottom:30px; padding-top:10px;">
+                <button id="load-more-btn" class="login-btn" style="width:auto; padding:10px 30px; background:#1a2a3a;" onclick="loadMoreProperties()">Load More</button>
+            </div>
+        ` : ''}
     `;
+
+    // Store remaining props in a temporary global for pagination
+    window.remainingHomeProps = filteredProps.slice(initialLoadCount);
+
     startSlider();
 }
+
+window.loadMoreProperties = () => {
+    if (!window.remainingHomeProps || window.remainingHomeProps.length === 0) return;
+
+    const chunk = window.remainingHomeProps.slice(0, 8);
+    window.remainingHomeProps = window.remainingHomeProps.slice(8);
+
+    const grid = document.getElementById('home-prop-grid');
+    if (grid) {
+        // Create a temporary container to convert string to nodes
+        const temp = document.createElement('div');
+        temp.innerHTML = chunk.map(p => renderPropertyCard(p)).join('');
+        while (temp.firstChild) {
+            grid.appendChild(temp.firstChild);
+        }
+    }
+
+    if (window.remainingHomeProps.length === 0) {
+        const btn = document.getElementById('load-more-btn');
+        if (btn) btn.style.display = 'none';
+    }
+};
 
 let sliderInterval;
 let currentSlide = 0;
@@ -2514,8 +2559,9 @@ function openSearchModal() {
 function closeModal() { document.getElementById('modal-container').style.display = 'none'; }
 
 // Helpers
+// Helpers
 // Optimized Image Compression & Conversion (Reduces data size drastically)
-const toBase64 = (file, maxWidth = 1024, quality = 0.7) => new Promise((resolve, reject) => {
+const toBase64 = (file, maxWidth = 800, quality = 0.5) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
