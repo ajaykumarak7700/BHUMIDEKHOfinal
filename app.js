@@ -1781,8 +1781,14 @@ function renderAgent(container) {
 
     const stats = [
         { label: 'My Properties', val: agentProps.length, icon: 'fa-building', color: '#138808' },
-        { label: 'Total Views', val: totalViews, icon: 'fa-eye', color: '#FF9933' },
-        // Replaced Leads with Add Action
+        // Replaced Total Views with Membership Status as per request
+        {
+            label: 'MEMBERSHIP',
+            val: (agent.membershipStatus === 'active') ? 'ACTIVE' : 'INACTIVE',
+            icon: (agent.membershipStatus === 'active') ? 'fa-check-circle' : 'fa-times-circle',
+            color: (agent.membershipStatus === 'active') ? '#2e7d32' : '#D32F2F',
+            valSize: '1.5rem' // Custom size for text value
+        },
         { label: 'Add Property', val: '+', icon: 'fa-plus-circle', color: '#673AB7', isAction: true },
         { label: 'Wallet Balance', val: `₹ ${agent.wallet || 0}`, icon: 'fa-wallet', color: '#138808' }
     ];
@@ -1825,10 +1831,6 @@ function renderAgent(container) {
                 (agent.kyc.status === 'pending' ? `<button class="prop-btn" style="width:auto; padding:12px 20px; background:#FF9933;" onclick="renderProfile(document.getElementById('app'))"><i class="fas fa-clock"></i> KYC Pending</button>` :
                     `<div style="color:#138808; font-weight:700; background:#e8f5e9; padding:8px 15px; border-radius:30px; font-size:0.85rem; border:1px solid #c8e6c9;"><i class="fas fa-check-circle"></i> KYC Verified</div>`)
             }
-                        <div style="padding:8px 15px; border-radius:30px; font-size:0.85rem; font-weight:700; border:1px solid #ddd; background:${(agent.membershipStatus === 'active') ? '#e8f5e9' : '#ffebee'}; color:${(agent.membershipStatus === 'active') ? '#2e7d32' : '#D32F2F'}; display:flex; align-items:center; gap:6px;">
-                            <i class="fas fa-${(agent.membershipStatus === 'active') ? 'check-circle' : 'times-circle'}"></i> 
-                            MEMBERSHIP: ${(agent.membershipStatus === 'active') ? 'ACTIVE' : 'INACTIVE'}
-                        </div>
                     </div>
                 ` : ''}
                 </header>
@@ -1843,7 +1845,7 @@ function renderAgent(container) {
                         ` : `
                             <div class="stat-box" style="border-left:5px solid ${s.color};">
                                 <i class="fas ${s.icon}" style="float:right; color:#eee; font-size:2rem;"></i>
-                                <div class="stat-num" style="color:${s.color}">${s.val}</div>
+                                <div class="stat-num" style="color:${s.color}; font-size:${s.valSize || '2rem'};">${s.val}</div>
                                 <div class="stat-tag">${s.label}</div>
                             </div>
                         `).join('')}
