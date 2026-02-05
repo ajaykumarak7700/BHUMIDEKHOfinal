@@ -209,19 +209,21 @@ function setupFirebaseListener() {
 }
 
 
-// Save to localStorage (backup)
+// Save to localStorage (backup - ONLY Session & Settings, NO Properties/Images)
 function saveToLocalStorage() {
+    // We do NOT save State.properties or State.agents here anymore to avoid 5MB limit.
+    // They are saved ONLY to Firebase.
     localStorage.setItem('bhumi_v2_state', JSON.stringify({
         guestLikes: (!State.user) ? State.likes : (JSON.parse(localStorage.getItem('bhumi_v2_state'))?.guestLikes || []),
-        user: State.user,
-        agents: State.agents,
-        settings: State.settings,
-        withdrawalRequests: State.withdrawalRequests || [],
-        walletTransactions: State.walletTransactions || [],
-        adminWallet: State.adminWallet,
-        customers: State.customers || []
+        user: State.user, // Keep user logged in
+        settings: State.settings, // Keep settings cached
+        // agents: State.agents, // Removed to save space
+        // withdrawalRequests: State.withdrawalRequests, // Removed
+        // walletTransactions: State.walletTransactions, // Removed
+        adminWallet: State.adminWallet
+        // customers: State.customers // Removed
     }));
-    localStorage.setItem('bhumi_v2_props', JSON.stringify(State.properties));
+    // localStorage.setItem('bhumi_v2_props', JSON.stringify(State.properties)); // DISABLED: Cloud Only Mode
 }
 
 // --- App Initialization ---
@@ -320,11 +322,15 @@ function loadGlobalData() {
             banners: [
                 "https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=1200",
                 "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200",
-                "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200"
-            ]
         };
     }
 
+    // Cloud-First Mode: We do NOT load properties from localStorage anymore.
+    // This forces the UI to wait for Firebase (showing Skeletons).
+    State.properties = [];
+
+    // Only load critical session data
+    /*
     try {
         const savedProps = localStorage.getItem('bhumi_v2_props');
         if (savedProps) {
@@ -351,6 +357,7 @@ function loadGlobalData() {
             State.properties = [];
         }
     }
+    */
 }
 
 function saveGlobalData() {
