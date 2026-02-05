@@ -1414,88 +1414,63 @@ body {
 }
 
 /* Input Icons Effect - Colored left border based on label */
-#p-title {
-    border-left: 4px solid #E91E63;
+/* Clean Box Input Design */
+.prop-form-input,
+#add-prop-form input:not([type="file"]):not(.editable-label),
+#add-prop-form select,
+#add-prop-form textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #E0E0E0;
+    /* Solid distinct border */
+    border-radius: 10px;
+    background-color: #F8F9FA;
+    /* Light background for the box */
+    font-size: 1rem;
+    color: #333;
+    transition: all 0.2s ease;
+    margin-top: 5px;
+    /* Space between label and box */
+    border-left: 2px solid #E0E0E0 !important;
+    /* Reset colored left borders */
 }
 
-#p-city {
-    border-left: 4px solid #9C27B0;
+/* Focus State - Active Box */
+.prop-form-input:focus,
+#add-prop-form input:not([type="file"]):not(.editable-label):focus,
+#add-prop-form select:focus,
+#add-prop-form textarea:focus {
+    border-color: #138808;
+    background-color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(19, 136, 8, 0.1);
+    /* Subtle glowing shadow */
+    outline: none;
 }
 
-#p-cat {
-    border-left: 4px solid #673AB7;
-}
-
-#p-price {
-    border-left: 4px solid #138808;
-}
-
-#p-area {
-    border-left: 4px solid #00796B;
-}
-
-#p-sqft {
-    border-left: 4px solid #FF5722;
-}
-
-#p-mobile {
-    border-left: 4px solid #1976D2;
-}
-
-#p-whatsapp {
-    border-left: 4px solid #388E3C;
-}
-
-#p-desc {
-    border-left: 4px solid #5D4037;
-}
-
-#p-video {
-    border-left: 4px solid #D32F2F;
-}
-
-#p-map {
-    border-left: 4px solid #0288D1;
-}
-
+/* Editable Label Header Styling */
 .editable-label {
-    font-size: 0.8rem;
+    font-size: 0.85rem !important;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 800;
-    padding: 5px 10px;
-    border-radius: 8px;
-    border: none;
-    background: transparent;
-    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    font-weight: 800 !important;
+    color: #555 !important;
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
 }
 
-/* Colorful Labels - Each field gets unique color */
-#l-title {
-    color: #E91E63;
-    background: linear-gradient(135deg, #FCE4EC, #F8BBD9);
-}
-
-/* Pink */
-#l-city {
-    color: #9C27B0;
-    background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
-}
-
-/* Purple */
-#l-cat {
-    color: #673AB7;
-    background: linear-gradient(135deg, #EDE7F6, #D1C4E9);
-}
-
-/* Deep Purple */
-#l-price {
-    color: #138808;
-    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+.label-edit-wrap {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 2px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    /* More breathing room between groups */
 }
 
 .label-edit-wrap .editable-label {
