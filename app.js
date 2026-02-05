@@ -35,6 +35,7 @@ window.hideGlobalLoader = (message = "सफलतापूर्वक सं�
 // --- State Management ---
 const State = {
     view: 'home', // home, likes, login, admin, agent, details, signup
+    isLoading: true, // NEW: Tracks if we are waiting for data
     user: null,
     selectedPropertyId: null,
     likes: [],
@@ -159,9 +160,12 @@ function saveToFirebase() {
 
 function loadFromFirebase(callback) {
     if (typeof database === 'undefined' || !database) {
+        State.isLoading = false; // Stop loading if FB missing
         if (callback) callback(false);
         return;
     }
+
+    State.isLoading = true; // Ensure loading mode on start
 
     database.ref('bhumi_v2').once('value')
         .then(snapshot => {
@@ -173,16 +177,21 @@ function loadFromFirebase(callback) {
                 if (data.walletTransactions) State.walletTransactions = data.walletTransactions;
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
-                if (data.properties) State.properties = data.properties;
 
-                saveToLocalStorage(); // Sync back to local storage
+                // CRITICAL: Ensure we get an array, even if empty
+                State.properties = data.properties || [];
+
+                saveToLocalStorage(); // Sync back to local storage (Settings/Session only)
+                State.isLoading = false; // DATA LOADED
                 if (callback) callback(true);
             } else {
+                State.isLoading = false; // NO DATA FOUND (But loaded successfully)
                 if (callback) callback(false);
             }
         })
         .catch(err => {
             console.error("Firebase Load Error:", err);
+            State.isLoading = false; // ERROR, STOP LOADING
             if (callback) callback(false);
         });
 }
@@ -978,7 +987,7 @@ function renderHome(container) {
         <div class="property-grid" id="home-prop-grid">
             ${initialProps.length > 0
             ? initialProps.map(p => renderPropertyCard(p)).join('')
-            : (State.properties.length === 0
+            : (State.isLoading
                 ? `<!-- Skeleton Loading When Data is Fetching -->
                        <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
                        <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
