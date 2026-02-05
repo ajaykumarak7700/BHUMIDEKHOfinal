@@ -1778,7 +1778,8 @@ function renderAgent(container) {
     const stats = [
         { label: 'My Properties', val: agentProps.length, icon: 'fa-building', color: '#138808' },
         { label: 'Total Views', val: totalViews, icon: 'fa-eye', color: '#FF9933' },
-        { label: 'Total Leads', val: totalLeads, icon: 'fa-user-tie', color: '#1a2a3a' },
+        // Replaced Leads with Add Action
+        { label: 'Add Property', val: '+', icon: 'fa-plus-circle', color: '#673AB7', isAction: true },
         { label: 'Wallet Balance', val: `₹ ${agent.wallet || 0}`, icon: 'fa-wallet', color: '#138808' }
     ];
 
@@ -1831,7 +1832,12 @@ function renderAgent(container) {
 
                 ${tab === 'dashboard' ? `
                     <div class="stats-row">
-                        ${stats.map(s => `
+                        ${stats.map(s => s.isAction ? `
+                            <div class="stat-box" style="border-left:5px solid ${s.color}; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f3e5f5;" onclick="showPropertyModal()">
+                                <i class="fas ${s.icon}" style="font-size:2.5rem; color:${s.color}; margin-bottom:10px;"></i>
+                                <div style="font-weight:700; color:${s.color}; font-size:1rem;">ADD PROPERTY</div>
+                            </div>
+                        ` : `
                             <div class="stat-box" style="border-left:5px solid ${s.color};">
                                 <i class="fas ${s.icon}" style="float:right; color:#eee; font-size:2rem;"></i>
                                 <div class="stat-num" style="color:${s.color}">${s.val}</div>
