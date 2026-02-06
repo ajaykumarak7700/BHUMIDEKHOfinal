@@ -698,7 +698,7 @@ function renderProfile(container) {
                             <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
                                 <div>
                                     <div style="font-size:0.85rem; opacity:0.9; margin-bottom:5px;">Wallet Balance</div>
-                                    <div style="font-size:1.8rem; font-weight:800;">₹ ${(userDetails.wallet || 0).toLocaleString()}</div>
+                                    <div style="font-size:1.8rem; font-weight:800;">Rs. ${(userDetails.wallet || 0).toLocaleString()}</div>
                                 </div>
                                 <i class="fas fa-wallet" style="font-size:2.5rem; opacity:0.3;"></i>
                             </div>
@@ -913,10 +913,10 @@ function renderPropertyCard(p) {
             </div>
             <div class="prop-body">
                 <div class="prop-price">
-                    ₹ ${p.priceSqft} / sq. ft.
+                    Rs. ${p.priceSqft} / sq. ft.
                 </div>
                 <div class="prop-sub">
-                    Price: ₹ ${p.price} | Area: ${p.area}
+                    Price: Rs. ${p.price} | Area: ${p.area}
                 </div>
                 <h4 class="prop-title">${p.title}</h4>
                 <div class="prop-location">
@@ -1402,7 +1402,7 @@ function renderAdmin(container) {
     const stats = [
         { label: 'Properties', val: State.properties.length },
         { label: 'Agents', val: State.agents.length },
-        { label: 'Wallet Balance', val: '₹ ' + State.adminWallet.toLocaleString() }
+        { label: 'Wallet Balance', val: 'Rs. ' + State.adminWallet.toLocaleString() }
     ];
     container.innerHTML = `
         <div class="dashboard-layout">
@@ -1433,7 +1433,7 @@ function renderAdmin(container) {
                         <div>
                             <h1 style="font-size:1.5rem;">Admin Dashboard</h1>
                             <div style="margin-top:8px; padding:8px 15px; background:linear-gradient(135deg, #138808, #28a745); color:white; border-radius:30px; display:inline-flex; align-items:center; gap:8px; font-weight:700;">
-                                <i class="fas fa-wallet"></i> Wallet Balance: ₹ ${State.adminWallet.toLocaleString()}
+                                <i class="fas fa-wallet"></i> Wallet Balance: Rs. ${State.adminWallet.toLocaleString()}
                             </div>
                         </div>
                     </div>
@@ -1467,7 +1467,7 @@ function renderAdmin(container) {
                                                 <div style="font-size:0.7rem; color:#666; margin-top:4px;"><i class="fas fa-calendar-alt"></i> ${p.createdAt || 'N/A'}</div>
                                             </td>
                                             <td style="padding:15px;"><div><strong>${p.agent}</strong></div><div style="font-size:0.75rem; color:#138808; font-weight:700;"><i class="fas fa-phone-alt"></i> ${agentPhone}</div></td>
-                                            <td style="padding:15px;">₹ ${p.price}</td>
+                                            <td style="padding:15px;">Rs. ${p.price}</td>
                                             <td style="padding:15px;">
                                                 <span style="padding:4px 10px; border-radius:50px; font-size:0.7rem; font-weight:700; background:${p.status === 'approved' ? '#e8f5e9' : (p.status === 'disabled' ? '#ffebee' : (p.status === 'sold' ? '#e0f2f1' : '#fff3e0'))}; color:${p.status === 'approved' ? '#2e7d32' : (p.status === 'disabled' ? '#D32F2F' : (p.status === 'sold' ? '#00796b' : '#e65100'))};">${p.status.toUpperCase()}</span>
                                                 ${p.status === 'disabled' && p.disableReason ? `<div style="font-size:0.7rem; color:#D32F2F; margin-top:5px; font-weight:600; max-width:150px; line-height:1.2;">Reason: ${p.disableReason}</div>` : ''}
@@ -1614,7 +1614,7 @@ function renderAdmin(container) {
                                         </td>
                                         <td style="padding:15px;">${c.joinedAt}</td>
 
-                                        <td style="padding:15px; font-weight:700;">₹ ${(c.wallet || 0).toLocaleString()}</td>
+                                        <td style="padding:15px; font-weight:700;">Rs. ${(c.wallet || 0).toLocaleString()}</td>
                                         <td style="padding:15px;">
                                             <span style="padding:5px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${c.status === 'active' ? '#e8f5e9' : '#ffebee'}; color:${c.status === 'active' ? '#2e7d32' : '#D32F2F'}; text-transform:uppercase;">
                                                 ${c.status}
@@ -1682,8 +1682,8 @@ function renderAdmin(container) {
                                             <div style="font-size:0.8rem; color:#138808;"><i class="fas fa-phone-alt"></i> ${phone}</div>
                                             <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">${type}</div>
                                         </td>
-                                        <td style="padding:15px; color:#1a2a3a; font-weight:600;">₹ ${wallet.toLocaleString()}</td>
-                                        <td style="padding:15px;"><strong style="color:#138808;">₹ ${r.amount}</strong></td>
+                                        <td style="padding:15px; color:#1a2a3a; font-weight:600;">Rs. ${wallet.toLocaleString()}</td>
+                                        <td style="padding:15px;"><strong style="color:#138808;">Rs. ${r.amount}</strong></td>
                                         <td style="padding:15px; font-size:0.85rem; color:#666;">${r.date}</td>
                                         <td style="padding:15px;">
                                             <span style="padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${r.status === 'approved' ? '#e8f5e9' : (r.status === 'rejected' ? '#ffebee' : '#fff3e0')}; color:${r.status === 'approved' ? '#2e7d32' : (r.status === 'rejected' ? '#D32F2F' : '#e65100')}; text-transform:uppercase;">
@@ -1710,7 +1710,7 @@ function renderAdmin(container) {
                         <div class="stat-box" style="background:linear-gradient(135deg, #FF9933, #138808); color:white; padding:40px; border-radius:20px; text-align:center; margin-bottom:30px;">
                             <i class="fas fa-wallet" style="font-size:3rem; margin-bottom:15px; opacity:0.9;"></i>
                             <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">Admin Wallet Balance</div>
-                            <div style="font-size:3rem; font-weight:900; margin:15px 0;">₹ ${State.adminWallet.toLocaleString()}</div>
+                            <div style="font-size:3rem; font-weight:900; margin:15px 0;">Rs. ${State.adminWallet.toLocaleString()}</div>
                             <button class="prop-btn" style="background:white; color:#138808; width:auto; padding:12px 30px; margin-top:10px; border-radius:50px; font-weight:800;" 
                                 onclick="addAdminBalance()"><i class="fas fa-plus-circle"></i> Add Balance</button>
                         </div>
@@ -1726,7 +1726,7 @@ function renderAdmin(container) {
                                     <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #f0f0f0;">
                                         <div>
                                             <div style="font-weight:700; color:#1a2a3a; margin-bottom:4px;">
-                                                ${t.type === 'admin_credit' ? '<span style="color:#138808;">+ ₹ ' + t.amount.toLocaleString() + '</span>' : '<span style="color:#D32F2F;">- ₹ ' + t.amount.toLocaleString() + '</span>'}
+                                                ${t.type === 'admin_credit' ? '<span style="color:#138808;">+ Rs. ' + t.amount.toLocaleString() + '</span>' : '<span style="color:#D32F2F;">- Rs. ' + t.amount.toLocaleString() + '</span>'}
                                             </div>
                                             <div style="font-size:0.75rem; color:#999;">${t.date}</div>
                                             ${t.remark ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-top:4px;">"${t.remark}"</div>` : ''}
@@ -1950,7 +1950,7 @@ function renderAgent(container) {
             valSize: '1.5rem' // Custom size for text value
         },
         { label: 'Add Property', val: '+', icon: 'fa-plus-circle', color: '#673AB7', isAction: true },
-        { label: 'Wallet Balance', val: `₹ ${agent.wallet || 0} `, icon: 'fa-wallet', color: '#138808' }
+        { label: 'Wallet Balance', val: `Rs. ${agent.wallet || 0} `, icon: 'fa-wallet', color: '#138808' }
     ];
 
     container.innerHTML = `
@@ -2032,7 +2032,7 @@ function renderAgent(container) {
                                     </div>
                                     <div class="prop-body">
                                         <div style="display:flex; justify-content:space-between; align-items:start;">
-                                            <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">₹ ${p.price}</div>
+                                            <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">Rs. ${p.price}</div>
                                             <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                         </div>
                                         <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
@@ -2067,7 +2067,7 @@ function renderAgent(container) {
                                 </div>
                                 <div class="prop-body">
                                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                                        <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">₹ ${p.price}</div>
+                                        <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">Rs. ${p.price}</div>
                                         <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                     </div>
                                     <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
@@ -2086,7 +2086,7 @@ function renderAgent(container) {
                         <div class="stat-box" style="background:linear-gradient(135deg, #138808, #28a745); color:white; padding:30px; border-radius:20px; text-align:center;">
                             <i class="fas fa-wallet" style="font-size:2.5rem; margin-bottom:15px; opacity:0.8;"></i>
                             <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">Available Balance</div>
-                            <div style="font-size:2.5rem; font-weight:900; margin:10px 0;">₹ ${agent.wallet || 0}</div>
+                            <div style="font-size:2.5rem; font-weight:900; margin:10px 0;">Rs. ${agent.wallet || 0}</div>
                             <button class="prop-btn" style="background:white; color:#138808; width:auto; padding:12px 30px; margin-top:10px; border-radius:50px;" 
                                 onclick="requestWithdrawal(${agent.id})">Request Withdrawal</button>
                         </div>
@@ -2103,7 +2103,7 @@ function renderAgent(container) {
                                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f0f0f0;">
                                     <div>
                                         <div style="font-weight:700; color:#1a2a3a;">
-                                            ${t.type === 'credit' ? '<span style="color:#138808;">+ ₹ ' + t.amount + '</span>' : '<span style="color:#D32F2F;">- ₹ ' + t.amount + '</span>'}
+                                            ${t.type === 'credit' ? '<span style="color:#138808;">+ Rs. ' + t.amount + '</span>' : '<span style="color:#D32F2F;">- Rs. ' + t.amount + '</span>'}
                                         </div>
                                         <div style="font-size:0.75rem; color:#999;">${t.date} • ${t.type.toUpperCase()}</div>
                                         ${t.remark ? `<div style="font-size:0.7rem; color:#666; font-style:italic;">"${t.remark}"</div>` : ''}
@@ -2153,7 +2153,7 @@ function renderDetails(container) {
                     </div>
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.sqft || 'Price/sq.ft'}</span>
-                        <strong style="color:#138808; font-size:1.3rem;">₹ ${p.priceSqft}</strong>
+                        <strong style="color:#138808; font-size:1.3rem;">Rs. ${p.priceSqft}</strong>
                     </div>
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.city || 'City'}</span>
@@ -3097,7 +3097,7 @@ window.manageCustomerWallet = (id) => {
     modal.innerHTML = `
         <div class="modal-content scale-in" style="max-width:400px; width:90%;">
             <h3 style="margin-bottom:20px;">Manage Wallet: ${c.name}</h3>
-            <p style="margin-bottom:15px;">Current Balance: <strong style="color:#138808; font-size:1.2rem;">â‚¹ ${(c.wallet || 0).toLocaleString()}</strong></p>
+            <p style="margin-bottom:15px;">Current Balance: <strong style="color:#138808; font-size:1.2rem;">Rs. ${(c.wallet || 0).toLocaleString()}</strong></p>
             <div class="form-group"><label>Amount (?)</label><input type="number" id="wc-amount" class="login-input" placeholder="Enter Amount"></div>
             <div style="display:flex; gap:10px; margin-top:20px;">
                 <button class="login-btn" style="background:#138808; flex:1;" onclick="updateCustomerWallet(${c.id}, 'credit')">Add (+)</button>
@@ -3276,7 +3276,7 @@ function manageWallet(agentId) {
     modal.innerHTML = `
         <div class="modal-content scale-in" style="max-width:350px;">
             <h3 style="margin-bottom:20px;">Manage Wallet: ${a.name}</h3>
-            <p>Current Balance: <strong>â‚¹ ${a.wallet}</strong></p>
+            <p>Current Balance: <strong>Rs. ${a.wallet}</strong></p>
             <div class="form-group">
                 <label>Amount (?)</label>
                 <input type="number" id="w-amount" class="login-input" placeholder="Enter amount">
@@ -3503,13 +3503,13 @@ window.openCustomerWalletModal = () => {
             
             <div style="background:linear-gradient(135deg, #FF9933, #FFB366); padding:25px; border-radius:15px; margin-bottom:25px; color:white; text-align:center;">
                 <div style="font-size:0.9rem; opacity:0.9; margin-bottom:8px;">Available Balance</div>
-                <div style="font-size:2.5rem; font-weight:800;">â‚¹ ${(customer.wallet || 0).toLocaleString()}</div>
+                <div style="font-size:2.5rem; font-weight:800;">Rs. ${(customer.wallet || 0).toLocaleString()}</div>
             </div>
             
             <div style="margin-bottom:25px;">
                 <h4 style="margin-bottom:15px; color:#1a2a3a;">Request Withdrawal</h4>
                 <div class="form-group">
-                    <label>Amount (â‚¹)</label>
+                    <label>Amount (Rs.)</label>
                     <input type="number" id="cw-amount" class="login-input" placeholder="Enter amount" max="${customer.wallet || 0}">
                 </div>
                 <button class="login-btn" onclick="requestCustomerWithdrawal()" style="background:#138808; width:100%;">
@@ -3524,7 +3524,7 @@ window.openCustomerWalletModal = () => {
                         ${customerWithdrawals.sort((a, b) => b.id - a.id).map(r => `
                             <div style="background:#f8f9fa; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid ${r.status === 'approved' ? '#28a745' : (r.status === 'rejected' ? '#D32F2F' : '#FF9933')};">
                                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                    <strong style="color:#1a2a3a;">â‚¹ ${r.amount.toLocaleString()}</strong>
+                                    <strong style="color:#1a2a3a;">Rs. ${r.amount.toLocaleString()}</strong>
                                     <span style="padding:3px 10px; border-radius:50px; font-size:0.7rem; font-weight:800; background:${r.status === 'approved' ? '#e8f5e9' : (r.status === 'rejected' ? '#ffebee' : '#fff3e0')}; color:${r.status === 'approved' ? '#2e7d32' : (r.status === 'rejected' ? '#D32F2F' : '#e65100')}; text-transform:uppercase;">
                                         ${r.status}
                                     </span>
@@ -3611,7 +3611,7 @@ window.deleteCustomer = (id) => {
     const customer = State.customers.find(c => c.id === id);
     if (!customer) return;
 
-    if (confirm(`Are you sure you want to PERMANENTLY DELETE this customer?\n\nName: ${customer.name}\nPhone: ${customer.phone}\nEmail: ${customer.email}\n\nThis will also delete:\n- All their wallet balance (â‚¹${(customer.wallet || 0).toLocaleString()})\n- All their liked properties\n- All their KYC data\n\nThis action CANNOT be undone!`)) {
+    if (confirm(`Are you sure you want to PERMANENTLY DELETE this customer?\n\nName: ${customer.name}\nPhone: ${customer.phone}\nEmail: ${customer.email}\n\nThis will also delete:\n- All their wallet balance (Rs. ${(customer.wallet || 0).toLocaleString()})\n- All their liked properties\n- All their KYC data\n\nThis action CANNOT be undone!`)) {
         showGlobalLoader("Deleting customer...");
 
         // Remove from State
@@ -4076,3 +4076,4 @@ window.deleteExploreCard = function (index) {
         });
     }
 };
+
