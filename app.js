@@ -1,4 +1,4 @@
-﻿window.showGlobalLoader = (message = "à¤•à¥ƒà¤ªà¤¯à¤¾ à¤ªà¥à¤°à¤¤à¥€à¤•à¥à¤·à¤¾ à¤•à¤°à¥‡à¤‚...") => {
+﻿window.showGlobalLoader = (message = "कृपया प्रतीक्षा करें...") => {
     const loader = document.getElementById('global-loader');
     const text = document.getElementById('loader-text');
     if (text) text.innerText = message;
@@ -9,7 +9,7 @@
     }
 };
 
-window.hideGlobalLoader = (message = "à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤¸à¤‚à¤ªà¤¨à¥à¤¨!", duration = 100) => {
+window.hideGlobalLoader = (message = "सफलतापूर्वक संपन्न!", duration = 100) => {
     const loader = document.getElementById('global-loader');
     const text = document.getElementById('loader-text');
     if (loader) {
@@ -644,7 +644,7 @@ function renderProfile(container) {
                             <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
                                 <div>
                                     <div style="font-size:0.85rem; opacity:0.9; margin-bottom:5px;">Wallet Balance</div>
-                                    <div style="font-size:1.8rem; font-weight:800;">â‚¹ ${(userDetails.wallet || 0).toLocaleString()}</div>
+                                    <div style="font-size:1.8rem; font-weight:800;">₹ ${(userDetails.wallet || 0).toLocaleString()}</div>
                                 </div>
                                 <i class="fas fa-wallet" style="font-size:2.5rem; opacity:0.3;"></i>
                             </div>
@@ -747,7 +747,7 @@ window.submitKYC = async () => {
 
         if (!accName || !accNo || !ifsc || !doc) return alert("Please fill all details and upload document.");
 
-        showGlobalLoader("à¤•à¥‡à¤µà¤¾à¤ˆà¤¸à¥€ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¤¿à¤¯à¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ..."); // Updating KYC...
+        showGlobalLoader("केवाईसी अपडेट किया जा रहा है..."); // Updating KYC...
 
         const role = State.user.role;
         const collection = role === 'agent' ? State.agents : State.customers;
@@ -767,7 +767,7 @@ window.submitKYC = async () => {
             State.tempKYCImage = null;
 
             await saveGlobalData();
-            hideGlobalLoader("à¤•à¥‡à¤µà¤¾à¤ˆà¤¸à¥€ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
+            hideGlobalLoader("केवाईसी अपडेट सफल!");
             render();
             setTimeout(() => {
                 alert("KYC Submitted! Please wait for approval.");
@@ -859,10 +859,10 @@ function renderPropertyCard(p) {
             </div>
             <div class="prop-body">
                 <div class="prop-price">
-                    â‚¹ ${p.priceSqft} / sq. ft.
+                    ₹ ${p.priceSqft} / sq. ft.
                 </div>
                 <div class="prop-sub">
-                    Price: â‚¹ ${p.price} | Area: ${p.area}
+                    Price: ₹ ${p.price} | Area: ${p.area}
                 </div>
                 <h4 class="prop-title">${p.title}</h4>
                 <div class="prop-location">
@@ -873,7 +873,7 @@ function renderPropertyCard(p) {
                         <i class="fas fa-clock"></i> ${p.createdAt || 'N/A'}
                     </div>
                 ` : ''}
-                <button class="prop-btn">à¤µà¤¿à¤µà¤°à¤£ à¤¦à¥‡à¤–à¥‡à¤‚</button>
+                <button class="prop-btn">विवरण देखें</button>
             </div>
         </div>
     `;
@@ -1041,9 +1041,9 @@ function renderLikes(container) {
     container.innerHTML = `
         <div class="likes-page">
             <div style="background: linear-gradient(to right, #FF9933, #FFFFFF, #138808); padding: 15px; border-radius: 15px; margin-bottom: 25px; text-align: center; border: 2px solid rgba(0,0,0,0.05);">
-                <h2 style="margin:0; color:#1a2a3a; font-size:1.4rem; font-weight:900;"><i class="fas fa-heart" style="color:#D32F2F;"></i> à¤ªà¤¸à¤‚à¤¦à¥€à¤¦à¤¾ à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€à¤œ</h2>
+                <h2 style="margin:0; color:#1a2a3a; font-size:1.4rem; font-weight:900;"><i class="fas fa-heart" style="color:#D32F2F;"></i> पसंदीदा प्रॉपर्टीज</h2>
             </div>
-            ${likedProps.length === 0 ? `<div style="text-align:center; padding:50px; color:#999;">à¤•à¥‹à¤ˆ à¤ªà¤¸à¤‚à¤¦à¥€à¤¦à¤¾ à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€ à¤¨à¤¹à¥€à¤‚ à¤®à¤¿à¤²à¥€</div>` : `<div class="property-grid">${likedProps.map(p => renderPropertyCard(p)).join('')}</div>`}
+            ${likedProps.length === 0 ? `<div style="text-align:center; padding:50px; color:#999;">कोई पसंदीदा प्रॉपर्टी नहीं मिली</div>` : `<div class="property-grid">${likedProps.map(p => renderPropertyCard(p)).join('')}</div>`}
         </div>
     `;
 }
@@ -1120,7 +1120,7 @@ function handleLogin(role) {
     if (!loginId || !pass) return alert("Please enter both ID and Password.");
 
     window.isRealTaskRunning = true;
-    showGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ..."); // Logging in...
+    showGlobalLoader("लॉगिन हो रहा है..."); // Logging in...
 
     // Start processing immediately
     (async () => {
@@ -1129,7 +1129,7 @@ function handleLogin(role) {
                 if (loginId === 'admin@bhumidekho.com' && pass === (State.settings.adminPassword || 'admin123')) {
                     State.user = { role: 'admin', name: 'Super Admin' };
                     await saveGlobalData();
-                    hideGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¸à¤«à¤²!");
+                    hideGlobalLoader("लॉगिन सफल!");
                     navigate('admin');
                 } else {
                     hideGlobalLoader(null);
@@ -1140,13 +1140,13 @@ function handleLogin(role) {
                 if (agent) {
                     if (agent.status === 'blocked') {
                         hideGlobalLoader(null);
-                        setTimeout(() => alert("à¤†à¤ªà¤•à¤¾ à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ à¤…à¤­à¥€ à¤…à¤ªà¥à¤°à¥‚à¤µ à¤¨à¤¹à¥€à¤‚ à¤¹à¥à¤† à¤¹à¥ˆà¥¤"), 200);
+                        setTimeout(() => alert("आपका अकाउंट अभी अप्रूव नहीं हुआ है।"), 200);
                         return;
                     }
                     if (agent.status === 'approved') {
                         State.user = { role: 'agent', name: agent.name, id: agent.id, photo: agent.photo };
                         await saveGlobalData();
-                        hideGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¸à¤«à¤²!");
+                        hideGlobalLoader("लॉगिन सफल!");
                         navigate('agent');
                     } else {
                         hideGlobalLoader(null);
@@ -1169,7 +1169,7 @@ function handleLogin(role) {
                     if (!cust.likes) cust.likes = [];
                     State.likes = cust.likes;
                     await saveGlobalData();
-                    hideGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¸à¤«à¤²!");
+                    hideGlobalLoader("लॉगिन सफल!");
                     navigate('home');
                 } else {
                     hideGlobalLoader(null);
@@ -1274,7 +1274,7 @@ async function handleSignup(role) {
     }
 
     window.isRealTaskRunning = true;
-    showGlobalLoader("à¤°à¤œà¤¿à¤¸à¥à¤Ÿà¥à¤°à¥‡à¤¶à¤¨ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ..."); // Registering...
+    showGlobalLoader("रजिस्ट्रेशन हो रहा है..."); // Registering...
 
     (async () => {
         try {
@@ -1296,7 +1296,7 @@ async function handleSignup(role) {
                 });
 
                 await saveGlobalData();
-                hideGlobalLoader("à¤°à¤œà¤¿à¤¸à¥à¤Ÿà¥à¤°à¥‡à¤¶à¤¨ à¤¸à¤«à¤²!");
+                hideGlobalLoader("रजिस्ट्रेशन सफल!");
                 setTimeout(() => {
                     alert("Agent Registered! Please wait for Admin approval.");
                     navigate('login');
@@ -1321,7 +1321,7 @@ async function handleSignup(role) {
                 State.likes = [];
 
                 await saveGlobalData();
-                hideGlobalLoader("à¤°à¤œà¤¿à¤¸à¥à¤Ÿà¥à¤°à¥‡à¤¶à¤¨ à¤¸à¤«à¤²!");
+                hideGlobalLoader("रजिस्ट्रेशन सफल!");
                 setTimeout(() => {
                     navigate('home');
                 }, 200);
@@ -1341,7 +1341,7 @@ function renderAdmin(container) {
     const stats = [
         { label: 'Properties', val: State.properties.length },
         { label: 'Agents', val: State.agents.length },
-        { label: 'Wallet Balance', val: 'â‚¹ ' + State.adminWallet.toLocaleString() }
+        { label: 'Wallet Balance', val: '₹ ' + State.adminWallet.toLocaleString() }
     ];
     container.innerHTML = `
         <div class="dashboard-layout">
@@ -1371,7 +1371,7 @@ function renderAdmin(container) {
                         <div>
                             <h1 style="font-size:1.5rem;">Admin Dashboard</h1>
                             <div style="margin-top:8px; padding:8px 15px; background:linear-gradient(135deg, #138808, #28a745); color:white; border-radius:30px; display:inline-flex; align-items:center; gap:8px; font-weight:700;">
-                                <i class="fas fa-wallet"></i> Wallet Balance: â‚¹ ${State.adminWallet.toLocaleString()}
+                                <i class="fas fa-wallet"></i> Wallet Balance: ₹ ${State.adminWallet.toLocaleString()}
                             </div>
                         </div>
                     </div>
@@ -1405,7 +1405,7 @@ function renderAdmin(container) {
                                                 <div style="font-size:0.7rem; color:#666; margin-top:4px;"><i class="fas fa-calendar-alt"></i> ${p.createdAt || 'N/A'}</div>
                                             </td>
                                             <td style="padding:15px;"><div><strong>${p.agent}</strong></div><div style="font-size:0.75rem; color:#138808; font-weight:700;"><i class="fas fa-phone-alt"></i> ${agentPhone}</div></td>
-                                            <td style="padding:15px;">â‚¹ ${p.price}</td>
+                                            <td style="padding:15px;">₹ ${p.price}</td>
                                             <td style="padding:15px;">
                                                 <span style="padding:4px 10px; border-radius:50px; font-size:0.7rem; font-weight:700; background:${p.status === 'approved' ? '#e8f5e9' : (p.status === 'disabled' ? '#ffebee' : (p.status === 'sold' ? '#e0f2f1' : '#fff3e0'))}; color:${p.status === 'approved' ? '#2e7d32' : (p.status === 'disabled' ? '#D32F2F' : (p.status === 'sold' ? '#00796b' : '#e65100'))};">${p.status.toUpperCase()}</span>
                                                 ${p.status === 'disabled' && p.disableReason ? `<div style="font-size:0.7rem; color:#D32F2F; margin-top:5px; font-weight:600; max-width:150px; line-height:1.2;">Reason: ${p.disableReason}</div>` : ''}
@@ -1540,7 +1540,7 @@ function renderAdmin(container) {
                                         </td>
                                         <td style="padding:15px;">${c.joinedAt}</td>
 
-                                        <td style="padding:15px; font-weight:700;">â‚¹ ${(c.wallet || 0).toLocaleString()}</td>
+                                        <td style="padding:15px; font-weight:700;">₹ ${(c.wallet || 0).toLocaleString()}</td>
                                         <td style="padding:15px;">
                                             <span style="padding:5px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${c.status === 'active' ? '#e8f5e9' : '#ffebee'}; color:${c.status === 'active' ? '#2e7d32' : '#D32F2F'}; text-transform:uppercase;">
                                                 ${c.status}
@@ -1608,8 +1608,8 @@ function renderAdmin(container) {
                                             <div style="font-size:0.8rem; color:#138808;"><i class="fas fa-phone-alt"></i> ${phone}</div>
                                             <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">${type}</div>
                                         </td>
-                                        <td style="padding:15px; color:#1a2a3a; font-weight:600;">â‚¹ ${wallet.toLocaleString()}</td>
-                                        <td style="padding:15px;"><strong style="color:#138808;">â‚¹ ${r.amount}</strong></td>
+                                        <td style="padding:15px; color:#1a2a3a; font-weight:600;">₹ ${wallet.toLocaleString()}</td>
+                                        <td style="padding:15px;"><strong style="color:#138808;">₹ ${r.amount}</strong></td>
                                         <td style="padding:15px; font-size:0.85rem; color:#666;">${r.date}</td>
                                         <td style="padding:15px;">
                                             <span style="padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${r.status === 'approved' ? '#e8f5e9' : (r.status === 'rejected' ? '#ffebee' : '#fff3e0')}; color:${r.status === 'approved' ? '#2e7d32' : (r.status === 'rejected' ? '#D32F2F' : '#e65100')}; text-transform:uppercase;">
@@ -1636,7 +1636,7 @@ function renderAdmin(container) {
                         <div class="stat-box" style="background:linear-gradient(135deg, #FF9933, #138808); color:white; padding:40px; border-radius:20px; text-align:center; margin-bottom:30px;">
                             <i class="fas fa-wallet" style="font-size:3rem; margin-bottom:15px; opacity:0.9;"></i>
                             <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">Admin Wallet Balance</div>
-                            <div style="font-size:3rem; font-weight:900; margin:15px 0;">â‚¹ ${State.adminWallet.toLocaleString()}</div>
+                            <div style="font-size:3rem; font-weight:900; margin:15px 0;">₹ ${State.adminWallet.toLocaleString()}</div>
                             <button class="prop-btn" style="background:white; color:#138808; width:auto; padding:12px 30px; margin-top:10px; border-radius:50px; font-weight:800;" 
                                 onclick="addAdminBalance()"><i class="fas fa-plus-circle"></i> Add Balance</button>
                         </div>
@@ -1652,7 +1652,7 @@ function renderAdmin(container) {
                                     <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #f0f0f0;">
                                         <div>
                                             <div style="font-weight:700; color:#1a2a3a; margin-bottom:4px;">
-                                                ${t.type === 'admin_credit' ? '<span style="color:#138808;">+ â‚¹ ' + t.amount.toLocaleString() + '</span>' : '<span style="color:#D32F2F;">- â‚¹ ' + t.amount.toLocaleString() + '</span>'}
+                                                ${t.type === 'admin_credit' ? '<span style="color:#138808;">+ ₹ ' + t.amount.toLocaleString() + '</span>' : '<span style="color:#D32F2F;">- ₹ ' + t.amount.toLocaleString() + '</span>'}
                                             </div>
                                             <div style="font-size:0.75rem; color:#999;">${t.date}</div>
                                             ${t.remark ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-top:4px;">"${t.remark}"</div>` : ''}
@@ -1820,7 +1820,7 @@ function renderAgent(container) {
             valSize: '1.5rem' // Custom size for text value
         },
         { label: 'Add Property', val: '+', icon: 'fa-plus-circle', color: '#673AB7', isAction: true },
-        { label: 'Wallet Balance', val: `â‚¹ ${agent.wallet || 0} `, icon: 'fa-wallet', color: '#138808' }
+        { label: 'Wallet Balance', val: `₹ ${agent.wallet || 0} `, icon: 'fa-wallet', color: '#138808' }
     ];
 
     container.innerHTML = `
@@ -1902,7 +1902,7 @@ function renderAgent(container) {
                                     </div>
                                     <div class="prop-body">
                                         <div style="display:flex; justify-content:space-between; align-items:start;">
-                                            <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">â‚¹ ${p.price}</div>
+                                            <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">₹ ${p.price}</div>
                                             <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                         </div>
                                         <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
@@ -1937,7 +1937,7 @@ function renderAgent(container) {
                                 </div>
                                 <div class="prop-body">
                                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                                        <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">â‚¹ ${p.price}</div>
+                                        <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">₹ ${p.price}</div>
                                         <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                     </div>
                                     <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
@@ -1956,7 +1956,7 @@ function renderAgent(container) {
                         <div class="stat-box" style="background:linear-gradient(135deg, #138808, #28a745); color:white; padding:30px; border-radius:20px; text-align:center;">
                             <i class="fas fa-wallet" style="font-size:2.5rem; margin-bottom:15px; opacity:0.8;"></i>
                             <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">Available Balance</div>
-                            <div style="font-size:2.5rem; font-weight:900; margin:10px 0;">â‚¹ ${agent.wallet || 0}</div>
+                            <div style="font-size:2.5rem; font-weight:900; margin:10px 0;">₹ ${agent.wallet || 0}</div>
                             <button class="prop-btn" style="background:white; color:#138808; width:auto; padding:12px 30px; margin-top:10px; border-radius:50px;" 
                                 onclick="requestWithdrawal(${agent.id})">Request Withdrawal</button>
                         </div>
@@ -1973,9 +1973,9 @@ function renderAgent(container) {
                                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f0f0f0;">
                                     <div>
                                         <div style="font-weight:700; color:#1a2a3a;">
-                                            ${t.type === 'credit' ? '<span style="color:#138808;">+ â‚¹ ' + t.amount + '</span>' : '<span style="color:#D32F2F;">- â‚¹ ' + t.amount + '</span>'}
+                                            ${t.type === 'credit' ? '<span style="color:#138808;">+ ₹ ' + t.amount + '</span>' : '<span style="color:#D32F2F;">- ₹ ' + t.amount + '</span>'}
                                         </div>
-                                        <div style="font-size:0.75rem; color:#999;">${t.date} â€¢ ${t.type.toUpperCase()}</div>
+                                        <div style="font-size:0.75rem; color:#999;">${t.date} • ${t.type.toUpperCase()}</div>
                                         ${t.remark ? `<div style="font-size:0.7rem; color:#666; font-style:italic;">"${t.remark}"</div>` : ''}
                                     </div>
                                     <span style="font-size:0.75rem; font-weight:800; color:${t.status === 'approved' ? '#138808' : (t.status === 'rejected' ? '#D32F2F' : (t.type === 'credit' ? '#138808' : '#FF9933'))}">
@@ -2011,11 +2011,11 @@ function renderDetails(container) {
         let contentHtml = '';
         if (activeTab === 'Details') {
             contentHtml = `
-    < div style = "margin-bottom:20px;" >
+                <div style="margin-bottom:20px;">
                     <h2 style="color:#1a2a3a; font-size:1.6rem; font-weight:900; margin-bottom:5px; line-height:1.2;">${p.title}</h2>
                     <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
-                </div >
-                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800; font-size:1.3rem;">à¤µà¤¿à¤µà¤°à¤£ à¤à¤µà¤‚ à¤¸à¥à¤¥à¤¾à¤¨</h3>
+                </div>
+                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800; font-size:1.3rem;">विवरण एवं स्थान</h3>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.area || 'Area'}</span>
@@ -2023,7 +2023,7 @@ function renderDetails(container) {
                     </div>
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.sqft || 'Price/sq.ft'}</span>
-                        <strong style="color:#138808; font-size:1.3rem;">â‚¹ ${p.priceSqft}</strong>
+                        <strong style="color:#138808; font-size:1.3rem;">₹ ${p.priceSqft}</strong>
                     </div>
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.city || 'City'}</span>
@@ -2041,14 +2041,14 @@ function renderDetails(container) {
                     `).join('')}
                 </div>
                 <div style="margin-top:25px; background:#ffffff; padding:20px; border-radius:18px; border:1.5px solid #eee; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
-                    <h4 style="margin-bottom:12px; color:#138808; font-weight:800;"><i class="fas fa-file-alt"></i> ${p.labels?.description || 'à¤µà¤¿à¤µà¤°à¤£ (Description)'}</h4>
+                    <h4 style="margin-bottom:12px; color:#138808; font-weight:800;"><i class="fas fa-file-alt"></i> ${p.labels?.description || 'विवरण (Description)'}</h4>
                     <p style="font-size:1rem; color:#444; line-height:1.8;">${p.description}</p>
                 </div>
 `;
         } else if (activeTab === 'Photos') {
             const allImages = p.images || [p.image];
             contentHtml = `
-    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Gallery(${allImages.length} Photos)</h3 >
+            <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Gallery (${allImages.length} Photos)</h3>
         <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
             ${allImages.map((img, idx) => `
                         <div style="background:white; padding:5px; border-radius:12px; border:1px solid #eee; ${idx === 0 ? 'grid-column: span 2;' : ''}">
@@ -2060,7 +2060,7 @@ function renderDetails(container) {
         } else if (activeTab === 'Video') {
             const vidId = getYouTubeID(p.video);
             contentHtml = `
-    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Video Tour</h3 >
+            <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Video Tour</h3>
         ${vidId ? `
                     <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:15px; overflow:hidden; border:1px solid #eee;">
                         <iframe style="position:absolute; top:0; left:0; width:100%; height:100%;" 
@@ -2068,13 +2068,13 @@ function renderDetails(container) {
                     </div>
                 ` : `
                     <div style="text-align:center; padding:50px; background:white; border-radius:15px; border:1px solid #eee; color:#999;">
-                        <i class="fab fa-youtube" style="font-size:3rem; margin-bottom:10px;"></i><br>à¤µà¥€à¤¡à¤¿à¤¯à¥‹ à¤‰à¤ªà¤²à¤¬à¥à¤§ à¤¨à¤¹à¥€à¤‚ à¤¹à¥ˆ
+                        <i class="fab fa-youtube" style="font-size:3rem; margin-bottom:10px;"></i><br>वीडियो उपलब्ध नहीं है
                     </div>
                 `}
 `;
         } else if (activeTab === 'Map') {
             contentHtml = `
-    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Location Map</h3 >
+            <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Location Map</h3>
         <div style="text-align:center; padding:40px; background:white; border-radius:15px; border:1px solid #eee;">
             <i class="fas fa-map-marked-alt" style="font-size:3rem; color:#138808; margin-bottom:15px;"></i><br>
                 <a href="${p.map || '#'}" target="_blank" class="btn-green-fill" style="padding:12px 25px; border-radius:30px; display:inline-flex; width:auto;">View on Google Maps</a>
@@ -2086,7 +2086,7 @@ function renderDetails(container) {
         const hasMultipleImages = heroImages.length > 1;
 
         container.innerHTML = `
-    < div class="details-view" >
+                <div class="details-view">
                 <div class="details-hero" style="position:relative;">
                     <div id="hero-slider-container" style="display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;">
                         ${heroImages.map((img, idx) => `
@@ -2110,14 +2110,14 @@ function renderDetails(container) {
                 <div style="padding:20px; padding-bottom:120px;">${contentHtml}</div>
                 <div class="contact-footer" style="padding:15px 20px 25px; flex-direction:column; gap:12px;">
                     <button class="login-btn" style="background:#FFF9F3; color:#FF9933; border:1.5px solid #FFB366; margin:0 0 5px 0; width:100%; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="shareProperty(${p.id})">
-                        <i class="fas fa-share-alt"></i> Share Details (à¤¶à¥‡à¤¯à¤° à¤µà¤¿à¤µà¤°à¤£)
+                        <i class="fas fa-share-alt"></i> Share Details (शेयर विवरण)
                     </button>
                     <div style="display:flex; gap:10px; width:100%;">
                         <a href="tel:${p.mobile || '0000000000'}" class="btn-green-fill" style="flex:1;">
-                            <i class="fas fa-phone-alt"></i> à¤…à¤­à¥€ à¤•à¥‰à¤² à¤•à¤°à¥‡à¤‚
+                            <i class="fas fa-phone-alt"></i> अभी कॉल करें
                         </a>
                         <a href="https://wa.me/91${p.whatsapp || '0000000000'}" target="_blank" class="btn-green-outline" style="flex:1;">
-                            <i class="fab fa-whatsapp"></i> à¤µà¥à¤¹à¤¾à¤Ÿà¥à¤¸à¤à¤ª
+                            <i class="fab fa-whatsapp"></i> व्हाट्सऐप
                         </a>
                     </div>
             </div>`;
@@ -2457,7 +2457,7 @@ window.processPropertySubmit = async function () {
     }
 
     window.isRealTaskRunning = true;
-    showGlobalLoader("à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€ à¤…à¤ªà¤²à¥‹à¤¡ à¤•à¥€ à¤œà¤¾ à¤°à¤¹à¥€ à¤¹à¥ˆ... (Images: " + window.tempPropertyImages.length + ")");
+    showGlobalLoader("प्रॉपर्टी अपलोड की जा रही है... (Images: " + window.tempPropertyImages.length + ")");
 
     try {
         // Use images from tempPropertyImages (already base64)
@@ -2511,7 +2511,7 @@ window.processPropertySubmit = async function () {
 
         await saveGlobalData();
 
-        hideGlobalLoader("à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€ à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤…à¤ªà¤²à¥‹à¤¡!");
+        hideGlobalLoader("प्रॉपर्टी सफलतापूर्वक अपलोड!");
 
         setTimeout(() => {
             window.tempPropertyImages = []; // Reset images array
@@ -2637,9 +2637,9 @@ function editProperty(id) {
             p.editedBy = State.user.name || 'Agent';
         }
 
-        showGlobalLoader("à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¤¿à¤¯à¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
+        showGlobalLoader("अपडेट किया जा रहा है...");
         saveGlobalData().then(() => {
-            hideGlobalLoader("à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
+            hideGlobalLoader("अपडेट सफल!");
             closeModal();
             render();
 
