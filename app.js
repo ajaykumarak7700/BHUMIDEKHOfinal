@@ -1788,11 +1788,8 @@ function renderAdmin(container) {
                         </div>
                     </div>
                 ` : ''}
-                    </div>
-                ` : ''
-}
-            </main >
-        </div >
+            </main>
+        </div>
     `;
 }
 
@@ -1823,7 +1820,7 @@ function renderAgent(container) {
             valSize: '1.5rem' // Custom size for text value
         },
         { label: 'Add Property', val: '+', icon: 'fa-plus-circle', color: '#673AB7', isAction: true },
-        { label: 'Wallet Balance', val: `â‚¹ ${ agent.wallet || 0 } `, icon: 'fa-wallet', color: '#138808' }
+        { label: 'Wallet Balance', val: `â‚¹ ${agent.wallet || 0} `, icon: 'fa-wallet', color: '#138808' }
     ];
 
     container.innerHTML = `
@@ -2051,7 +2048,7 @@ function renderDetails(container) {
         } else if (activeTab === 'Photos') {
             const allImages = p.images || [p.image];
             contentHtml = `
-    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Gallery(${ allImages.length } Photos)</h3 >
+    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Gallery(${allImages.length} Photos)</h3 >
         <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
             ${allImages.map((img, idx) => `
                         <div style="background:white; padding:5px; border-radius:12px; border:1px solid #eee; ${idx === 0 ? 'grid-column: span 2;' : ''}">
@@ -2064,8 +2061,7 @@ function renderDetails(container) {
             const vidId = getYouTubeID(p.video);
             contentHtml = `
     < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Video Tour</h3 >
-        ${
-    vidId ? `
+        ${vidId ? `
                     <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:15px; overflow:hidden; border:1px solid #eee;">
                         <iframe style="position:absolute; top:0; left:0; width:100%; height:100%;" 
                             src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen></iframe>
@@ -2146,25 +2142,25 @@ function renderDetails(container) {
         const worldMap = '\u{1F5FA}\uFE0F';
         const phone = '\u{1F4DE}';
 
-        const msg = `* ${ p.title }*\n` +
-            `${ moneyBag } Price: Rs.${ p.price } \n` +
-            `${ pin } City: ${ p.city } \n` +
-            `${ ruler } Area: ${ p.area } \n` +
-            `${ clipboard } Type: ${ p.category } \n\n` +
-            `* Description:* ${ p.description } \n\n` +
-            (p.video ? `${ tv } * Video Tour:* ${ p.video } \n` : '') +
-            (p.map ? `${ worldMap } * Location Map:* ${ p.map } \n` : '') +
-            `${ phone } * Contact:* ${ p.mobile } \n\n` +
+        const msg = `* ${p.title}*\n` +
+            `${moneyBag} Price: Rs.${p.price} \n` +
+            `${pin} City: ${p.city} \n` +
+            `${ruler} Area: ${p.area} \n` +
+            `${clipboard} Type: ${p.category} \n\n` +
+            `* Description:* ${p.description} \n\n` +
+            (p.video ? `${tv} * Video Tour:* ${p.video} \n` : '') +
+            (p.map ? `${worldMap} * Location Map:* ${p.map} \n` : '') +
+            `${phone} * Contact:* ${p.mobile} \n\n` +
             `Shared via BhumiDekho`;
 
         if (navigator.share) {
             navigator.share({ title: p.title, text: msg, url: window.location.href })
                 .catch(() => window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'));
         } else {
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-}
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
     };
-renderContent();
+    renderContent();
 }
 
 
