@@ -1,4 +1,4 @@
-window.showGlobalLoader = (message = "कृपया प्रतीक्षा करें...") => {
+﻿window.showGlobalLoader = (message = "à¤•à¥ƒà¤ªà¤¯à¤¾ à¤ªà¥à¤°à¤¤à¥€à¤•à¥à¤·à¤¾ à¤•à¤°à¥‡à¤‚...") => {
     const loader = document.getElementById('global-loader');
     const text = document.getElementById('loader-text');
     if (text) text.innerText = message;
@@ -9,7 +9,7 @@ window.showGlobalLoader = (message = "कृपया प्रतीक्ष�
     }
 };
 
-window.hideGlobalLoader = (message = "सफलतापूर्वक संपन्न!", duration = 100) => {
+window.hideGlobalLoader = (message = "à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤¸à¤‚à¤ªà¤¨à¥à¤¨!", duration = 100) => {
     const loader = document.getElementById('global-loader');
     const text = document.getElementById('loader-text');
     if (loader) {
@@ -495,6 +495,10 @@ function render() {
 
     const logoText = document.getElementById('app-logo-text');
     if (logoText) logoText.innerHTML = State.settings.appName || 'Bhumi<span style="color: #FF9933;">Dekho</span>';
+
+    // Update Dynamic Elements
+    updateOtherButton();
+
     app.innerHTML = '';
 
     switch (State.view) {
@@ -640,7 +644,7 @@ function renderProfile(container) {
                             <div style="display:flex; justify-content:space-between; align-items:center; color:white;">
                                 <div>
                                     <div style="font-size:0.85rem; opacity:0.9; margin-bottom:5px;">Wallet Balance</div>
-                                    <div style="font-size:1.8rem; font-weight:800;">₹ ${(userDetails.wallet || 0).toLocaleString()}</div>
+                                    <div style="font-size:1.8rem; font-weight:800;">â‚¹ ${(userDetails.wallet || 0).toLocaleString()}</div>
                                 </div>
                                 <i class="fas fa-wallet" style="font-size:2.5rem; opacity:0.3;"></i>
                             </div>
@@ -743,7 +747,7 @@ window.submitKYC = async () => {
 
         if (!accName || !accNo || !ifsc || !doc) return alert("Please fill all details and upload document.");
 
-        showGlobalLoader("केवाईसी अपडेट किया जा रहा है..."); // Updating KYC...
+        showGlobalLoader("à¤•à¥‡à¤µà¤¾à¤ˆà¤¸à¥€ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¤¿à¤¯à¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ..."); // Updating KYC...
 
         const role = State.user.role;
         const collection = role === 'agent' ? State.agents : State.customers;
@@ -763,7 +767,7 @@ window.submitKYC = async () => {
             State.tempKYCImage = null;
 
             await saveGlobalData();
-            hideGlobalLoader("केवाईसी अपडेट सफल!");
+            hideGlobalLoader("à¤•à¥‡à¤µà¤¾à¤ˆà¤¸à¥€ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
             render();
             setTimeout(() => {
                 alert("KYC Submitted! Please wait for approval.");
@@ -855,10 +859,10 @@ function renderPropertyCard(p) {
             </div>
             <div class="prop-body">
                 <div class="prop-price">
-                    ₹ ${p.priceSqft} / sq. ft.
+                    â‚¹ ${p.priceSqft} / sq. ft.
                 </div>
                 <div class="prop-sub">
-                    Price: ₹ ${p.price} | Area: ${p.area}
+                    Price: â‚¹ ${p.price} | Area: ${p.area}
                 </div>
                 <h4 class="prop-title">${p.title}</h4>
                 <div class="prop-location">
@@ -869,7 +873,7 @@ function renderPropertyCard(p) {
                         <i class="fas fa-clock"></i> ${p.createdAt || 'N/A'}
                     </div>
                 ` : ''}
-                <button class="prop-btn">विवरण देखें</button>
+                <button class="prop-btn">à¤µà¤¿à¤µà¤°à¤£ à¤¦à¥‡à¤–à¥‡à¤‚</button>
             </div>
         </div>
     `;
@@ -1037,9 +1041,9 @@ function renderLikes(container) {
     container.innerHTML = `
         <div class="likes-page">
             <div style="background: linear-gradient(to right, #FF9933, #FFFFFF, #138808); padding: 15px; border-radius: 15px; margin-bottom: 25px; text-align: center; border: 2px solid rgba(0,0,0,0.05);">
-                <h2 style="margin:0; color:#1a2a3a; font-size:1.4rem; font-weight:900;"><i class="fas fa-heart" style="color:#D32F2F;"></i> पसंदीदा प्रॉपर्टीज</h2>
+                <h2 style="margin:0; color:#1a2a3a; font-size:1.4rem; font-weight:900;"><i class="fas fa-heart" style="color:#D32F2F;"></i> à¤ªà¤¸à¤‚à¤¦à¥€à¤¦à¤¾ à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€à¤œ</h2>
             </div>
-            ${likedProps.length === 0 ? `<div style="text-align:center; padding:50px; color:#999;">कोई पसंदीदा प्रॉपर्टी नहीं मिली</div>` : `<div class="property-grid">${likedProps.map(p => renderPropertyCard(p)).join('')}</div>`}
+            ${likedProps.length === 0 ? `<div style="text-align:center; padding:50px; color:#999;">à¤•à¥‹à¤ˆ à¤ªà¤¸à¤‚à¤¦à¥€à¤¦à¤¾ à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€ à¤¨à¤¹à¥€à¤‚ à¤®à¤¿à¤²à¥€</div>` : `<div class="property-grid">${likedProps.map(p => renderPropertyCard(p)).join('')}</div>`}
         </div>
     `;
 }
@@ -1116,7 +1120,7 @@ function handleLogin(role) {
     if (!loginId || !pass) return alert("Please enter both ID and Password.");
 
     window.isRealTaskRunning = true;
-    showGlobalLoader("लॉगिन हो रहा है..."); // Logging in...
+    showGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ..."); // Logging in...
 
     // Start processing immediately
     (async () => {
@@ -1125,7 +1129,7 @@ function handleLogin(role) {
                 if (loginId === 'admin@bhumidekho.com' && pass === (State.settings.adminPassword || 'admin123')) {
                     State.user = { role: 'admin', name: 'Super Admin' };
                     await saveGlobalData();
-                    hideGlobalLoader("लॉगिन सफल!");
+                    hideGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¸à¤«à¤²!");
                     navigate('admin');
                 } else {
                     hideGlobalLoader(null);
@@ -1136,13 +1140,13 @@ function handleLogin(role) {
                 if (agent) {
                     if (agent.status === 'blocked') {
                         hideGlobalLoader(null);
-                        setTimeout(() => alert("आपका अकाउंट अभी अप्रूव नहीं हुआ है।"), 200);
+                        setTimeout(() => alert("à¤†à¤ªà¤•à¤¾ à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ à¤…à¤­à¥€ à¤…à¤ªà¥à¤°à¥‚à¤µ à¤¨à¤¹à¥€à¤‚ à¤¹à¥à¤† à¤¹à¥ˆà¥¤"), 200);
                         return;
                     }
                     if (agent.status === 'approved') {
                         State.user = { role: 'agent', name: agent.name, id: agent.id, photo: agent.photo };
                         await saveGlobalData();
-                        hideGlobalLoader("लॉगिन सफल!");
+                        hideGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¸à¤«à¤²!");
                         navigate('agent');
                     } else {
                         hideGlobalLoader(null);
@@ -1165,7 +1169,7 @@ function handleLogin(role) {
                     if (!cust.likes) cust.likes = [];
                     State.likes = cust.likes;
                     await saveGlobalData();
-                    hideGlobalLoader("लॉगिन सफल!");
+                    hideGlobalLoader("à¤²à¥‰à¤—à¤¿à¤¨ à¤¸à¤«à¤²!");
                     navigate('home');
                 } else {
                     hideGlobalLoader(null);
@@ -1270,7 +1274,7 @@ async function handleSignup(role) {
     }
 
     window.isRealTaskRunning = true;
-    showGlobalLoader("रजिस्ट्रेशन हो रहा है..."); // Registering...
+    showGlobalLoader("à¤°à¤œà¤¿à¤¸à¥à¤Ÿà¥à¤°à¥‡à¤¶à¤¨ à¤¹à¥‹ à¤°à¤¹à¤¾ à¤¹à¥ˆ..."); // Registering...
 
     (async () => {
         try {
@@ -1292,7 +1296,7 @@ async function handleSignup(role) {
                 });
 
                 await saveGlobalData();
-                hideGlobalLoader("रजिस्ट्रेशन सफल!");
+                hideGlobalLoader("à¤°à¤œà¤¿à¤¸à¥à¤Ÿà¥à¤°à¥‡à¤¶à¤¨ à¤¸à¤«à¤²!");
                 setTimeout(() => {
                     alert("Agent Registered! Please wait for Admin approval.");
                     navigate('login');
@@ -1317,7 +1321,7 @@ async function handleSignup(role) {
                 State.likes = [];
 
                 await saveGlobalData();
-                hideGlobalLoader("रजिस्ट्रेशन सफल!");
+                hideGlobalLoader("à¤°à¤œà¤¿à¤¸à¥à¤Ÿà¥à¤°à¥‡à¤¶à¤¨ à¤¸à¤«à¤²!");
                 setTimeout(() => {
                     navigate('home');
                 }, 200);
@@ -1337,7 +1341,7 @@ function renderAdmin(container) {
     const stats = [
         { label: 'Properties', val: State.properties.length },
         { label: 'Agents', val: State.agents.length },
-        { label: 'Wallet Balance', val: '₹ ' + State.adminWallet.toLocaleString() }
+        { label: 'Wallet Balance', val: 'â‚¹ ' + State.adminWallet.toLocaleString() }
     ];
     container.innerHTML = `
         <div class="dashboard-layout">
@@ -1355,6 +1359,8 @@ function renderAdmin(container) {
                     <a href="#" class="side-link ${tab === 'adminWallet' ? 'active' : ''}" onclick="setAdminTab('adminWallet'); toggleSidebar()"><i class="fas fa-wallet"></i> My Wallet</a>
                     <a href="#" class="side-link ${tab === 'broadcast' ? 'active' : ''}" onclick="setAdminTab('broadcast'); toggleSidebar()"><i class="fas fa-bullhorn"></i> Broadcast</a>
                     <a href="#" class="side-link ${tab === 'settings' ? 'active' : ''}" onclick="setAdminTab('settings'); toggleSidebar()"><i class="fas fa-cogs"></i> Settings</a>
+                    <a href="#" class="side-link ${tab === 'settings' ? 'active' : ''}" onclick="setAdminTab('settings'); toggleSidebar()"><i class="fas fa-cogs"></i> Settings</a>
+                    <a href="#" class="side-link ${tab === 'navigation' ? 'active' : ''}" onclick="setAdminTab('navigation'); toggleSidebar()"><i class="fas fa-compass"></i> Navigation</a>
                     <a href="#" class="side-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </nav>
             </aside>
@@ -1365,7 +1371,7 @@ function renderAdmin(container) {
                         <div>
                             <h1 style="font-size:1.5rem;">Admin Dashboard</h1>
                             <div style="margin-top:8px; padding:8px 15px; background:linear-gradient(135deg, #138808, #28a745); color:white; border-radius:30px; display:inline-flex; align-items:center; gap:8px; font-weight:700;">
-                                <i class="fas fa-wallet"></i> Wallet Balance: ₹ ${State.adminWallet.toLocaleString()}
+                                <i class="fas fa-wallet"></i> Wallet Balance: â‚¹ ${State.adminWallet.toLocaleString()}
                             </div>
                         </div>
                     </div>
@@ -1399,7 +1405,7 @@ function renderAdmin(container) {
                                                 <div style="font-size:0.7rem; color:#666; margin-top:4px;"><i class="fas fa-calendar-alt"></i> ${p.createdAt || 'N/A'}</div>
                                             </td>
                                             <td style="padding:15px;"><div><strong>${p.agent}</strong></div><div style="font-size:0.75rem; color:#138808; font-weight:700;"><i class="fas fa-phone-alt"></i> ${agentPhone}</div></td>
-                                            <td style="padding:15px;">₹ ${p.price}</td>
+                                            <td style="padding:15px;">â‚¹ ${p.price}</td>
                                             <td style="padding:15px;">
                                                 <span style="padding:4px 10px; border-radius:50px; font-size:0.7rem; font-weight:700; background:${p.status === 'approved' ? '#e8f5e9' : (p.status === 'disabled' ? '#ffebee' : (p.status === 'sold' ? '#e0f2f1' : '#fff3e0'))}; color:${p.status === 'approved' ? '#2e7d32' : (p.status === 'disabled' ? '#D32F2F' : (p.status === 'sold' ? '#00796b' : '#e65100'))};">${p.status.toUpperCase()}</span>
                                                 ${p.status === 'disabled' && p.disableReason ? `<div style="font-size:0.7rem; color:#D32F2F; margin-top:5px; font-weight:600; max-width:150px; line-height:1.2;">Reason: ${p.disableReason}</div>` : ''}
@@ -1534,7 +1540,7 @@ function renderAdmin(container) {
                                         </td>
                                         <td style="padding:15px;">${c.joinedAt}</td>
 
-                                        <td style="padding:15px; font-weight:700;">₹ ${(c.wallet || 0).toLocaleString()}</td>
+                                        <td style="padding:15px; font-weight:700;">â‚¹ ${(c.wallet || 0).toLocaleString()}</td>
                                         <td style="padding:15px;">
                                             <span style="padding:5px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${c.status === 'active' ? '#e8f5e9' : '#ffebee'}; color:${c.status === 'active' ? '#2e7d32' : '#D32F2F'}; text-transform:uppercase;">
                                                 ${c.status}
@@ -1602,8 +1608,8 @@ function renderAdmin(container) {
                                             <div style="font-size:0.8rem; color:#138808;"><i class="fas fa-phone-alt"></i> ${phone}</div>
                                             <div style="font-size:0.7rem; color:#999; text-transform:uppercase;">${type}</div>
                                         </td>
-                                        <td style="padding:15px; color:#1a2a3a; font-weight:600;">₹ ${wallet.toLocaleString()}</td>
-                                        <td style="padding:15px;"><strong style="color:#138808;">₹ ${r.amount}</strong></td>
+                                        <td style="padding:15px; color:#1a2a3a; font-weight:600;">â‚¹ ${wallet.toLocaleString()}</td>
+                                        <td style="padding:15px;"><strong style="color:#138808;">â‚¹ ${r.amount}</strong></td>
                                         <td style="padding:15px; font-size:0.85rem; color:#666;">${r.date}</td>
                                         <td style="padding:15px;">
                                             <span style="padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${r.status === 'approved' ? '#e8f5e9' : (r.status === 'rejected' ? '#ffebee' : '#fff3e0')}; color:${r.status === 'approved' ? '#2e7d32' : (r.status === 'rejected' ? '#D32F2F' : '#e65100')}; text-transform:uppercase;">
@@ -1630,7 +1636,7 @@ function renderAdmin(container) {
                         <div class="stat-box" style="background:linear-gradient(135deg, #FF9933, #138808); color:white; padding:40px; border-radius:20px; text-align:center; margin-bottom:30px;">
                             <i class="fas fa-wallet" style="font-size:3rem; margin-bottom:15px; opacity:0.9;"></i>
                             <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">Admin Wallet Balance</div>
-                            <div style="font-size:3rem; font-weight:900; margin:15px 0;">₹ ${State.adminWallet.toLocaleString()}</div>
+                            <div style="font-size:3rem; font-weight:900; margin:15px 0;">â‚¹ ${State.adminWallet.toLocaleString()}</div>
                             <button class="prop-btn" style="background:white; color:#138808; width:auto; padding:12px 30px; margin-top:10px; border-radius:50px; font-weight:800;" 
                                 onclick="addAdminBalance()"><i class="fas fa-plus-circle"></i> Add Balance</button>
                         </div>
@@ -1646,7 +1652,7 @@ function renderAdmin(container) {
                                     <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #f0f0f0;">
                                         <div>
                                             <div style="font-weight:700; color:#1a2a3a; margin-bottom:4px;">
-                                                ${t.type === 'admin_credit' ? '<span style="color:#138808;">+ ₹ ' + t.amount.toLocaleString() + '</span>' : '<span style="color:#D32F2F;">- ₹ ' + t.amount.toLocaleString() + '</span>'}
+                                                ${t.type === 'admin_credit' ? '<span style="color:#138808;">+ â‚¹ ' + t.amount.toLocaleString() + '</span>' : '<span style="color:#D32F2F;">- â‚¹ ' + t.amount.toLocaleString() + '</span>'}
                                             </div>
                                             <div style="font-size:0.75rem; color:#999;">${t.date}</div>
                                             ${t.remark ? `<div style="font-size:0.75rem; color:#666; font-style:italic; margin-top:4px;">"${t.remark}"</div>` : ''}
@@ -1758,8 +1764,35 @@ function renderAdmin(container) {
                          <button class="login-btn" onclick="saveContactSettings()" style="margin-top:20px; width:auto; padding:12px 30px;">Save All Settings</button>
                     </div>
                 ` : ''}
-            </main>
-        </div>
+                ${tab === 'navigation' ? `
+                    <div style="max-width:600px;">
+                        <h2 style="margin-bottom:20px;">Navigation Settings</h2>
+                        <div class="stat-box" style="padding:25px;">
+                             <h3 style="margin-bottom:15px; color:#138808;">'OTHER' Button Configuration</h3>
+                             <p style="color:#666; margin-bottom:15px; font-size:0.9rem;">Customize the center button in the bottom navigation bar.</p>
+                             <div class="form-group">
+                                 <label>Button Label</label>
+                                 <input id="nav-other-label" value="${(State.settings.otherButton && State.settings.otherButton.label) || 'OTHER'}" class="login-input" placeholder="e.g. OFFERS">
+                             </div>
+                             <div class="form-group">
+                                 <label>Icon Class (Font Awesome)</label>
+                                 <input id="nav-other-icon" value="${(State.settings.otherButton && State.settings.otherButton.icon) || 'fas fa-ellipsis-h'}" class="login-input" placeholder="e.g. fas fa-star">
+                                 <div style="font-size:0.75rem; color:#666; margin-top:5px;">
+                                    Popular Icons: 
+                                    <span style="cursor:pointer; color:#138808; text-decoration:underline;" onclick="document.getElementById('nav-other-icon').value='fas fa-ellipsis-h'">Ellipsis</span>, 
+                                    <span style="cursor:pointer; color:#138808; text-decoration:underline;" onclick="document.getElementById('nav-other-icon').value='fas fa-star'">Star</span>, 
+                                    <span style="cursor:pointer; color:#138808; text-decoration:underline;" onclick="document.getElementById('nav-other-icon').value='fas fa-bars'">Menu</span>
+                                 </div>
+                             </div>
+                             <button class="login-btn" onclick="saveNavigationSettings()" style="margin-top:15px; width:auto;">Save Navigation</button>
+                        </div>
+                    </div>
+                ` : ''}
+                    </div>
+                ` : ''
+}
+            </main >
+        </div >
     `;
 }
 
@@ -1790,11 +1823,11 @@ function renderAgent(container) {
             valSize: '1.5rem' // Custom size for text value
         },
         { label: 'Add Property', val: '+', icon: 'fa-plus-circle', color: '#673AB7', isAction: true },
-        { label: 'Wallet Balance', val: `₹ ${agent.wallet || 0}`, icon: 'fa-wallet', color: '#138808' }
+        { label: 'Wallet Balance', val: `â‚¹ ${ agent.wallet || 0 } `, icon: 'fa-wallet', color: '#138808' }
     ];
 
     container.innerHTML = `
-        <div class="dashboard-layout">
+    < div class="dashboard-layout" >
             <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
             <aside class="sidebar agent">
                 <div class="logo-simple" style="margin-bottom:30px; color:white; font-size:1.5rem; font-weight: 900;">
@@ -1872,7 +1905,7 @@ function renderAgent(container) {
                                     </div>
                                     <div class="prop-body">
                                         <div style="display:flex; justify-content:space-between; align-items:start;">
-                                            <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">₹ ${p.price}</div>
+                                            <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">â‚¹ ${p.price}</div>
                                             <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                         </div>
                                         <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
@@ -1907,7 +1940,7 @@ function renderAgent(container) {
                                 </div>
                                 <div class="prop-body">
                                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                                        <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">₹ ${p.price}</div>
+                                        <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">â‚¹ ${p.price}</div>
                                         <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                     </div>
                                     <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
@@ -1926,7 +1959,7 @@ function renderAgent(container) {
                         <div class="stat-box" style="background:linear-gradient(135deg, #138808, #28a745); color:white; padding:30px; border-radius:20px; text-align:center;">
                             <i class="fas fa-wallet" style="font-size:2.5rem; margin-bottom:15px; opacity:0.8;"></i>
                             <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">Available Balance</div>
-                            <div style="font-size:2.5rem; font-weight:900; margin:10px 0;">₹ ${agent.wallet || 0}</div>
+                            <div style="font-size:2.5rem; font-weight:900; margin:10px 0;">â‚¹ ${agent.wallet || 0}</div>
                             <button class="prop-btn" style="background:white; color:#138808; width:auto; padding:12px 30px; margin-top:10px; border-radius:50px;" 
                                 onclick="requestWithdrawal(${agent.id})">Request Withdrawal</button>
                         </div>
@@ -1943,9 +1976,9 @@ function renderAgent(container) {
                                 <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f0f0f0;">
                                     <div>
                                         <div style="font-weight:700; color:#1a2a3a;">
-                                            ${t.type === 'credit' ? '<span style="color:#138808;">+ ₹ ' + t.amount + '</span>' : '<span style="color:#D32F2F;">- ₹ ' + t.amount + '</span>'}
+                                            ${t.type === 'credit' ? '<span style="color:#138808;">+ â‚¹ ' + t.amount + '</span>' : '<span style="color:#D32F2F;">- â‚¹ ' + t.amount + '</span>'}
                                         </div>
-                                        <div style="font-size:0.75rem; color:#999;">${t.date} • ${t.type.toUpperCase()}</div>
+                                        <div style="font-size:0.75rem; color:#999;">${t.date} â€¢ ${t.type.toUpperCase()}</div>
                                         ${t.remark ? `<div style="font-size:0.7rem; color:#666; font-style:italic;">"${t.remark}"</div>` : ''}
                                     </div>
                                     <span style="font-size:0.75rem; font-weight:800; color:${t.status === 'approved' ? '#138808' : (t.status === 'rejected' ? '#D32F2F' : (t.type === 'credit' ? '#138808' : '#FF9933'))}">
@@ -1958,7 +1991,7 @@ function renderAgent(container) {
                     </div>
                 ` : ''}
             </main>
-        </div>
+        </div >
     `;
 }
 
@@ -1981,11 +2014,11 @@ function renderDetails(container) {
         let contentHtml = '';
         if (activeTab === 'Details') {
             contentHtml = `
-                <div style="margin-bottom:20px;">
+    < div style = "margin-bottom:20px;" >
                     <h2 style="color:#1a2a3a; font-size:1.6rem; font-weight:900; margin-bottom:5px; line-height:1.2;">${p.title}</h2>
                     <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
-                </div>
-                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800; font-size:1.3rem;">विवरण एवं स्थान</h3>
+                </div >
+                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800; font-size:1.3rem;">à¤µà¤¿à¤µà¤°à¤£ à¤à¤µà¤‚ à¤¸à¥à¤¥à¤¾à¤¨</h3>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.area || 'Area'}</span>
@@ -1993,7 +2026,7 @@ function renderDetails(container) {
                     </div>
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.sqft || 'Price/sq.ft'}</span>
-                        <strong style="color:#138808; font-size:1.3rem;">₹ ${p.priceSqft}</strong>
+                        <strong style="color:#138808; font-size:1.3rem;">â‚¹ ${p.priceSqft}</strong>
                     </div>
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.city || 'City'}</span>
@@ -2011,52 +2044,53 @@ function renderDetails(container) {
                     `).join('')}
                 </div>
                 <div style="margin-top:25px; background:#ffffff; padding:20px; border-radius:18px; border:1.5px solid #eee; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
-                    <h4 style="margin-bottom:12px; color:#138808; font-weight:800;"><i class="fas fa-file-alt"></i> ${p.labels?.description || 'विवरण (Description)'}</h4>
+                    <h4 style="margin-bottom:12px; color:#138808; font-weight:800;"><i class="fas fa-file-alt"></i> ${p.labels?.description || 'à¤µà¤¿à¤µà¤°à¤£ (Description)'}</h4>
                     <p style="font-size:1rem; color:#444; line-height:1.8;">${p.description}</p>
                 </div>
-            `;
+`;
         } else if (activeTab === 'Photos') {
             const allImages = p.images || [p.image];
             contentHtml = `
-                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Gallery (${allImages.length} Photos)</h3>
-                <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
-                    ${allImages.map((img, idx) => `
+    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Gallery(${ allImages.length } Photos)</h3 >
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+            ${allImages.map((img, idx) => `
                         <div style="background:white; padding:5px; border-radius:12px; border:1px solid #eee; ${idx === 0 ? 'grid-column: span 2;' : ''}">
                             <img src="${img}" style="width:100%; height:${idx === 0 ? '200px' : '120px'}; object-fit:cover; border-radius:8px; cursor:pointer;" onclick="viewFullImage('${img}')">
                         </div>
                     `).join('')}
-                </div>
-            `;
+        </div>
+`;
         } else if (activeTab === 'Video') {
             const vidId = getYouTubeID(p.video);
             contentHtml = `
-                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Video Tour</h3>
-                ${vidId ? `
+    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Video Tour</h3 >
+        ${
+    vidId ? `
                     <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:15px; overflow:hidden; border:1px solid #eee;">
                         <iframe style="position:absolute; top:0; left:0; width:100%; height:100%;" 
                             src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen></iframe>
                     </div>
                 ` : `
                     <div style="text-align:center; padding:50px; background:white; border-radius:15px; border:1px solid #eee; color:#999;">
-                        <i class="fab fa-youtube" style="font-size:3rem; margin-bottom:10px;"></i><br>वीडियो उपलब्ध नहीं है
+                        <i class="fab fa-youtube" style="font-size:3rem; margin-bottom:10px;"></i><br>à¤µà¥€à¤¡à¤¿à¤¯à¥‹ à¤‰à¤ªà¤²à¤¬à¥à¤§ à¤¨à¤¹à¥€à¤‚ à¤¹à¥ˆ
                     </div>
                 `}
-            `;
+`;
         } else if (activeTab === 'Map') {
             contentHtml = `
-                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Location Map</h3>
-                <div style="text-align:center; padding:40px; background:white; border-radius:15px; border:1px solid #eee;">
-                    <i class="fas fa-map-marked-alt" style="font-size:3rem; color:#138808; margin-bottom:15px;"></i><br>
-                    <a href="${p.map || '#'}" target="_blank" class="btn-green-fill" style="padding:12px 25px; border-radius:30px; display:inline-flex; width:auto;">View on Google Maps</a>
-                </div>
-            `;
+    < h3 style = "color:#1a2a3a; margin-bottom:15px; font-weight:800;" > Location Map</h3 >
+        <div style="text-align:center; padding:40px; background:white; border-radius:15px; border:1px solid #eee;">
+            <i class="fas fa-map-marked-alt" style="font-size:3rem; color:#138808; margin-bottom:15px;"></i><br>
+                <a href="${p.map || '#'}" target="_blank" class="btn-green-fill" style="padding:12px 25px; border-radius:30px; display:inline-flex; width:auto;">View on Google Maps</a>
+        </div>
+`;
         }
 
         const heroImages = p.images || [p.image];
         const hasMultipleImages = heroImages.length > 1;
 
         container.innerHTML = `
-            <div class="details-view">
+    < div class="details-view" >
                 <div class="details-hero" style="position:relative;">
                     <div id="hero-slider-container" style="display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;">
                         ${heroImages.map((img, idx) => `
@@ -2080,14 +2114,14 @@ function renderDetails(container) {
                 <div style="padding:20px; padding-bottom:120px;">${contentHtml}</div>
                 <div class="contact-footer" style="padding:15px 20px 25px; flex-direction:column; gap:12px;">
                     <button class="login-btn" style="background:#FFF9F3; color:#FF9933; border:1.5px solid #FFB366; margin:0 0 5px 0; width:100%; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="shareProperty(${p.id})">
-                        <i class="fas fa-share-alt"></i> Share Details (शेयर विवरण)
+                        <i class="fas fa-share-alt"></i> Share Details (à¤¶à¥‡à¤¯à¤° à¤µà¤¿à¤µà¤°à¤£)
                     </button>
                     <div style="display:flex; gap:10px; width:100%;">
                         <a href="tel:${p.mobile || '0000000000'}" class="btn-green-fill" style="flex:1;">
-                            <i class="fas fa-phone-alt"></i> अभी कॉल करें
+                            <i class="fas fa-phone-alt"></i> à¤…à¤­à¥€ à¤•à¥‰à¤² à¤•à¤°à¥‡à¤‚
                         </a>
                         <a href="https://wa.me/91${p.whatsapp || '0000000000'}" target="_blank" class="btn-green-outline" style="flex:1;">
-                            <i class="fab fa-whatsapp"></i> व्हाट्सएप
+                            <i class="fab fa-whatsapp"></i> à¤µà¥à¤¹à¤¾à¤Ÿà¥à¤¸à¤à¤ª
                         </a>
                     </div>
             </div>`;
@@ -2112,25 +2146,25 @@ function renderDetails(container) {
         const worldMap = '\u{1F5FA}\uFE0F';
         const phone = '\u{1F4DE}';
 
-        const msg = `* ${p.title}*\n` +
-            `${moneyBag} Price: Rs.${p.price} \n` +
-            `${pin} City: ${p.city} \n` +
-            `${ruler} Area: ${p.area} \n` +
-            `${clipboard} Type: ${p.category} \n\n` +
-            `* Description:* ${p.description} \n\n` +
-            (p.video ? `${tv} * Video Tour:* ${p.video} \n` : '') +
-            (p.map ? `${worldMap} * Location Map:* ${p.map} \n` : '') +
-            `${phone} * Contact:* ${p.mobile} \n\n` +
+        const msg = `* ${ p.title }*\n` +
+            `${ moneyBag } Price: Rs.${ p.price } \n` +
+            `${ pin } City: ${ p.city } \n` +
+            `${ ruler } Area: ${ p.area } \n` +
+            `${ clipboard } Type: ${ p.category } \n\n` +
+            `* Description:* ${ p.description } \n\n` +
+            (p.video ? `${ tv } * Video Tour:* ${ p.video } \n` : '') +
+            (p.map ? `${ worldMap } * Location Map:* ${ p.map } \n` : '') +
+            `${ phone } * Contact:* ${ p.mobile } \n\n` +
             `Shared via BhumiDekho`;
 
         if (navigator.share) {
             navigator.share({ title: p.title, text: msg, url: window.location.href })
                 .catch(() => window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'));
         } else {
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-        }
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
     };
-    renderContent();
+renderContent();
 }
 
 
@@ -2427,7 +2461,7 @@ window.processPropertySubmit = async function () {
     }
 
     window.isRealTaskRunning = true;
-    showGlobalLoader("प्रॉपर्टी अपलोड की जा रही है... (Images: " + window.tempPropertyImages.length + ")");
+    showGlobalLoader("à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€ à¤…à¤ªà¤²à¥‹à¤¡ à¤•à¥€ à¤œà¤¾ à¤°à¤¹à¥€ à¤¹à¥ˆ... (Images: " + window.tempPropertyImages.length + ")");
 
     try {
         // Use images from tempPropertyImages (already base64)
@@ -2481,7 +2515,7 @@ window.processPropertySubmit = async function () {
 
         await saveGlobalData();
 
-        hideGlobalLoader("प्रॉपर्टी सफलतापूर्वक अपलोड!");
+        hideGlobalLoader("à¤ªà¥à¤°à¥‰à¤ªà¤°à¥à¤Ÿà¥€ à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤…à¤ªà¤²à¥‹à¤¡!");
 
         setTimeout(() => {
             window.tempPropertyImages = []; // Reset images array
@@ -2607,9 +2641,9 @@ function editProperty(id) {
             p.editedBy = State.user.name || 'Agent';
         }
 
-        showGlobalLoader("अपडेट किया जा रहा है...");
+        showGlobalLoader("à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¤¿à¤¯à¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
         saveGlobalData().then(() => {
-            hideGlobalLoader("अपडेट सफल!");
+            hideGlobalLoader("à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
             closeModal();
             render();
 
@@ -2937,7 +2971,7 @@ window.manageCustomerWallet = (id) => {
     modal.innerHTML = `
         <div class="modal-content scale-in" style="max-width:400px; width:90%;">
             <h3 style="margin-bottom:20px;">Manage Wallet: ${c.name}</h3>
-            <p style="margin-bottom:15px;">Current Balance: <strong style="color:#138808; font-size:1.2rem;">₹ ${(c.wallet || 0).toLocaleString()}</strong></p>
+            <p style="margin-bottom:15px;">Current Balance: <strong style="color:#138808; font-size:1.2rem;">â‚¹ ${(c.wallet || 0).toLocaleString()}</strong></p>
             <div class="form-group"><label>Amount (?)</label><input type="number" id="wc-amount" class="login-input" placeholder="Enter Amount"></div>
             <div style="display:flex; gap:10px; margin-top:20px;">
                 <button class="login-btn" style="background:#138808; flex:1;" onclick="updateCustomerWallet(${c.id}, 'credit')">Add (+)</button>
@@ -2953,7 +2987,7 @@ window.updateCustomerWallet = async (id, type) => {
     const amount = Number(document.getElementById('wc-amount').value);
     if (!c || !amount || amount <= 0) return alert("Invalid Amount");
 
-    showGlobalLoader(type === 'credit' ? "वॉलेट में राशि जोड़ी जा रही है..." : "वॉलेट से राशि निकाली जा रही है...");
+    showGlobalLoader(type === 'credit' ? "à¤µà¥‰à¤²à¥‡à¤Ÿ à¤®à¥‡à¤‚ à¤°à¤¾à¤¶à¤¿ à¤œà¥‹à¤¡à¤¼à¥€ à¤œà¤¾ à¤°à¤¹à¥€ à¤¹à¥ˆ..." : "à¤µà¥‰à¤²à¥‡à¤Ÿ à¤¸à¥‡ à¤°à¤¾à¤¶à¤¿ à¤¨à¤¿à¤•à¤¾à¤²à¥€ à¤œà¤¾ à¤°à¤¹à¥€ à¤¹à¥ˆ...");
 
     if (type === 'credit') {
         if (State.adminWallet < amount) {
@@ -2993,7 +3027,7 @@ window.updateCustomerWallet = async (id, type) => {
         });
     }
     await saveGlobalData();
-    hideGlobalLoader("वॉलेट अपडेट सफल!");
+    hideGlobalLoader("à¤µà¥‰à¤²à¥‡à¤Ÿ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
     closeModal();
     render();
     setTimeout(() => alert("Wallet Updated Successfully!"), 200);
@@ -3116,7 +3150,7 @@ function manageWallet(agentId) {
     modal.innerHTML = `
         <div class="modal-content scale-in" style="max-width:350px;">
             <h3 style="margin-bottom:20px;">Manage Wallet: ${a.name}</h3>
-            <p>Current Balance: <strong>₹ ${a.wallet}</strong></p>
+            <p>Current Balance: <strong>â‚¹ ${a.wallet}</strong></p>
             <div class="form-group">
                 <label>Amount (?)</label>
                 <input type="number" id="w-amount" class="login-input" placeholder="Enter amount">
@@ -3133,14 +3167,14 @@ async function adjustWallet(id, type) {
     const a = State.agents.find(x => x.id === id);
     const amountVal = document.getElementById('w-amount').value;
     if (!amountVal || isNaN(amountVal) || parseInt(amountVal) <= 0) {
-        return alert("कृपया एक सही राशि (Amount) दर्ज करें!");
+        return alert("à¤•à¥ƒà¤ªà¤¯à¤¾ à¤à¤• à¤¸à¤¹à¥€ à¤°à¤¾à¤¶à¤¿ (Amount) à¤¦à¤°à¥à¤œ à¤•à¤°à¥‡à¤‚!");
     }
     const amount = parseInt(amountVal);
-    showGlobalLoader("वॉलेट अपडेट किया जा रहा है...");
+    showGlobalLoader("à¤µà¥‰à¤²à¥‡à¤Ÿ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¤¿à¤¯à¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
     if (type === 'add') {
         // Check if admin has sufficient balance
         if (State.adminWallet < amount) {
-            return alert("Admin wallet में पर्याप्त बैलेंस नहीं है!");
+            return alert("Admin wallet à¤®à¥‡à¤‚ à¤ªà¤°à¥à¤¯à¤¾à¤ªà¥à¤¤ à¤¬à¥ˆà¤²à¥‡à¤‚à¤¸ à¤¨à¤¹à¥€à¤‚ à¤¹à¥ˆ!");
         }
 
         // Deduct from admin wallet
@@ -3180,10 +3214,10 @@ async function adjustWallet(id, type) {
         });
     }
     await saveGlobalData();
-    hideGlobalLoader("वॉलेट अपडेट सफल!");
+    hideGlobalLoader("à¤µà¥‰à¤²à¥‡à¤Ÿ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
     closeModal();
     render();
-    setTimeout(() => alert(`Wallet updated! New Balance: ₹ ${a.wallet}`), 200);
+    setTimeout(() => alert(`Wallet updated! New Balance: â‚¹ ${a.wallet}`), 200);
 }
 
 async function requestWithdrawal(id) {
@@ -3192,13 +3226,13 @@ async function requestWithdrawal(id) {
     if (amountStr === null) return; // User cancelled prompt
 
     if (!amountStr.trim() || isNaN(amountStr) || parseInt(amountStr) <= 0) {
-        return alert("कृपया एक सही राशि (Amount) दर्ज करें!");
+        return alert("à¤•à¥ƒà¤ªà¤¯à¤¾ à¤à¤• à¤¸à¤¹à¥€ à¤°à¤¾à¤¶à¤¿ (Amount) à¤¦à¤°à¥à¤œ à¤•à¤°à¥‡à¤‚!");
     }
 
     const amount = parseInt(amountStr);
     if (amount > a.wallet) return alert("Insufficient balance");
 
-    showGlobalLoader("निकासी अनुरोध भेजा जा रहा है...");
+    showGlobalLoader("à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤…à¤¨à¥à¤°à¥‹à¤§ à¤­à¥‡à¤œà¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
 
     // Deduct immediately
     a.wallet -= amount;
@@ -3227,7 +3261,7 @@ async function requestWithdrawal(id) {
     });
 
     await saveGlobalData();
-    hideGlobalLoader("अनुरोध सफल!");
+    hideGlobalLoader("à¤…à¤¨à¥à¤°à¥‹à¤§ à¤¸à¤«à¤²!");
     render();
     setTimeout(() => alert("Withdrawal request sent! Amount deducted from wallet and held for approval."), 200);
 }
@@ -3238,7 +3272,7 @@ function processWithdrawal(reqId, status) {
     const remark = prompt(`Enter remark for ${status === 'approved' ? 'Approval' : 'Rejection'}:`);
     if (remark === null) return;
 
-    showGlobalLoader("निकासी प्रक्रिया शुरू..."); // Withdrawal being processed...
+    showGlobalLoader("à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤ªà¥à¤°à¤•à¥à¤°à¤¿à¤¯à¤¾ à¤¶à¥à¤°à¥‚..."); // Withdrawal being processed...
 
     const a = State.agents.find(x => x.id === r.agentId);
     const transaction = State.walletTransactions.find(t => t.id === r.id);
@@ -3262,7 +3296,7 @@ function processWithdrawal(reqId, status) {
 
     // Save and show success
     saveGlobalData().then(() => {
-        hideGlobalLoader(status === 'approved' ? "निकासी स्वीकृत!" : "निकासी अस्वीकृत!");
+        hideGlobalLoader(status === 'approved' ? "à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤¸à¥à¤µà¥€à¤•à¥ƒà¤¤!" : "à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤…à¤¸à¥à¤µà¥€à¤•à¥ƒà¤¤!");
         setTimeout(() => {
             alert(`Withdrawal request ${status}!`);
             render();
@@ -3279,14 +3313,14 @@ function addAdminBalance() {
     if (password === null) return; // User cancelled
 
     if (password !== "Ajay@6341#") {
-        return alert("गलत पासवर्ड! Access Denied.");
+        return alert("à¤—à¤²à¤¤ à¤ªà¤¾à¤¸à¤µà¤°à¥à¤¡! Access Denied.");
     }
 
     const amountStr = prompt("Enter amount to add to Admin Wallet (?):");
     if (amountStr === null) return;
 
     if (!amountStr.trim() || isNaN(amountStr) || parseInt(amountStr) <= 0) {
-        return alert("कृपया एक सही राशि (Amount) दर्ज करें!");
+        return alert("à¤•à¥ƒà¤ªà¤¯à¤¾ à¤à¤• à¤¸à¤¹à¥€ à¤°à¤¾à¤¶à¤¿ (Amount) à¤¦à¤°à¥à¤œ à¤•à¤°à¥‡à¤‚!");
     }
 
     const amount = parseInt(amountStr);
@@ -3304,7 +3338,7 @@ function addAdminBalance() {
 
     saveGlobalData();
     render();
-    alert(`₹ ${amount.toLocaleString()} successfully added to Admin Wallet!`);
+    alert(`â‚¹ ${amount.toLocaleString()} successfully added to Admin Wallet!`);
 }
 
 function toggleDateSetting() {
@@ -3343,13 +3377,13 @@ window.openCustomerWalletModal = () => {
             
             <div style="background:linear-gradient(135deg, #FF9933, #FFB366); padding:25px; border-radius:15px; margin-bottom:25px; color:white; text-align:center;">
                 <div style="font-size:0.9rem; opacity:0.9; margin-bottom:8px;">Available Balance</div>
-                <div style="font-size:2.5rem; font-weight:800;">₹ ${(customer.wallet || 0).toLocaleString()}</div>
+                <div style="font-size:2.5rem; font-weight:800;">â‚¹ ${(customer.wallet || 0).toLocaleString()}</div>
             </div>
             
             <div style="margin-bottom:25px;">
                 <h4 style="margin-bottom:15px; color:#1a2a3a;">Request Withdrawal</h4>
                 <div class="form-group">
-                    <label>Amount (₹)</label>
+                    <label>Amount (â‚¹)</label>
                     <input type="number" id="cw-amount" class="login-input" placeholder="Enter amount" max="${customer.wallet || 0}">
                 </div>
                 <button class="login-btn" onclick="requestCustomerWithdrawal()" style="background:#138808; width:100%;">
@@ -3364,7 +3398,7 @@ window.openCustomerWalletModal = () => {
                         ${customerWithdrawals.sort((a, b) => b.id - a.id).map(r => `
                             <div style="background:#f8f9fa; padding:15px; border-radius:10px; margin-bottom:10px; border-left:4px solid ${r.status === 'approved' ? '#28a745' : (r.status === 'rejected' ? '#D32F2F' : '#FF9933')};">
                                 <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                    <strong style="color:#1a2a3a;">₹ ${r.amount.toLocaleString()}</strong>
+                                    <strong style="color:#1a2a3a;">â‚¹ ${r.amount.toLocaleString()}</strong>
                                     <span style="padding:3px 10px; border-radius:50px; font-size:0.7rem; font-weight:800; background:${r.status === 'approved' ? '#e8f5e9' : (r.status === 'rejected' ? '#ffebee' : '#fff3e0')}; color:${r.status === 'approved' ? '#2e7d32' : (r.status === 'rejected' ? '#D32F2F' : '#e65100')}; text-transform:uppercase;">
                                         ${r.status}
                                     </span>
@@ -3402,7 +3436,7 @@ window.requestCustomerWithdrawal = () => {
         return alert("Insufficient balance!");
     }
 
-    showGlobalLoader("निकासी अनुरोध भेजा जा रहा है...");
+    showGlobalLoader("à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤…à¤¨à¥à¤°à¥‹à¤§ à¤­à¥‡à¤œà¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
 
     // Deduct from customer wallet immediately
     customer.wallet -= amount;
@@ -3434,7 +3468,7 @@ window.requestCustomerWithdrawal = () => {
 
     // Save and show success
     saveGlobalData().then(() => {
-        hideGlobalLoader("निकासी अनुरोध सफल!");
+        hideGlobalLoader("à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤…à¤¨à¥à¤°à¥‹à¤§ à¤¸à¤«à¤²!");
         setTimeout(() => {
             alert("Withdrawal request submitted successfully!");
             closeModal();
@@ -3451,7 +3485,7 @@ window.deleteCustomer = (id) => {
     const customer = State.customers.find(c => c.id === id);
     if (!customer) return;
 
-    if (confirm(`Are you sure you want to PERMANENTLY DELETE this customer?\n\nName: ${customer.name}\nPhone: ${customer.phone}\nEmail: ${customer.email}\n\nThis will also delete:\n- All their wallet balance (₹${(customer.wallet || 0).toLocaleString()})\n- All their liked properties\n- All their KYC data\n\nThis action CANNOT be undone!`)) {
+    if (confirm(`Are you sure you want to PERMANENTLY DELETE this customer?\n\nName: ${customer.name}\nPhone: ${customer.phone}\nEmail: ${customer.email}\n\nThis will also delete:\n- All their wallet balance (â‚¹${(customer.wallet || 0).toLocaleString()})\n- All their liked properties\n- All their KYC data\n\nThis action CANNOT be undone!`)) {
         showGlobalLoader("Deleting customer...");
 
         // Remove from State
@@ -3549,6 +3583,10 @@ window.saveContactSettings = () => {
         founders: newFounders
     };
 
+    // Navigation Settings are now saved in saveNavigationSettings()
+    // State.settings.otherButton is handled there.
+    // Removed old block to prevent overwriting with nulls if inputs are missing.
+
     if (oldPass && newPass) {
         const current = State.settings.adminPassword || 'admin123';
         if (oldPass === current) {
@@ -3567,6 +3605,21 @@ window.saveContactSettings = () => {
     render();
     if (!State.suppressSettingsAlert) alert("Settings Saved Successfully!");
     State.suppressSettingsAlert = false;
+};
+
+window.saveNavigationSettings = () => {
+    const label = document.getElementById('nav-other-label').value;
+    const icon = document.getElementById('nav-other-icon').value;
+
+    State.settings.otherButton = {
+        label: label || 'OTHER',
+        icon: icon || 'fas fa-ellipsis-h'
+    };
+
+    saveGlobalData();
+    render();
+    updateOtherButton();
+    alert("Navigation Settings Info Saved!");
 };
 
 window.addFounder = () => {
@@ -3655,4 +3708,19 @@ window.toggleMembership = async function (id) {
 
     await saveGlobalData();
     render(); // Re-render to show updated button state
+};
+
+// --- Dynamic UX Updates ---
+window.updateOtherButton = () => {
+    const btn = document.querySelector('.nav-item[data-page="other"]');
+    if (btn) {
+        const label = (State.settings.otherButton && State.settings.otherButton.label) || 'OTHER';
+        const icon = (State.settings.otherButton && State.settings.otherButton.icon) || 'fas fa-ellipsis-h';
+
+        const span = btn.querySelector('span');
+        const i = btn.querySelector('i');
+
+        if (span) span.innerText = label;
+        if (i) i.className = icon;
+    }
 };
