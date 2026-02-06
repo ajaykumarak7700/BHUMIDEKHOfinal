@@ -504,6 +504,7 @@ function render() {
     switch (State.view) {
         case 'home': renderHome(app); break;
         case 'likes': renderLikes(app); break;
+        case 'other': renderOther(app); break;
         case 'login': renderLogin(app); break;
         case 'admin': renderAdmin(app); break;
         case 'agent': renderAgent(app); break;
@@ -513,6 +514,35 @@ function render() {
         case 'profile': renderProfile(app); break;
         case 'contact': renderContactUs(app); break;
     }
+}
+
+function renderOther(container) {
+    container.innerHTML = `
+        <div style="padding:20px 20px 100px 20px; max-width:800px; margin:0 auto; margin-top:20px;">
+            <div style="text-align:center; margin-bottom:30px;">
+                <h2 style="color:#1a2a3a; font-size:1.8rem; font-weight:900; margin-bottom:10px;">
+                    <span style="border-bottom:4px solid #FF9933;">Explore</span> More
+                </h2>
+                <p style="color:#666;">Discover additional features and services</p>
+            </div>
+
+            <div class="other-grid">
+                ${Array.from({ length: 8 }, (_, i) => `
+                    <div class="other-card clickable-effect" onclick="alert('You clicked Card ${i + 1}')">
+                        <div class="other-card-icon">
+                            <i class="fas fa-${['star', 'cog', 'history', 'bookmark', 'share-alt', 'question-circle', 'bell', 'shield-alt'][i]}"></i>
+                        </div>
+                        <div class="other-card-content">
+                            <h3 class="other-card-title">Card ${i + 1}</h3>
+                            <p class="other-card-desc">
+                                ${['Premium features for exclusive members.', 'Manage your app preferences here.', 'View your past activity history.', 'Saved items for quick access.', 'Share with friends and family.', 'Get help and support anytime.', 'Check your latest notifications.', 'Privacy and security settings.'][i]}
+                            </p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function renderContactUs(container) {
