@@ -73,7 +73,21 @@ const State = {
     customers: [
         { id: 201, name: "Rahul Sharma", phone: "9800012345", email: "rahul@gmail.com", password: "123", status: "active", joinedAt: "01/01/2026" },
         { id: 202, name: "Priya Singh", phone: "9800054321", email: "priya@gmail.com", password: "123", status: "active", joinedAt: "15/01/2026" }
-    ]
+    ],
+    otherPage: {
+        heading: "Explore More",
+        subHeading: "Discover additional features and services",
+        cards: [
+            { id: 1, title: "Card 1", desc: "Premium features for exclusive members.", icon: "star", bg: "#ffffff" },
+            { id: 2, title: "Card 2", desc: "Manage your app preferences here.", icon: "cog", bg: "#ffffff" },
+            { id: 3, title: "Card 3", desc: "View your past activity history.", icon: "history", bg: "#ffffff" },
+            { id: 4, title: "Card 4", desc: "Saved items for quick access.", icon: "bookmark", bg: "#ffffff" },
+            { id: 5, title: "Card 5", desc: "Share with friends and family.", icon: "share-alt", bg: "#ffffff" },
+            { id: 6, title: "Card 6", desc: "Get help and support anytime.", icon: "question-circle", bg: "#ffffff" },
+            { id: 7, title: "Card 7", desc: "Check your latest notifications.", icon: "bell", bg: "#ffffff" },
+            { id: 8, title: "Card 8", desc: "Privacy and security settings.", icon: "shield-alt", bg: "#ffffff" }
+        ]
+    }
 };
 
 // --- Firebase Helper Functions ---
@@ -94,7 +108,8 @@ function saveToFirebase() {
         walletTransactions: State.walletTransactions || [],
         adminWallet: State.adminWallet,
         customers: State.customers || [],
-        properties: State.properties || []
+        properties: State.properties || [],
+        otherPage: State.otherPage
     };
 
     return database.ref('bhumi_v2').set(dataToSync)
@@ -125,6 +140,7 @@ function loadFromFirebase(callback) {
                 if (data.walletTransactions) State.walletTransactions = data.walletTransactions;
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
+                if (data.otherPage) State.otherPage = data.otherPage;
 
                 // CRITICAL FIX: Firebase sometimes returns an Object instead of Array
                 if (data.properties) {
@@ -171,6 +187,7 @@ function setupFirebaseListener() {
             State.adminWallet = data.adminWallet !== undefined ? data.adminWallet : State.adminWallet;
             State.walletTransactions = data.walletTransactions || State.walletTransactions;
             State.adminWallet = data.adminWallet !== undefined ? data.adminWallet : State.adminWallet;
+            if (data.otherPage) State.otherPage = data.otherPage;
 
             // CRITICAL FIX: Also handle Object-to-Array conversion here for live updates
             if (data.properties) {
@@ -517,26 +534,29 @@ function render() {
 }
 
 function renderOther(container) {
+    const data = State.otherPage || { heading: "Explore More", subHeading: "", cards: [] };
     container.innerHTML = `
         <div style="padding:20px 20px 100px 20px; max-width:800px; margin:0 auto; margin-top:20px;">
             <div style="text-align:center; margin-bottom:30px;">
                 <h2 style="color:#1a2a3a; font-size:1.8rem; font-weight:900; margin-bottom:10px;">
-                    <span style="border-bottom:4px solid #FF9933;">Explore</span> More
+                    ${data.heading}
                 </h2>
-                <p style="color:#666;">Discover additional features and services</p>
+                <p style="color:#666;">${data.subHeading}</p>
             </div>
 
             <div class="other-grid">
-                ${Array.from({ length: 8 }, (_, i) => `
-                    <div class="other-card clickable-effect" onclick="alert('You clicked Card ${i + 1}')">
-                        <div class="other-card-icon">
-                            <i class="fas fa-${['star', 'cog', 'history', 'bookmark', 'share-alt', 'question-circle', 'bell', 'shield-alt'][i]}"></i>
-                        </div>
-                        <div class="other-card-content">
-                            <h3 class="other-card-title">Card ${i + 1}</h3>
-                            <p class="other-card-desc">
-                                ${['Premium features for exclusive members.', 'Manage your app preferences here.', 'View your past activity history.', 'Saved items for quick access.', 'Share with friends and family.', 'Get help and support anytime.', 'Check your latest notifications.', 'Privacy and security settings.'][i]}
-                            </p>
+                ${(data.cards || []).filter(c => !c.hidden).map((card, i) => `
+                    <div class="other-card clickable-effect" onclick="handleCardClick(${i})" 
+                        style="background:${card.bgImg ? `url(${card.bgImg}) center/cover no-repeat` : (card.bg || '#ffffff')}; height:${card.size || 160}px; position:relative;">
+                        ${card.bgImg ? '<div style="position:absolute; inset:0; background:rgba(0,0,0,0.4); border-radius:16px;"></div>' : ''}
+                        <div style="position:relative; z-index:2; width:100%; display:flex; flex-direction:column; align-items:center;">
+                            <div class="other-card-icon" style="${card.bgImg ? 'background:rgba(255,255,255,0.9); box-shadow:0 4px 15px rgba(0,0,0,0.3);' : ''}">
+                                <i class="fas fa-${card.icon || 'star'}"></i>
+                            </div>
+                            <div class="other-card-content" style="${card.bgImg ? 'color:white !important; text-shadow:0 2px 4px rgba(0,0,0,0.5);' : ''}">
+                                <h3 class="other-card-title" style="${card.bgImg ? 'color:white !important;' : ''}">${card.title}</h3>
+                                <p class="other-card-desc" style="${card.bgImg ? 'color:rgba(255,255,255,0.9) !important;' : ''}">${card.desc}</p>
+                            </div>
                         </div>
                     </div>
                 `).join('')}
@@ -1387,6 +1407,7 @@ function renderAdmin(container) {
                     <a href="#" class="side-link ${tab === 'customers' ? 'active' : ''}" onclick="setAdminTab('customers'); toggleSidebar()"><i class="fas fa-user-friends"></i> Customers</a>
                     <a href="#" class="side-link ${tab === 'withdrawals' ? 'active' : ''}" onclick="setAdminTab('withdrawals'); toggleSidebar()"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
                     <a href="#" class="side-link ${tab === 'adminWallet' ? 'active' : ''}" onclick="setAdminTab('adminWallet'); toggleSidebar()"><i class="fas fa-wallet"></i> My Wallet</a>
+                    <a href="#" class="side-link ${tab === 'exploreMgr' ? 'active' : ''}" onclick="setAdminTab('exploreMgr'); toggleSidebar()"><i class="fas fa-th-large"></i> Explore Pages</a>
                     <a href="#" class="side-link ${tab === 'broadcast' ? 'active' : ''}" onclick="setAdminTab('broadcast'); toggleSidebar()"><i class="fas fa-bullhorn"></i> Broadcast</a>
                     <a href="#" class="side-link ${tab === 'settings' ? 'active' : ''}" onclick="setAdminTab('settings'); toggleSidebar()"><i class="fas fa-cogs"></i> Settings</a>
                     <a href="#" class="side-link ${tab === 'settings' ? 'active' : ''}" onclick="setAdminTab('settings'); toggleSidebar()"><i class="fas fa-cogs"></i> Settings</a>
@@ -1697,6 +1718,48 @@ function renderAdmin(container) {
                                     <i class="fas fa-inbox" style="font-size:3rem; margin-bottom:10px; opacity:0.3;"></i><br>
                                     No transactions yet
                                 </div>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+                ${tab === 'exploreMgr' ? `
+                    <div class="stat-box">
+                        <h3 style="margin-bottom:20px; color:#1a2a3a;">Example Page Manager ('Other' Button)</h3>
+                        
+                        <div style="background:#f8f9fa; padding:20px; border-radius:15px; margin-bottom:30px; border:1px solid #eee;">
+                            <h4 style="margin-bottom:15px; color:#138808;">Page Header</h4>
+                            <div class="form-group">
+                                <label>Main Heading</label>
+                                <input id="ex-heading" class="login-input" value="${State.otherPage?.heading || 'Explore More'}">
+                            </div>
+                            <div class="form-group">
+                                <label>Sub Heading</label>
+                                <input id="ex-subheading" class="login-input" value="${State.otherPage?.subHeading || ''}">
+                            </div>
+                            <button class="login-btn" onclick="saveExploreHeader()" style="width:auto; padding:10px 30px;">Save Header</button>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <h4 style="margin:0; color:#138808;">Other Cards</h4>
+                            <button class="login-btn" onclick="addExploreCard()" style="width:auto; padding:8px 20px; font-size:0.9rem;">
+                                <i class="fas fa-plus"></i> Add New Card
+                            </button>
+                        </div>
+                        <div class="property-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                            ${(State.otherPage?.cards || []).map((c, i) => `
+                                <div style="background:white; border:1px solid #ddd; border-radius:12px; padding:15px; position:relative;">
+                                    <div style="position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%; background:${c.bg || '#ffffff'}; border:1px solid #ccc;"></div>
+                                    <h4 style="margin:0 0 5px 0;">${i + 1}. ${c.title} ${c.hidden ? '<span style="color:#D32F2F; font-size:0.7rem; font-weight:700;">(HIDDEN)</span>' : ''}</h4>
+                                    <p style="font-size:0.8rem; color:#666; margin-bottom:15px; height:40px; overflow:hidden;">${c.desc}</p>
+                                    <div style="display:flex; gap:10px;">
+                                        <button class="prop-btn" onclick="editExploreCard(${i})" style="background:#e8f5e9; color:#138808; border:1px solid #138808; font-size:0.9rem;">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="prop-btn" onclick="deleteExploreCard(${i})" style="background:#ffebee; color:#D32F2F; border:1px solid #D32F2F; font-size:0.9rem; width:auto; padding:0 15px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -3748,5 +3811,212 @@ window.updateOtherButton = () => {
 
         if (span) span.innerText = label;
         if (i) i.className = icon;
+    }
+};
+
+window.saveExploreHeader = function () {
+    const h = document.getElementById('ex-heading').value;
+    const s = document.getElementById('ex-subheading').value;
+
+    if (!State.otherPage) State.otherPage = { cards: [] };
+    State.otherPage.heading = h;
+    State.otherPage.subHeading = s;
+
+    showGlobalLoader("Saving Header...");
+    saveGlobalData().then(() => {
+        hideGlobalLoader("Header Updated!");
+    });
+};
+
+window.editExploreCard = function (index) {
+    if (!State.otherPage || !State.otherPage.cards) {
+        if (!State.otherPage) State.otherPage = { cards: [] };
+    }
+    const c = State.otherPage.cards[index] || { title: '', desc: '', bg: '#ffffff', icon: 'star' };
+    const modal = document.getElementById('modal-container');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    // Use single quotes for JS strings, double for HTML attributes
+    // Ensure values are safe to inject
+    const safeTitle = (c.title || '').replace(/"/g, '&quot;');
+    const safeDesc = (c.desc || '').replace(/</g, '&lt;');
+    const safeBg = (c.bg || '#ffffff');
+    const safeBgImg = (c.bgImg || '');
+    const safeSize = (c.size || 160);
+    const safeHtml = (c.htmlContent || '');
+    const isHidden = c.hidden ? 'checked' : '';
+
+    // Common icons list
+    const icons = ['star', 'home', 'building', 'user', 'cog', 'heart', 'bell', 'search', 'map-marker-alt', 'phone', 'envelope', 'camera', 'wallet', 'history', 'shield-alt', 'question-circle', 'share-alt', 'bookmark', 'calendar', 'check-circle'];
+    const currentIcon = c.icon || 'star';
+
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px; padding:20px; max-height:85vh; overflow-y:auto;">
+            <h3 style="margin-bottom:15px; color:#1a2a3a;">Edit Card ${index + 1}</h3>
+            <div class="form-group">
+                <label>Card Title</label>
+                <input id="ec-title" class="login-input" value="${safeTitle}">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="ec-desc" class="login-input" rows="3">${safeDesc}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Select Icon</label>
+                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; max-height:100px; overflow-y:auto; padding:5px; border:1px solid #eee; border-radius:8px;">
+                    ${icons.map(icon => `
+                        <div onclick="selectExploreIcon(this, '${icon}')" class="icon-option ${icon === currentIcon ? 'selected' : ''}" style="cursor:pointer; padding:8px; text-align:center; border-radius:6px; background:${icon === currentIcon ? '#e8f5e9' : 'transparent'}; border:${icon === currentIcon ? '1px solid #138808' : '1px solid transparent'};">
+                            <i class="fas fa-${icon}" style="color:${icon === currentIcon ? '#138808' : '#666'};"></i>
+                        </div>
+                    `).join('')}
+                </div>
+                <input type="hidden" id="ec-icon" value="${currentIcon}">
+            </div>
+            <div class="form-group">
+                <label>Custom HTML Functionality (Optional)</label>
+                <textarea id="ec-html" class="login-input" rows="5" placeholder="<div>My Custom Content</div><script>alert('Hello')</script>" style="font-family:monospace; font-size:0.85rem;">${safeHtml}</textarea>
+                <div style="font-size:0.75rem; color:#666; margin-top:4px;">Enter HTML/Type script here. When clicked, this code will replace the entire page view.</div>
+            </div>
+            <div class="form-group">
+                <label>Background Color (Default)</label>
+                <input type="color" id="ec-bg" value="${safeBg}" style="width:100%; height:50px; border:none; border-radius:8px; cursor:pointer;">
+            </div>
+            <div class="form-group">
+                <label>Background Image URL (Optional)</label>
+                <input id="ec-bg-img" class="login-input" value="${safeBgImg}" placeholder="https://example.com/image.jpg">
+                <div style="font-size:0.75rem; color:#666; margin-top:4px;">Paste an image URL here to override the background color.</div>
+            </div>
+            <div class="form-group">
+                <label>Box Height (Size): <span id="size-val">${safeSize}px</span></label>
+                <input type="range" id="ec-size" min="100" max="300" step="10" value="${safeSize}" oninput="document.getElementById('size-val').innerText = this.value + 'px'" style="width:100%;">
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="ec-hidden" ${isHidden} style="width:20px; height:20px; cursor:pointer;">
+                <label for="ec-hidden" style="margin:0; font-weight:700; color:#D32F2F; cursor:pointer;">Disable (Hide) this Card</label>
+            </div>
+            <button class="login-btn" onclick="saveExploreCard(${index})">Save Changes</button>
+            <button class="prop-btn" style="background:none; color:#999; margin-top:10px; width:100%;" onclick="closeModal()">Cancel</button>
+        </div>
+    `;
+};
+
+window.selectExploreIcon = function (el, icon) {
+    document.querySelectorAll('.icon-option').forEach(d => {
+        d.style.background = 'transparent';
+        d.style.border = '1px solid transparent';
+        d.querySelector('i').style.color = '#666';
+    });
+    el.style.background = '#e8f5e9';
+    el.style.border = '1px solid #138808';
+    el.querySelector('i').style.color = '#138808';
+    document.getElementById('ec-icon').value = icon;
+};
+
+window.saveExploreCard = function (index) {
+    const title = document.getElementById('ec-title').value;
+    const desc = document.getElementById('ec-desc').value;
+    const htmlContent = document.getElementById('ec-html').value;
+    const bg = document.getElementById('ec-bg').value;
+    const bgImg = document.getElementById('ec-bg-img').value;
+    const icon = document.getElementById('ec-icon').value;
+    const size = document.getElementById('ec-size').value;
+    const hidden = document.getElementById('ec-hidden').checked;
+
+    // Ensure array exists
+    if (!State.otherPage) State.otherPage = { cards: [] };
+    if (!State.otherPage.cards) State.otherPage.cards = [];
+
+    // Fill gaps if any (up to index)
+    // The previous loop condition was <= index, which adds one too many if length == index
+    // Correct logic: if length is 0 and index is 0, we need to push 1 item.
+    // If length is 0 and index is 1, we push 2 items (0, 1).
+    while (State.otherPage.cards.length <= index) {
+        State.otherPage.cards.push({ title: 'New Card', desc: 'Description', bg: '#ffffff', icon: 'star' });
+    }
+
+    const card = State.otherPage.cards[index];
+    card.title = title;
+    card.desc = desc;
+    card.htmlContent = htmlContent;
+    card.bg = bg;
+    card.bgImg = bgImg;
+    card.icon = icon;
+    card.size = size;
+    card.hidden = hidden;
+
+    showGlobalLoader("Saving Card...");
+    saveGlobalData().then(() => {
+        hideGlobalLoader("Card Updated!");
+        closeModal();
+        render(); // Should refresh admin view if we are on admin tab or other view
+    });
+};
+
+window.addExploreCard = function () {
+    if (!State.otherPage) State.otherPage = { cards: [] };
+    if (!State.otherPage.cards) State.otherPage.cards = [];
+
+    State.otherPage.cards.push({
+        title: 'New Card',
+        desc: 'New Description',
+        bg: '#ffffff',
+        icon: 'star',
+        size: 160
+    });
+
+    showGlobalLoader("Adding Card...");
+    saveGlobalData().then(() => {
+        hideGlobalLoader("Card Added!");
+        render();
+    });
+};
+
+window.handleCardClick = function (index) {
+    const card = State.otherPage?.cards[index];
+    if (!card) return;
+
+    if (card.htmlContent && card.htmlContent.trim()) {
+        const app = document.getElementById('app');
+
+        // Render Custom Layout - integrated between header and footer
+        app.innerHTML = `
+            <div style="padding: 20px; max-width: 800px; margin: 0 auto;">
+                <button onclick="navigate('other')" style="background:none; border:none; color:#138808; padding:0; font-size:0.9rem; font-weight:600; cursor:pointer; margin-bottom:20px; display:inline-flex; align-items:center; gap:8px;">
+                    <span style="width:24px; height:24px; background:#e8f5e9; border-radius:50%; display:flex; align-items:center; justify-content:center;"><i class="fas fa-arrow-left" style="font-size:0.8rem;"></i></span>
+                    Back to Explore
+                </button>
+                
+                <div id="custom-card-container" style="width:100%;">
+                    ${card.htmlContent}
+                </div>
+            </div>
+        `;
+
+        // Execute Scripts safely
+        const scripts = app.querySelectorAll('script');
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+
+    } else {
+        alert(`You clicked ${card.title}. No custom content defined.`);
+    }
+};
+
+window.deleteExploreCard = function (index) {
+    if (!confirm("Are you sure you want to delete this card?")) return;
+
+    if (State.otherPage && State.otherPage.cards) {
+        State.otherPage.cards.splice(index, 1);
+
+        showGlobalLoader("Deleting Card...");
+        saveGlobalData().then(() => {
+            hideGlobalLoader("Card Deleted!");
+            render();
+        });
     }
 };
