@@ -549,14 +549,18 @@ function renderOther(container) {
                     <div class="other-card clickable-effect" onclick="handleCardClick(${i})" 
                         style="background:${card.bgImg ? `url(${card.bgImg}) center/cover no-repeat` : (card.bg || '#ffffff')}; height:${card.size || 160}px; position:relative;">
                         ${card.bgImg ? '<div style="position:absolute; inset:0; background:rgba(0,0,0,0.4); border-radius:16px;"></div>' : ''}
-                        <div style="position:relative; z-index:2; width:100%; display:flex; flex-direction:column; align-items:center;">
+                        <div style="position:relative; z-index:2; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                            ${!card.hideIcon ? `
                             <div class="other-card-icon" style="${card.bgImg ? 'background:rgba(255,255,255,0.9); box-shadow:0 4px 15px rgba(0,0,0,0.3);' : ''}">
                                 <i class="fas fa-${card.icon || 'star'}"></i>
                             </div>
+                            ` : ''}
+                            ${!card.hideText ? `
                             <div class="other-card-content" style="${card.bgImg ? 'color:white !important; text-shadow:0 2px 4px rgba(0,0,0,0.5);' : ''}">
                                 <h3 class="other-card-title" style="${card.bgImg ? 'color:white !important;' : ''}">${card.title}</h3>
                                 <p class="other-card-desc" style="${card.bgImg ? 'color:rgba(255,255,255,0.9) !important;' : ''}">${card.desc}</p>
                             </div>
+                            ` : ''}
                         </div>
                     </div>
                 `).join('')}
@@ -3846,6 +3850,8 @@ window.editExploreCard = function (index) {
     const safeSize = (c.size || 160);
     const safeHtml = (c.htmlContent || '');
     const isHidden = c.hidden ? 'checked' : '';
+    const isHideIcon = c.hideIcon ? 'checked' : '';
+    const isHideText = c.hideText ? 'checked' : '';
 
     // Common icons list
     const icons = ['star', 'home', 'building', 'user', 'cog', 'heart', 'bell', 'search', 'map-marker-alt', 'phone', 'envelope', 'camera', 'wallet', 'history', 'shield-alt', 'question-circle', 'share-alt', 'bookmark', 'calendar', 'check-circle'];
@@ -3891,6 +3897,19 @@ window.editExploreCard = function (index) {
                 <label>Box Height (Size): <span id="size-val">${safeSize}px</span></label>
                 <input type="range" id="ec-size" min="100" max="300" step="10" value="${safeSize}" oninput="document.getElementById('size-val').innerText = this.value + 'px'" style="width:100%;">
             </div>
+            <div class="form-group" style="background:#f9f9f9; padding:10px; border-radius:8px; border:1px solid #eee;">
+                <label style="margin-bottom:8px; display:block; font-weight:600;">Display Options:</label>
+                <div style="display:flex; flex-wrap:wrap; gap:15px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <input type="checkbox" id="ec-hide-icon" ${isHideIcon} style="cursor:pointer;">
+                        <label for="ec-hide-icon" style="margin:0; cursor:pointer; font-size:0.9rem;">Hide Icon</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <input type="checkbox" id="ec-hide-text" ${isHideText} style="cursor:pointer;">
+                        <label for="ec-hide-text" style="margin:0; cursor:pointer; font-size:0.9rem;">Hide Text</label>
+                    </div>
+                </div>
+            </div>
             <div class="form-group" style="display:flex; align-items:center; gap:10px;">
                 <input type="checkbox" id="ec-hidden" ${isHidden} style="width:20px; height:20px; cursor:pointer;">
                 <label for="ec-hidden" style="margin:0; font-weight:700; color:#D32F2F; cursor:pointer;">Disable (Hide) this Card</label>
@@ -3922,6 +3941,8 @@ window.saveExploreCard = function (index) {
     const icon = document.getElementById('ec-icon').value;
     const size = document.getElementById('ec-size').value;
     const hidden = document.getElementById('ec-hidden').checked;
+    const hideIcon = document.getElementById('ec-hide-icon').checked;
+    const hideText = document.getElementById('ec-hide-text').checked;
 
     // Ensure array exists
     if (!State.otherPage) State.otherPage = { cards: [] };
@@ -3944,6 +3965,8 @@ window.saveExploreCard = function (index) {
     card.icon = icon;
     card.size = size;
     card.hidden = hidden;
+    card.hideIcon = hideIcon;
+    card.hideText = hideText;
 
     showGlobalLoader("Saving Card...");
     saveGlobalData().then(() => {

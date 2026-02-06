@@ -1598,7 +1598,9 @@ body {
     /* Faster spin */
     z-index: 10;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}/* Other Page Grid Styles */
+}
+
+/* Other Page Grid Styles */
 .other-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1713,4 +1715,29 @@ body {
 .clickable-effect:active::after {
     width: 200px;
     height: 200px;
+}
+
+/* Glowing Fire Effect for Other Button */
+a[data-page="other"] i {
+    animation: fire-glow 2s infinite ease-in-out;
+}
+
+@keyframes fire-glow {
+    0% {
+        color: #555;
+        text-shadow: 0 0 0 rgba(255, 87, 34, 0);
+        transform: scale(1);
+    }
+
+    50% {
+        color: #FF5722;
+        text-shadow: 0 0 12px rgba(255, 87, 34, 0.6);
+        transform: scale(1.15);
+    }
+
+    100% {
+        color: #555;
+        text-shadow: 0 0 0 rgba(255, 87, 34, 0);
+        transform: scale(1);
+    }
 }
