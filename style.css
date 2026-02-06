@@ -1619,7 +1619,13 @@ body {
     justify-content: center;
     text-align: center;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid #f0f0f0;
+    /* Tiranga Border - Premium Indian Flag Colors */
+    border: 3px solid transparent;
+    background-image:
+        linear-gradient(#ffffff, #ffffff),
+        linear-gradient(90deg, #FF9933 0%, #FF9933 33%, #FFFFFF 33%, #FFFFFF 66%, #138808 66%, #138808 100%);
+    background-origin: padding-box, border-box;
+    background-clip: padding-box, border-box;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     overflow: hidden;
@@ -1629,8 +1635,11 @@ body {
 
 .other-card:hover {
     transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-    border-color: #138808;
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.12),
+        0 0 20px rgba(255, 153, 51, 0.3),
+        0 0 20px rgba(19, 136, 8, 0.3);
+    /* Enhanced Tiranga glow on hover */
 }
 
 .other-card:active {

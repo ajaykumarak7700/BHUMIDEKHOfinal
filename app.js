@@ -966,6 +966,13 @@ function renderHome(container) {
         return matchesSearch && matchesCat;
     });
 
+    // Sort by Display Order (Admin-controlled positioning)
+    filteredProps.sort((a, b) => {
+        const orderA = a.displayOrder !== undefined ? a.displayOrder : 9999;
+        const orderB = b.displayOrder !== undefined ? b.displayOrder : 9999;
+        return orderA - orderB;
+    });
+
     const initialLoadCount = 8;
     const initialProps = filteredProps.slice(0, initialLoadCount);
     const hasMore = filteredProps.length > initialLoadCount;
@@ -1465,7 +1472,19 @@ function renderAdmin(container) {
                                                 <span style="padding:4px 10px; border-radius:50px; font-size:0.7rem; font-weight:700; background:${p.status === 'approved' ? '#e8f5e9' : (p.status === 'disabled' ? '#ffebee' : (p.status === 'sold' ? '#e0f2f1' : '#fff3e0'))}; color:${p.status === 'approved' ? '#2e7d32' : (p.status === 'disabled' ? '#D32F2F' : (p.status === 'sold' ? '#00796b' : '#e65100'))};">${p.status.toUpperCase()}</span>
                                                 ${p.status === 'disabled' && p.disableReason ? `<div style="font-size:0.7rem; color:#D32F2F; margin-top:5px; font-weight:600; max-width:150px; line-height:1.2;">Reason: ${p.disableReason}</div>` : ''}
                                             </td>
-                                            <td style="padding:15px;"><button onclick="toggleFeature(${p.id})" style="border:none; padding:5px 10px; border-radius:4px; font-weight:700; background:${p.featured ? '#FF9933' : '#eee'}; color:${p.featured ? 'white' : '#999'};">${p.featured ? 'FEATURED' : 'MARK FEATURED'}</button></td>
+                                            <td style="padding:15px;">
+                                                <div style="display:flex; flex-direction:column; gap:8px;">
+                                                    <button onclick="toggleFeature(${p.id})" style="border:none; padding:5px 10px; border-radius:4px; font-weight:700; background:${p.featured ? '#FF9933' : '#eee'}; color:${p.featured ? 'white' : '#999'};">
+                                                        ${p.featured ? 'FEATURED' : 'MARK FEATURED'}
+                                                    </button>
+                                                    <div style="display:flex; align-items:center; gap:5px;">
+                                                        <input type="number" id="order-${p.id}" value="${p.displayOrder !== undefined ? p.displayOrder : ''}" placeholder="Order" 
+                                                            style="width:60px; padding:4px 6px; border:1px solid #ddd; border-radius:4px; font-size:0.8rem; text-align:center;"
+                                                            onchange="updateDisplayOrder(${p.id}, this.value)">
+                                                        <i class="fas fa-sort-numeric-down" style="color:#666; font-size:0.8rem;" title="Display Order"></i>
+                                                    </div>
+                                                </div>
+                                            </td>
                                             <td style="padding:15px; text-align:right;">
                                                 <div style="display:flex; flex-direction:column; gap:5px; align-items:end;">
                                                     <div style="display:flex; gap:5px;">
@@ -1892,6 +1911,20 @@ function renderAdmin(container) {
 
 window.setAdminTab = (t) => { State.adminTab = t; render(); };
 window.updateAdminSearch = (v) => { State.adminSearch = v; render(); };
+
+window.updateDisplayOrder = async function (id, order) {
+    const prop = State.properties.find(p => p.id === id);
+    if (!prop) return;
+
+    // Convert to number, or set to undefined if empty
+    prop.displayOrder = order.trim() === '' ? undefined : parseInt(order);
+
+    showGlobalLoader("अपडेट हो रहा है...");
+    await saveGlobalData();
+    hideGlobalLoader("Order Updated!");
+    render();
+};
+
 window.toggleFeature = (id) => { const p = State.properties.find(x => x.id === id); if (p) { p.featured = !p.featured; saveGlobalData(); render(); } };
 
 function renderAgent(container) {
