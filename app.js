@@ -1,4 +1,4 @@
-﻿window.showGlobalLoader = (message = "कृपया प्रतीक्षा करें...") => {
+﻿window.showGlobalLoader = (message = "Please wait...") => {
     const loader = document.getElementById('global-loader');
     const text = document.getElementById('loader-text');
     if (text) text.innerText = message;
@@ -9,7 +9,7 @@
     }
 };
 
-window.hideGlobalLoader = (message = "सफलतापूर्वक संपन्न!", duration = 100) => {
+window.hideGlobalLoader = (message = "Success!", duration = 100) => {
     const loader = document.getElementById('global-loader');
     const text = document.getElementById('loader-text');
     if (loader) {
@@ -801,7 +801,7 @@ window.submitKYC = async () => {
 
         if (!accName || !accNo || !ifsc || !doc) return alert("Please fill all details and upload document.");
 
-        showGlobalLoader("केवाईसी अपडेट किया जा रहा है..."); // Updating KYC...
+        showGlobalLoader("Updating KYC..."); // Updating KYC...
 
         const role = State.user.role;
         const collection = role === 'agent' ? State.agents : State.customers;
