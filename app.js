@@ -3110,10 +3110,41 @@ window.manageCustomerWallet = (id) => {
 
 window.updateCustomerWallet = async (id, type) => {
     const c = State.customers.find(x => x.id === id);
-    const amount = Number(document.getElementById('wc-amount').value);
-    if (!c || !amount || amount <= 0) return alert("Invalid Amount");
+    const amountVal = document.getElementById('wc-amount').value;
+    if (!c || !amountVal || isNaN(amountVal) || Number(amountVal) <= 0) return alert("Invalid Amount");
+    const amount = Number(amountVal);
 
-    showGlobalLoader(type === 'credit' ? "à¤µà¥‰à¤²à¥‡à¤Ÿ à¤®à¥‡à¤‚ à¤°à¤¾à¤¶à¤¿ à¤œà¥‹à¤¡à¤¼à¥€ à¤œà¤¾ à¤°à¤¹à¥€ à¤¹à¥ˆ..." : "à¤µà¥‰à¤²à¥‡à¤Ÿ à¤¸à¥‡ à¤°à¤¾à¤¶à¤¿ à¤¨à¤¿à¤•à¤¾à¤²à¥€ à¤œà¤¾ à¤°à¤¹à¥€ à¤¹à¥ˆ...");
+    // Show Confirmation Modal
+    const modal = document.getElementById('modal-container');
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px;">
+            <h3 style="margin-bottom:20px; color:#1a2a3a;">Confirm Wallet ${type === 'credit' ? 'Addition' : 'Reduction'}</h3>
+            <div style="background:#f8f9fa; padding:15px; border-radius:10px; margin-bottom:20px; border-left:4px solid ${type === 'credit' ? '#138808' : '#D32F2F'};">
+                <div style="margin-bottom:10px;"><strong>Customer:</strong> ${c.name}</div>
+                <div style="margin-bottom:10px;"><strong>Mobile:</strong> ${c.phone || 'N/A'}</div>
+                <div style="margin-bottom:10px;"><strong>Action:</strong> <span style="color:${type === 'credit' ? '#138808' : '#D32F2F'}; font-weight:700;">${type === 'credit' ? 'ADD' : 'REDUCE'}</span></div>
+                <div><strong>Amount:</strong> <span style="font-size:1.2rem; color:#FF9933; font-weight:800;">Rs. ${amount.toLocaleString()}</span></div>
+            </div>
+            <div class="form-group">
+                <label>Enter Admin Password</label>
+                <input type="password" id="wallet-auth-pwd" class="login-input" placeholder="Password">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="login-btn" onclick="executeCustomerWalletUpdate(${id}, '${type}', ${amount})" style="flex:1; background:#138808;">Submit</button>
+                <button class="prop-btn" onclick="closeModal(); manageCustomerWallet(${id})" style="flex:1; background:#999; color:white;">Cancel</button>
+            </div>
+        </div>
+    `;
+};
+
+window.executeCustomerWalletUpdate = async (id, type, amount) => {
+    const pwd = document.getElementById('wallet-auth-pwd').value;
+    if (pwd !== '252325') return alert("Incorrect Password!");
+
+    const c = State.customers.find(x => x.id === id);
+    if (!c) return;
+
+    showGlobalLoader(type === 'credit' ? "Processing credit..." : "Processing debit...");
 
     if (type === 'credit') {
         if (State.adminWallet < amount) {
@@ -3151,9 +3182,18 @@ window.updateCustomerWallet = async (id, type) => {
             date: new Date().toLocaleString(),
             desc: 'Admin deducted funds'
         });
+
+        // Record admin credit transaction
+        State.walletTransactions.push({
+            id: Date.now() + 1,
+            amount: amount,
+            type: 'admin_credit',
+            date: new Date().toLocaleString(),
+            remark: `Recovered from customer ${c.name}`
+        });
     }
     await saveGlobalData();
-    hideGlobalLoader("à¤µà¥‰à¤²à¥‡à¤Ÿ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
+    hideGlobalLoader("Wallet Updated!");
     closeModal();
     render();
     setTimeout(() => alert("Wallet Updated Successfully!"), 200);
@@ -3293,14 +3333,48 @@ async function adjustWallet(id, type) {
     const a = State.agents.find(x => x.id === id);
     const amountVal = document.getElementById('w-amount').value;
     if (!amountVal || isNaN(amountVal) || parseInt(amountVal) <= 0) {
-        return alert("à¤•à¥ƒà¤ªà¤¯à¤¾ à¤à¤• à¤¸à¤¹à¥€ à¤°à¤¾à¤¶à¤¿ (Amount) à¤¦à¤°à¥à¤œ à¤•à¤°à¥‡à¤‚!");
+        return alert("Please enter a valid amount!");
     }
     const amount = parseInt(amountVal);
-    showGlobalLoader("à¤µà¥‰à¤²à¥‡à¤Ÿ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤•à¤¿à¤¯à¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
+
+    // Show Confirmation Modal
+    const modal = document.getElementById('modal-container');
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px;">
+            <h3 style="margin-bottom:20px; color:#1a2a3a;">Confirm Agent Wallet Transfer</h3>
+            <div style="background:#f8f9fa; padding:15px; border-radius:10px; margin-bottom:20px; border-left:4px solid ${type === 'add' ? '#138808' : '#D32F2F'};">
+                <div style="margin-bottom:10px;"><strong>Agent:</strong> ${a.name}</div>
+                <div style="margin-bottom:10px;"><strong>Mobile:</strong> ${a.phone || 'N/A'}</div>
+                <div style="margin-bottom:10px;"><strong>Action:</strong> <span style="color:${type === 'add' ? '#138808' : '#D32F2F'}; font-weight:700;">${type === 'add' ? 'ADD' : 'REDUCE'}</span></div>
+                <div><strong>Amount:</strong> <span style="font-size:1.2rem; color:#FF9933; font-weight:800;">Rs. ${amount.toLocaleString()}</span></div>
+            </div>
+            <div class="form-group">
+                <label>Enter Admin Password</label>
+                <input type="password" id="agent-auth-pwd" class="login-input" placeholder="Password">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="login-btn" onclick="executeAgentWalletUpdate(${id}, '${type}', ${amount})" style="flex:1; background:#138808;">Submit</button>
+                <button class="prop-btn" onclick="closeModal(); manageWallet(${id})" style="flex:1; background:#999; color:white;">Cancel</button>
+            </div>
+        </div>
+    `;
+}
+
+window.executeAgentWalletUpdate = async (id, type, amount) => {
+    const pwd = document.getElementById('agent-auth-pwd').value;
+    if (pwd !== '252325') return alert("Incorrect Password!");
+
+    const a = State.agents.find(x => x.id === id);
+    if (!a) return;
+
+    showGlobalLoader("Processing adjustment...");
+
     if (type === 'add') {
         // Check if admin has sufficient balance
         if (State.adminWallet < amount) {
-            return alert("Admin wallet à¤®à¥‡à¤‚ à¤ªà¤°à¥à¤¯à¤¾à¤ªà¥à¤¤ à¤¬à¥ˆà¤²à¥‡à¤‚à¤¸ à¤¨à¤¹à¥€à¤‚ à¤¹à¥ˆ!");
+            hideGlobalLoader(null);
+            setTimeout(() => alert("Insufficient admin wallet balance!"), 200);
+            return;
         }
 
         // Deduct from admin wallet
@@ -3310,6 +3384,7 @@ async function adjustWallet(id, type) {
         a.wallet += amount;
 
         // Record agent credit transaction
+        if (!State.walletTransactions) State.walletTransactions = [];
         State.walletTransactions.push({
             id: Date.now(),
             agentId: a.id,
@@ -3328,8 +3403,15 @@ async function adjustWallet(id, type) {
             remark: `Transferred to ${a.name}`
         });
     } else {
-        if (a.wallet < amount) return alert("Insufficient balance");
+        if (a.wallet < amount) {
+            hideGlobalLoader(null);
+            setTimeout(() => alert("Insufficient agent balance"), 200);
+            return;
+        }
         a.wallet -= amount;
+        State.adminWallet += amount; // Add back to admin wallet
+
+        if (!State.walletTransactions) State.walletTransactions = [];
         State.walletTransactions.push({
             id: Date.now(),
             agentId: a.id,
@@ -3338,13 +3420,22 @@ async function adjustWallet(id, type) {
             date: new Date().toLocaleString(),
             remark: 'Reduced by Admin'
         });
+
+        // Record admin credit transaction
+        State.walletTransactions.push({
+            id: Date.now() + 1,
+            amount: amount,
+            type: 'admin_credit',
+            date: new Date().toLocaleString(),
+            remark: `Recovered from ${a.name}`
+        });
     }
     await saveGlobalData();
-    hideGlobalLoader("à¤µà¥‰à¤²à¥‡à¤Ÿ à¤…à¤ªà¤¡à¥‡à¤Ÿ à¤¸à¤«à¤²!");
+    hideGlobalLoader("Wallet Updated!");
     closeModal();
     render();
-    setTimeout(() => alert(`Wallet updated! New Balance: â‚¹ ${a.wallet}`), 200);
-}
+    setTimeout(() => alert(`Wallet updated! New Balance: Rs. ${a.wallet}`), 200);
+};
 
 async function requestWithdrawal(id) {
     const a = State.agents.find(x => x.id === id);
