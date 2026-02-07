@@ -373,6 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.state) { State.view = e.state.view; render(); }
     });
     attachNavListeners();
+    setupSwipeNavigation();
 });
 
 function loadGlobalData() {
@@ -4303,3 +4304,73 @@ window.deleteExploreCard = function (index) {
     }
 };
 
+
+// --- Swipe Navigation Logic ---
+let touchStartX = 0;
+let touchStartY = 0;
+
+function setupSwipeNavigation() {
+    document.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        handleSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+    }, { passive: true });
+}
+
+function handleSwipeGesture(startX, startY, endX, endY) {
+    // Only detect swipes if no modal or side panel is open
+    const modal = document.getElementById('modal-container');
+    const sidePanel = document.getElementById('side-panel');
+    if (modal && modal.style.display === 'flex') return;
+    if (sidePanel && sidePanel.classList.contains('active')) return;
+
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+
+    // Minimum distance for swipe (pixels)
+    // Also ensuring it's mostly horizontal (not a scroll)
+    if (Math.abs(diffX) < 80 || Math.abs(diffY) > 60) return;
+
+    // Main navigation sequence from footer
+    const mainTabs = ['home', 'likes', 'other', 'contact', 'login'];
+
+    // Determine effective current view for sequence
+    let currentView = State.view;
+    if (['profile', 'admin', 'agent', 'signup'].includes(currentView)) {
+        currentView = 'login'; // Group all auth/profile views into the login tab position
+    }
+
+    let currentIndex = mainTabs.indexOf(currentView);
+
+    // Only allow swipe navigation between main tabs
+    if (currentIndex === -1) return;
+
+    if (diffX > 0) {
+        // Swipe Right (Go Previous Tab)
+        if (currentIndex > 0) {
+            const prevView = mainTabs[currentIndex - 1];
+            if (prevView === 'login' && State.user) {
+                if (State.user.role === 'customer') navigate('profile');
+                else navigate(State.user.role);
+            } else {
+                navigate(prevView);
+            }
+        }
+    } else {
+        // Swipe Left (Go Next Tab)
+        if (currentIndex < mainTabs.length - 1) {
+            const nextView = mainTabs[currentIndex + 1];
+            if (nextView === 'login' && State.user) {
+                if (State.user.role === 'customer') navigate('profile');
+                else navigate(State.user.role);
+            } else {
+                navigate(nextView);
+            }
+        }
+    }
+}
