@@ -1175,8 +1175,8 @@ function renderHome(container) {
             { img: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200", title: "Prime Plots" }
         ];
 
-    // Categories
-    const categories = ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
+    // Categories - Load from State.settings or use defaults
+    const categories = State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
     const activeCat = State.homeCategory || 'All';
     const searchQuery = (State.homeSearch || '').toLowerCase();
 
@@ -2166,6 +2166,30 @@ function renderAdmin(container) {
                                  </div>
                              </div>
                              <button class="login-btn" onclick="saveNavigationSettings()" style="margin-top:15px; width:auto;">Save Navigation</button>
+                        </div>
+                        
+                        <!-- Property Types Management -->
+                        <div class="stat-box" style="padding:25px; margin-top:20px;">
+                             <h3 style="margin-bottom:15px; color:#138808;"><i class="fas fa-tags"></i> Property Types Management</h3>
+                             <p style="color:#666; margin-bottom:15px; font-size:0.9rem;">Manage property categories shown on the home page filter.</p>
+                             
+                             <div style="margin-bottom:20px;">
+                                 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                                     ${(State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House']).map((type, idx) => `
+                                         <div style="background:#f0f0f0; padding:8px 15px; border-radius:20px; display:flex; align-items:center; gap:8px; border:1px solid #ddd;">
+                                             <span style="font-weight:600; color:#1a2a3a;">${type}</span>
+                                             ${type !== 'All' ? `<i class="fas fa-times-circle" onclick="deletePropertyType(${idx})" style="color:#D32F2F; cursor:pointer; font-size:0.9rem;" title="Delete"></i>` : '<span style="color:#999; font-size:0.7rem;">(Default)</span>'}
+                                         </div>
+                                     `).join('')}
+                                 </div>
+                                 
+                                 <div style="display:flex; gap:10px; align-items:center;">
+                                     <input type="text" id="new-property-type" placeholder="Enter new property type..." class="login-input" style="flex:1;">
+                                     <button class="login-btn" onclick="addPropertyType()" style="width:auto; padding:12px 20px; margin:0;">
+                                         <i class="fas fa-plus"></i> Add Type
+                                     </button>
+                                 </div>
+                             </div>
                         </div>
                     </div>
                 ` : ''}
@@ -4211,6 +4235,57 @@ window.toggleMembership = async function (id) {
 
     await saveGlobalData();
     render(); // Re-render to show updated button state
+};
+
+// --- Property Types Management ---
+window.addPropertyType = async function () {
+    const input = document.getElementById('new-property-type');
+    const newType = input.value.trim();
+
+    if (!newType) {
+        alert('Please enter a property type name!');
+        return;
+    }
+
+    // Initialize if not exists
+    if (!State.settings.propertyTypes) {
+        State.settings.propertyTypes = ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
+    }
+
+    // Check for duplicates
+    if (State.settings.propertyTypes.includes(newType)) {
+        alert('This property type already exists!');
+        return;
+    }
+
+    showGlobalLoader('Adding Property Type...');
+    State.settings.propertyTypes.push(newType);
+
+    await saveGlobalData();
+    hideGlobalLoader('Property Type Added!');
+    input.value = '';
+    render();
+};
+
+window.deletePropertyType = async function (index) {
+    if (!State.settings.propertyTypes || index < 0 || index >= State.settings.propertyTypes.length) return;
+
+    const typeToDelete = State.settings.propertyTypes[index];
+
+    // Cannot delete 'All'
+    if (typeToDelete === 'All') {
+        alert('Cannot delete the default "All" category!');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete "${typeToDelete}" property type?`)) return;
+
+    showGlobalLoader('Deleting Property Type...');
+    State.settings.propertyTypes.splice(index, 1);
+
+    await saveGlobalData();
+    hideGlobalLoader('Property Type Deleted!');
+    render();
 };
 
 // --- Dynamic UX Updates ---
