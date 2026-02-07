@@ -149,6 +149,43 @@
                 opacity: 0;
             }
         }
+
+        .page-transition-right {
+            animation: slideInRight 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .page-transition-left {
+            animation: slideInLeft 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0.5;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0.5;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        #app {
+            overflow-x: hidden;
+            width: 100%;
+        }
     </style>
 </head>
 

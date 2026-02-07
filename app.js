@@ -539,38 +539,50 @@ function updateUIForUser() {
 }
 
 // --- Navigation & Router ---
-function navigate(view, params = null) {
+// --- Navigation & Router ---
+function navigate(view, params = null, direction = null) {
+    const appContainer = document.getElementById('app');
+
+    // Apply animation if direction is provided
+    if (direction && appContainer) {
+        appContainer.classList.remove('page-transition-right', 'page-transition-left');
+        // Trigger reflow
+        void appContainer.offsetWidth;
+        appContainer.classList.add(direction === 'right' ? 'page-transition-left' : 'page-transition-right');
+    }
+
     State.view = view;
     if (params) State.selectedPropertyId = params;
     window.scrollTo(0, 0);
 
     const header = document.getElementById('main-header');
-    header.style.display = (view === 'login' || view === 'admin' || view === 'agent') ? 'none' : 'block';
+    if (header) header.style.display = (view === 'login' || view === 'admin' || view === 'agent') ? 'none' : 'block';
 
     const profileAction = document.getElementById('profile-action');
     const nameSpan = document.getElementById('user-name-h');
-    const profileIconBox = profileAction.querySelector('.profile-circle');
-
-    if (State.user) {
-        nameSpan.innerText = State.user.name ? State.user.name.split(' ')[0] : 'User';
-        nameSpan.style.display = 'block';
-        if (State.user.photo) {
-            profileIconBox.innerHTML = `<img src="${State.user.photo}" style="width:100%; height:100%; object-fit:cover;">`;
+    if (profileAction && nameSpan) {
+        const profileIconBox = profileAction.querySelector('.profile-circle');
+        if (State.user) {
+            nameSpan.innerText = State.user.name ? State.user.name.split(' ')[0] : 'User';
+            nameSpan.style.display = 'block';
+            if (State.user.photo) {
+                profileIconBox.innerHTML = `<img src="${State.user.photo}" style="width:100%; height:100%; object-fit:cover;">`;
+            } else {
+                profileIconBox.innerHTML = `<i class="fas fa-user-circle"></i>`;
+            }
+            profileAction.onclick = () => {
+                if (State.user.role === 'customer') navigate('profile');
+                else navigate(State.user.role);
+            };
         } else {
-            profileIconBox.innerHTML = `<i class="fas fa-user-circle"></i>`;
+            nameSpan.style.display = 'none';
+            profileIconBox.innerHTML = `<i class="fas fa-user"></i>`;
+            profileAction.onclick = () => navigate('login');
         }
-        profileAction.onclick = () => {
-            if (State.user.role === 'customer') navigate('profile');
-            else navigate(State.user.role);
-        };
-    } else {
-        nameSpan.style.display = 'none';
-        profileIconBox.innerHTML = `<i class="fas fa-user"></i>`;
-        profileAction.onclick = () => navigate('login');
     }
 
     const loginText = document.getElementById('login-text');
-    loginText.innerText = State.user ? State.user.role.toUpperCase() : 'LOGIN';
+    if (loginText) loginText.innerText = State.user ? State.user.role.toUpperCase() : 'LOGIN';
 
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.toggle('active', item.getAttribute('data-page') === view);
@@ -4355,10 +4367,10 @@ function handleSwipeGesture(startX, startY, endX, endY) {
         if (currentIndex > 0) {
             const prevView = mainTabs[currentIndex - 1];
             if (prevView === 'login' && State.user) {
-                if (State.user.role === 'customer') navigate('profile');
-                else navigate(State.user.role);
+                if (State.user.role === 'customer') navigate('profile', null, 'right');
+                else navigate(State.user.role, null, 'right');
             } else {
-                navigate(prevView);
+                navigate(prevView, null, 'right');
             }
         }
     } else {
@@ -4366,10 +4378,10 @@ function handleSwipeGesture(startX, startY, endX, endY) {
         if (currentIndex < mainTabs.length - 1) {
             const nextView = mainTabs[currentIndex + 1];
             if (nextView === 'login' && State.user) {
-                if (State.user.role === 'customer') navigate('profile');
-                else navigate(State.user.role);
+                if (State.user.role === 'customer') navigate('profile', null, 'left');
+                else navigate(State.user.role, null, 'left');
             } else {
-                navigate(nextView);
+                navigate(nextView, null, 'left');
             }
         }
     }
