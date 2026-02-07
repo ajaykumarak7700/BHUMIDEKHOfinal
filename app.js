@@ -1135,7 +1135,7 @@ function renderHome(container) {
         <div class="property-grid" id="home-prop-grid" style="position: relative;">
             ${State.isLoading ? `
                 <div class="smart-loader-overlay">
-                    <div style="position: relative; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center;">
+                    <div style="position: relative; width: 165px; height: 165px; display: flex; align-items: center; justify-content: center;">
                         <div class="loader-circle"></div>
                         <div class="loader-text-inner">आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...</div>
                     </div>
