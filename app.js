@@ -92,6 +92,66 @@ const State = {
     }
 };
 
+// --- Offline Data (Dummy cards shown ONLY during loading) ---
+const OFFLINE_PROPERTIES = [
+    {
+        id: 'off_1',
+        title: "Modern 3BHK Apartment - Sample",
+        city: "Mumbai",
+        category: "Residential",
+        price: "1.2 Cr",
+        area: "1200 sq.ft",
+        priceSqft: "10,000",
+        image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: true,
+        isOffline: true,
+        createdAt: "Loading..."
+    },
+    {
+        id: 'off_2',
+        title: "Prime Commercial Plot - Sample",
+        city: "Delhi",
+        category: "Plot",
+        price: "85 Lakh",
+        area: "1500 sq.ft",
+        priceSqft: "5,666",
+        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: true,
+        isOffline: true,
+        createdAt: "Loading..."
+    },
+    {
+        id: 'off_3',
+        title: "Luxury Villa with Garden - Sample",
+        city: "Pune",
+        category: "Villa",
+        price: "2.5 Cr",
+        area: "3500 sq.ft",
+        priceSqft: "7,142",
+        image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: false,
+        isOffline: true,
+        createdAt: "Loading..."
+    },
+    {
+        id: 'off_4',
+        title: "Agricultural Land Near NH - Sample",
+        city: "Lucknow",
+        category: "Agricultural Land",
+        price: "45 Lakh",
+        area: "1 Acre",
+        priceSqft: "1.03",
+        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: false,
+        isOffline: true,
+        createdAt: "Loading..."
+    }
+];
+
 // --- Firebase Helper Functions ---
 function saveToFirebase() {
     if (typeof database === 'undefined' || !database) return Promise.resolve();
@@ -380,8 +440,8 @@ function loadGlobalData() {
         };
     }
 
-    // Start fresh - wait for Firebase
-    State.properties = [];
+    // Initialize with Offline properties as placeholders
+    State.properties = [...OFFLINE_PROPERTIES];
 
     // Only load critical session data
     /*
@@ -974,8 +1034,9 @@ function renderPropertyCard(p) {
                         <i class="fas fa-clock"></i> ${p.createdAt || 'N/A'}
                     </div>
                 ` : ''}
-                <button class="prop-btn">विवरण देखें</button>
+                <button class="prop-btn">${p.isOffline ? 'Sample View' : 'विवरण देखें'}</button>
             </div>
+            ${p.isOffline ? `<div class="offline-badge">OFFLINE SAMPLE</div>` : ''}
         </div>
     `;
 }
