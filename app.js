@@ -1141,7 +1141,7 @@ function renderHome(container) {
         <div class="property-grid" id="home-prop-grid" style="position: relative;">
             ${(State.isLoading && !State.isCriticalTimeout) ? `
                 <div class="smart-loader-overlay">
-                    <div style="position: relative; width: 165px; height: 165px; display: flex; align-items: center; justify-content: center;">
+                    <div style="position: relative; width: 210px; height: 210px; display: flex; align-items: center; justify-content: center;">
                         <div class="loader-circle"></div>
                         <div class="loader-text-inner">${State.loadingMessage}</div>
                     </div>
