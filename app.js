@@ -293,6 +293,13 @@ window.addEventListener('online', () => {
     setTimeout(hideSlowNetWarning, 2000);
 });
 
+function retryLoading() {
+    State.isCriticalTimeout = false;
+    State.isLoading = true;
+    render(); // Show the spinning circle again
+    loadFromFirebase(); // Re-trigger Firebase fetch
+}
+
 
 function setupFirebaseListener() {
     if (typeof database === 'undefined' || !database) return;
@@ -1155,7 +1162,7 @@ function renderHome(container) {
                     </div>
                     <h2 style="color: #1a2a3a; margin-bottom: 8px; font-size: 1.5rem;">Connection slow hai!</h2>
                     <p style="color: #666; font-weight: 600; font-size: 1rem; margin-bottom: 25px;">Please Check Your Internet Connection</p>
-                    <button onclick="location.reload()" style="padding: 12px 35px; background: #1a2a3a; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">Retry Now</button>
+                    <button onclick="retryLoading()" style="padding: 12px 35px; background: #1a2a3a; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">Retry Now</button>
                     <div style="margin-top: 15px; font-size: 0.8rem; color: #999;">Searching for data in background...</div>
                 </div>
             ` : (
