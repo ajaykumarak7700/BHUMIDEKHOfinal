@@ -313,12 +313,12 @@ function showEnquiryModal(pid) {
     const userPhone = State.user ? (State.user.phone || '') : '';
 
     modal.innerHTML = `
-        <div class="modal-content scale-in" style="max-width:400px; padding:0 !important; overflow:hidden;">
-            <div style="background:linear-gradient(135deg, #FF9933, #FF7700); padding:20px; color:white; text-align:center;">
+        <div class="modal-content scale-in" style="max-width:400px; padding:0 !important; display:flex; flex-direction:column; max-height:90vh; overflow:hidden;">
+            <div style="background:linear-gradient(135deg, #FF9933, #FF7700); padding:20px; color:white; text-align:center; flex-shrink:0;">
                 <h3 style="margin:0; font-size:1.4rem;">Property Enquiry</h3>
                 <p style="margin:5px 0 0; font-size:0.85rem; opacity:0.9;">${p.title}</p>
             </div>
-            <div style="padding:25px;">
+            <div style="padding:25px; overflow-y:auto; flex:1;">
                 <div style="display:flex; gap:15px; margin-bottom:20px; background:#f8f9fa; padding:10px; border-radius:12px; border:1px solid #eee;">
                     <img src="${p.image}" style="width:70px; height:70px; object-fit:cover; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
                     <div style="display:flex; flex-direction:column; justify-content:center;">
@@ -340,10 +340,10 @@ function showEnquiryModal(pid) {
                     <textarea id="enq-msg" class="login-input" placeholder="Interested in this property. Please call me." style="width:100%; height:80px; border:1.5px solid #eee; border-radius:10px; padding:12px; resize:none;">प्रॉपर्टी के बारे में और जानकारी चाहिए।</textarea>
                 </div>
 
-                <button class="login-btn enq-submit-btn" onclick="submitEnquiry(${pid})" style="background:#138808; border-radius:12px;">
+                <button class="login-btn enq-submit-btn" onclick="submitEnquiry(${pid})" style="background:#138808; border-radius:12px; margin-bottom:12px;">
                     <i class="fas fa-paper-plane"></i> Submit Enquiry
                 </button>
-                <button class="prop-btn" style="background:none; color:#999; margin-top:10px;" onclick="closeModal()">Cancel</button>
+                <button class="prop-btn" style="background:#D32F2F; color:white; padding:15px; font-weight:800; border-radius:12px; font-size:1rem;" onclick="closeModal()">CLOSE</button>
             </div>
         </div>
     `;
@@ -379,7 +379,7 @@ async function submitEnquiry(pid) {
         State.enquiries.push(enquiry);
 
         // In a real app, you'd push to Firebase here
-        if (typeof database !== 'undefined' \u0026\u0026 database) {
+        if (typeof database !== 'undefined' && database) {
             await database.ref('bhumi_v2/enquiries').push(enquiry);
         }
 
@@ -642,17 +642,7 @@ function updateUIForUser() {
 
 // --- Navigation & Router ---
 // --- Navigation & Router ---
-function navigate(view, params = null, direction = null) {
-    const appContainer = document.getElementById('app');
-
-    // Apply animation if direction is provided
-    if (direction && appContainer) {
-        appContainer.classList.remove('page-transition-right', 'page-transition-left');
-        // Trigger reflow
-        void appContainer.offsetWidth;
-        appContainer.classList.add(direction === 'right' ? 'page-transition-left' : 'page-transition-right');
-    }
-
+function navigate(view, params = null) {
     State.view = view;
     if (params) State.selectedPropertyId = params;
     window.scrollTo(0, 0);
@@ -2209,7 +2199,7 @@ function renderAgent(container) {
     ];
 
     container.innerHTML = `
-    < div class="dashboard-layout" >
+        <div class="dashboard-layout">
             <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
             <aside class="sidebar agent">
                 <div class="logo-simple" style="margin-bottom:30px; color:white; font-size:1.5rem; font-weight: 900;">
@@ -2373,7 +2363,7 @@ function renderAgent(container) {
                     </div>
                 ` : ''}
             </main>
-        </div >
+        </div>
     `;
 }
 
@@ -4474,10 +4464,10 @@ function handleSwipeGesture(startX, startY, endX, endY) {
         if (currentIndex > 0) {
             const prevView = mainTabs[currentIndex - 1];
             if (prevView === 'login' && State.user) {
-                if (State.user.role === 'customer') navigate('profile', null, 'right');
-                else navigate(State.user.role, null, 'right');
+                if (State.user.role === 'customer') navigate('profile');
+                else navigate(State.user.role);
             } else {
-                navigate(prevView, null, 'right');
+                navigate(prevView);
             }
         }
     } else {
@@ -4485,10 +4475,10 @@ function handleSwipeGesture(startX, startY, endX, endY) {
         if (currentIndex < mainTabs.length - 1) {
             const nextView = mainTabs[currentIndex + 1];
             if (nextView === 'login' && State.user) {
-                if (State.user.role === 'customer') navigate('profile', null, 'left');
-                else navigate(State.user.role, null, 'left');
+                if (State.user.role === 'customer') navigate('profile');
+                else navigate(State.user.role);
             } else {
-                navigate(nextView, null, 'left');
+                navigate(nextView);
             }
         }
     }
