@@ -49,6 +49,7 @@ const State = {
     adminSearch: '',
     agentTab: 'dashboard',
     agentSearch: '',
+    loadingMessage: 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...',
     settings: {
         showDate: true,
         contactInfo: {
@@ -186,12 +187,20 @@ function loadFromFirebase(callback) {
 
     State.isLoading = true; // Ensure loading mode on start
 
-    // Start a timer for slow internet warning
+    // Start a timer for slow internet warning (5 seconds)
     const slowNetTimer = setTimeout(() => {
         if (State.isLoading && !State.isDataLoaded) {
             showSlowNetWarning("Internet slow hai, kripya intezar karein...");
         }
-    }, 6000);
+    }, 5000);
+
+    // Critical connection timer (10 seconds)
+    const criticalNetTimer = setTimeout(() => {
+        if (State.isLoading && !State.isDataLoaded) {
+            State.loadingMessage = '<i class="fas fa-wifi-slash"></i><br>Connection slow hai!<br>Please Check Internet';
+            render(); // Refresh to show new message in loader
+        }
+    }, 10000);
 
     // Initial check: if already offline
     if (!navigator.onLine) showSlowNetWarning("No Internet! Please check your connection.");
@@ -199,7 +208,9 @@ function loadFromFirebase(callback) {
     database.ref('bhumi_v2').once('value')
         .then(snapshot => {
             clearTimeout(slowNetTimer);
+            clearTimeout(criticalNetTimer);
             hideSlowNetWarning();
+            State.loadingMessage = 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...'; // Reset
 
             const data = snapshot.val();
 
@@ -243,6 +254,8 @@ function loadFromFirebase(callback) {
         })
         .catch(err => {
             console.error("Firebase Load Error:", err);
+            clearTimeout(slowNetTimer);
+            clearTimeout(criticalNetTimer);
             hideSlowNetWarning();
             State.isLoading = false; // ERROR, STOP LOADING
             if (callback) callback(false);
@@ -1137,7 +1150,7 @@ function renderHome(container) {
                 <div class="smart-loader-overlay">
                     <div style="position: relative; width: 165px; height: 165px; display: flex; align-items: center; justify-content: center;">
                         <div class="loader-circle"></div>
-                        <div class="loader-text-inner">आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...</div>
+                        <div class="loader-text-inner">${State.loadingMessage}</div>
                     </div>
                 </div>
             ` : ''}
