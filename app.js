@@ -1220,7 +1220,7 @@ function renderHome(container) {
         </div>
 
         <!-- Categories Scroll (Moved above search) -->
-        <div id="cat-scroll" style="padding: 0 0 5px 20px; margin-top: 5px; position: relative; z-index: 10; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
+        <div id="cat-scroll" style="padding: 0 0 5px 20px; margin-top: 5px; position: relative; z-index: 10; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; touch-action: pan-x;" ontouchstart="categoryScrollStart(event)">
             <style>#cat-scroll::-webkit-scrollbar { display: none; }</style>
             ${(() => {
             const icons = {
@@ -1341,6 +1341,12 @@ function updateSlider() {
     dots.forEach((dot, i) => dot.classList.toggle('active', i === currentSlide));
 }
 window.goToSlide = (idx) => { currentSlide = idx; updateSlider(); startSlider(); };
+
+// Prevent page scroll when scrolling categories
+window.categoryScrollStart = (e) => {
+    // This function helps prevent vertical page scroll during horizontal category scroll
+    // The touch-action: pan-x CSS property is the main fix
+};
 
 function renderLikes(container) {
     const likedProps = State.properties.filter(p => State.likes.includes(p.id) && p.status === 'approved');
