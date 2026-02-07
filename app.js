@@ -68,6 +68,13 @@ const State = {
                 "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200",
                 "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200"
             ]
+        },
+        ux: {
+            loadingText: 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...',
+            loadingIcon: 'loader-circle',
+            slowConnIcon: 'fas fa-wifi-slash',
+            slowConnHeading: 'Connection slow hai!',
+            slowConnSubtext: 'Please Check Your Internet Connection'
         }
     },
     walletTransactions: [],
@@ -1259,8 +1266,8 @@ function renderHome(container) {
             ${(State.isLoading && !State.isCriticalTimeout) ? `
                 <div class="smart-loader-overlay">
                     <div style="position: relative; width: 210px; height: 210px; display: flex; align-items: center; justify-content: center;">
-                        <div class="loader-circle"></div>
-                        <div class="loader-text-inner">${State.loadingMessage}</div>
+                        <div class="${(State.settings.ux && State.settings.ux.loadingIcon) || 'loader-circle'}"></div>
+                        <div class="loader-text-inner">${(State.settings.ux && State.settings.ux.loadingText) || State.loadingMessage}</div>
                     </div>
                 </div>
             ` : ''}
@@ -1268,10 +1275,10 @@ function renderHome(container) {
             ${(State.isCriticalTimeout && !State.isDataLoaded) ? `
                 <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: #fff3e0; border-radius: 18px; border: 2px dashed #FF9933; margin: 10px 0; animation: popIn 0.5s ease-out;">
                     <div style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);">
-                        <i class="fas fa-wifi-slash" style="font-size: 2.5rem; color: #FF9933;"></i>
+                        <i class="${(State.settings.ux && State.settings.ux.slowConnIcon) || 'fas fa-wifi-slash'}" style="font-size: 2.5rem; color: #FF9933;"></i>
                     </div>
-                    <h2 style="color: #1a2a3a; margin-bottom: 8px; font-size: 1.5rem;">Connection slow hai!</h2>
-                    <p style="color: #666; font-weight: 600; font-size: 1rem; margin-bottom: 25px;">Please Check Your Internet Connection</p>
+                    <h2 style="color: #1a2a3a; margin-bottom: 8px; font-size: 1.5rem;">${(State.settings.ux && State.settings.ux.slowConnHeading) || 'Connection slow hai!'}</h2>
+                    <p style="color: #666; font-weight: 600; font-size: 1rem; margin-bottom: 25px;">${(State.settings.ux && State.settings.ux.slowConnSubtext) || 'Please Check Your Internet Connection'}</p>
                     <button onclick="retryLoading()" style="padding: 12px 35px; background: #1a2a3a; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">Retry Now</button>
                     <div style="margin-top: 15px; font-size: 0.8rem; color: #999;">Searching for data in background...</div>
                 </div>
@@ -2097,9 +2104,39 @@ function renderAdmin(container) {
                             <div class="form-group">
                                 <label>Banner Images (Comma separated URLs)</label>
                                 <textarea id="set-banners" class="login-input" style="height:100px;">${(State.settings.appDetails && State.settings.appDetails.banners) ? State.settings.appDetails.banners.join(',\n') : ''}</textarea>
-                                <div style="font-size:0.75rem; color:#666; margin-top:5px;">Enter direct image links separated by comma.</div>
-                            </div>
-                         </div>
+                                 <div style="font-size:0.75rem; color:#666; margin-top:5px;">Enter direct image links separated by comma.</div>
+                             </div>
+                          </div>
+
+                          <div class="stat-box" style="padding:25px; margin-top:20px;">
+                             <h3 style="margin-bottom:15px; color:#138808;">Loading & Connection Settings</h3>
+                             <p style="color:#666; margin-bottom:15px; font-size:0.9rem;">Customize the look and feel of loading screens and alerts.</p>
+                             
+                             <h4 style="margin:15px 0 10px; color:#1a2a3a;">Primary Loader (Circle)</h4>
+                             <div class="form-group">
+                                 <label>Loading Text</label>
+                                 <input id="set-ux-load-text" type="text" value="${(State.settings.ux && State.settings.ux.loadingText) || State.loadingMessage}" class="login-input">
+                             </div>
+                             <div class="form-group">
+                                 <label>Loading Icon Class (Default: loader-circle)</label>
+                                 <input id="set-ux-load-icon" type="text" value="${(State.settings.ux && State.settings.ux.loadingIcon) || 'loader-circle'}" class="login-input">
+                                 <div style="font-size:0.75rem; color:#666; margin-top:5px;">Use 'loader-circle' for animated ring, or FontAwesome class (e.g. fas fa-spinner fa-spin).</div>
+                             </div>
+
+                             <h4 style="margin:20px 0 10px; color:#1a2a3a; border-top:1px solid #eee; padding-top:15px;">Slow Connection Alert</h4>
+                             <div class="form-group">
+                                 <label>Alert Icon Class</label>
+                                 <input id="set-ux-slow-icon" type="text" value="${(State.settings.ux && State.settings.ux.slowConnIcon) || 'fas fa-wifi-slash'}" class="login-input">
+                             </div>
+                             <div class="form-group">
+                                 <label>Alert Heading</label>
+                                 <input id="set-ux-slow-title" type="text" value="${(State.settings.ux && State.settings.ux.slowConnHeading) || 'Connection slow hai!'}" class="login-input">
+                             </div>
+                             <div class="form-group">
+                                 <label>Alert Subtext</label>
+                                 <input id="set-ux-slow-sub" type="text" value="${(State.settings.ux && State.settings.ux.slowConnSubtext) || 'Please Check Your Internet Connection'}" class="login-input">
+                             </div>
+                          </div>
 
                          <div class="stat-box" style="padding:25px; margin-top:20px;">
                             <h3 style="margin-bottom:15px; color:#138808;">Contact Information</h3>
@@ -4113,6 +4150,15 @@ window.saveContactSettings = () => {
     // Navigation Settings are now saved in saveNavigationSettings()
     // State.settings.otherButton is handled there.
     // Removed old block to prevent overwriting with nulls if inputs are missing.
+
+    // UX Settings
+    State.settings.ux = {
+        loadingText: document.getElementById('set-ux-load-text')?.value || State.settings.ux.loadingText,
+        loadingIcon: document.getElementById('set-ux-load-icon')?.value || State.settings.ux.loadingIcon,
+        slowConnIcon: document.getElementById('set-ux-slow-icon')?.value || State.settings.ux.slowConnIcon,
+        slowConnHeading: document.getElementById('set-ux-slow-title')?.value || State.settings.ux.slowConnHeading,
+        slowConnSubtext: document.getElementById('set-ux-slow-sub')?.value || State.settings.ux.slowConnSubtext
+    };
 
     if (oldPass && newPass) {
         const current = State.settings.adminPassword || 'admin123';
