@@ -40,7 +40,7 @@ const State = {
     user: null,
     selectedPropertyId: null,
     likes: [],
-    properties: [], // Will be initialized with Offline properties in loadGlobalData
+    properties: [], // Reset to empty, waiting for Firebase
     withdrawalRequests: [],
     agents: [
         { id: 101, name: "John Agent", email: "john.agent@bhumidekho.com", password: "admin123", phone: "9876543210", status: "approved", wallet: 5000 }
@@ -91,66 +91,6 @@ const State = {
         ]
     }
 };
-
-// --- Offline Data (Shown while internet is slow or loading) ---
-const OFFLINE_PROPERTIES = [
-    {
-        id: 'off_1',
-        title: "Modern 3BHK Apartment - Sample",
-        city: "Mumbai",
-        category: "Residential",
-        price: "1.2 Cr",
-        area: "1200 sq.ft",
-        priceSqft: "10,000",
-        image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=500&q=80",
-        status: "approved",
-        featured: true,
-        isOffline: true,
-        createdAt: "Added Just Now"
-    },
-    {
-        id: 'off_2',
-        title: "Prime Commercial Plot - Sample",
-        city: "Delhi",
-        category: "Plot",
-        price: "85 Lakh",
-        area: "1500 sq.ft",
-        priceSqft: "5,666",
-        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80",
-        status: "approved",
-        featured: true,
-        isOffline: true,
-        createdAt: "Added Just Now"
-    },
-    {
-        id: 'off_3',
-        title: "Luxury Villa with Garden - Sample",
-        city: "Pune",
-        category: "Villa",
-        price: "2.5 Cr",
-        area: "3500 sq.ft",
-        priceSqft: "7,142",
-        image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=500&q=80",
-        status: "approved",
-        featured: false,
-        isOffline: true,
-        createdAt: "Added Just Now"
-    },
-    {
-        id: 'off_4',
-        title: "Agricultural Land Near NH - Sample",
-        city: "Lucknow",
-        category: "Agricultural Land",
-        price: "45 Lakh",
-        area: "1 Acre",
-        priceSqft: "1.03",
-        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80",
-        status: "approved",
-        featured: false,
-        isOffline: true,
-        createdAt: "Added Just Now"
-    }
-];
 
 // --- Firebase Helper Functions ---
 function saveToFirebase() {
@@ -228,26 +168,19 @@ function loadFromFirebase(callback) {
                 if (data.customers) State.customers = data.customers;
                 if (data.otherPage) State.otherPage = data.otherPage;
 
-                // CRITICAL FIX: Firebase sometimes returns an Object instead of Array
-                // Merge Logic: Cloud Data + Offline Data
-                let cloudProps = [];
                 if (data.properties) {
-                    cloudProps = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
+                    State.properties = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
+                    State.properties = State.properties.filter(p => p != null);
+                } else {
+                    State.properties = [];
                 }
-
-                // Keep Cloud Props at top, Offline Props at bottom (only if cloud is small, or just as fallback)
-                // Filter out any nulls
-                cloudProps = cloudProps.filter(p => p != null && !p.isOffline);
-
-                // Combine: Real Cloud Properties + Sample Offline Properties
-                State.properties = [...cloudProps, ...OFFLINE_PROPERTIES];
 
                 saveToLocalStorage(); // Sync back to local storage (Settings/Session only)
                 State.isLoading = false; // DATA LOADED
                 render(); // Explicitly re-render to remove skeleton and show data
                 if (callback) callback(true);
             } else {
-                State.properties = [...OFFLINE_PROPERTIES]; // If no data in Firebase, show offline samples
+                State.properties = [];
                 State.isLoading = false; // NO DATA FOUND (But loaded successfully)
                 render();
                 if (callback) callback(false);
@@ -318,11 +251,8 @@ function setupFirebaseListener() {
 
             // CRITICAL FIX: Also handle Object-to-Array conversion here for live updates
             if (data.hasOwnProperty('properties')) {
-                let liveProps = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
-                liveProps = liveProps.filter(p => p != null && !p.isOffline);
-                State.properties = [...liveProps, ...OFFLINE_PROPERTIES];
-            } else {
-                State.properties = [...OFFLINE_PROPERTIES];
+                State.properties = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
+                State.properties = State.properties.filter(p => p != null);
             }
 
             // We usually don't want to live-sync settings or customers while user is active 
@@ -450,8 +380,8 @@ function loadGlobalData() {
         };
     }
 
-    // Initialize with Offline properties for instant display
-    State.properties = [...OFFLINE_PROPERTIES];
+    // Start fresh - wait for Firebase
+    State.properties = [];
 
     // Only load critical session data
     /*
@@ -1044,9 +974,8 @@ function renderPropertyCard(p) {
                         <i class="fas fa-clock"></i> ${p.createdAt || 'N/A'}
                     </div>
                 ` : ''}
-                <button class="prop-btn">${p.isOffline ? 'Sample View' : 'विवरण देखें'}</button>
+                <button class="prop-btn">विवरण देखें</button>
             </div>
-            ${p.isOffline ? `<div class="offline-badge">OFFLINE SAMPLE</div>` : ''}
         </div>
     `;
 }
