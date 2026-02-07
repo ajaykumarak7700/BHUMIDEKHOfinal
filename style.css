@@ -413,21 +413,21 @@ body {
 
 .prop-like-btn {
     position: absolute;
-    top: 15px;
-    left: 15px;
+    top: 12px;
+    left: 12px;
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
-    width: 45px;
-    height: 45px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     z-index: 10;
     transition: all 0.3s ease;
-    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    border: 1.2px solid rgba(255, 255, 255, 0.2);
 }
 
 .prop-like-btn:active {

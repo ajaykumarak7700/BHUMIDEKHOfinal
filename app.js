@@ -2391,8 +2391,8 @@ function renderDetails(container) {
                         <h2 style="color:#1a2a3a; font-size:1.6rem; font-weight:900; margin-bottom:5px; line-height:1.2;">${p.title}</h2>
                         <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
                     </div>
-                    <div onclick="toggleLike(event, ${p.id})" style="cursor:pointer; width:48px; height:48px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); flex-shrink:0; margin-left:15px; border:1px solid #eee;">
-                        <i class="${State.likes.includes(p.id) ? 'fas' : 'far'} fa-heart" style="color:${State.likes.includes(p.id) ? '#FF5252' : '#666'}; font-size:1.4rem;"></i>
+                    <div onclick="toggleLike(event, ${p.id})" style="cursor:pointer; width:56px; height:56px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(0,0,0,0.12); flex-shrink:0; margin-left:15px; border:1px solid #eee;">
+                        <i class="${State.likes.includes(p.id) ? 'fas' : 'far'} fa-heart" style="color:${State.likes.includes(p.id) ? '#FF5252' : '#666'}; font-size:1.8rem;"></i>
                     </div>
                 </div>
                 <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800; font-size:1.3rem;">विवरण एवं स्थान</h3>
