@@ -1126,8 +1126,8 @@ function renderPropertyCard(p, isLikeView = false) {
         <div class="prop-card" onclick="navigate('details', ${p.id})">
             <div class="prop-img-box">
                 <img src="${p.image}" alt="" loading="lazy">
-                <div class="prop-like-btn" onclick="toggleLike(event, ${p.id})">
-                    <i class="${isLiked ? 'fas' : 'far'} fa-heart" style="color:${isLiked ? '#D32F2F' : 'white'}"></i>
+                <div class="prop-like-btn" onclick="toggleLike(event, ${p.id})" title="Like this property">
+                    <i class="${isLiked ? 'fas' : 'far'} fa-heart" style="color:${isLiked ? '#FF5252' : 'white'}"></i>
                 </div>
             </div>
             <div class="prop-body">
@@ -2475,6 +2475,9 @@ function renderDetails(container) {
                     ` : ''}
                     <div style="position:absolute; top:20px; left:20px; background:rgba(255,255,255,0.9); color:#1a2a3a; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); z-index:10;" onclick="navigate('home')">
                         <i class="fas fa-arrow-left"></i>
+                    </div>
+                    <div class="prop-like-btn" onclick="toggleLike(event, ${p.id})" style="top:20px; left:auto; right:20px; background:rgba(255,255,255,0.9); color:#1a2a3a; width:40px; height:40px; border-radius:50%; border:none; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
+                        <i class="${State.likes.includes(p.id) ? 'fas' : 'far'} fa-heart" style="color:${State.likes.includes(p.id) ? '#FF5252' : '#666'}; font-size:1.3rem;"></i>
                     </div>
                 </div>
                 <div class="details-tabs" style="display:flex; gap:8px; padding:12px; background:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
