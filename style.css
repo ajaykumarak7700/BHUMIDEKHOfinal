@@ -470,6 +470,22 @@ body {
     width: 100%;
     border-radius: 8px;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.prop-btn:active {
+    transform: scale(0.96);
+}
+
+.enquiry-btn {
+    background: linear-gradient(135deg, #FF9933, #FF7700) !important;
+    box-shadow: 0 4px 10px rgba(255, 153, 51, 0.3);
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 /* Premium Add Property Button */

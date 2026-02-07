@@ -300,6 +300,108 @@ function retryLoading() {
     loadFromFirebase(); // Re-trigger Firebase fetch
 }
 
+// --- Enquiry System ---
+function showEnquiryModal(pid) {
+    const p = State.properties.find(x => x.id === pid);
+    if (!p) return;
+
+    const modal = document.getElementById('modal-container');
+    modal.style.display = 'flex';
+
+    // Auto-fill user info if logged in
+    const userName = State.user ? State.user.name : '';
+    const userPhone = State.user ? (State.user.phone || '') : '';
+
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px; padding:0 !important; overflow:hidden;">
+            <div style="background:linear-gradient(135deg, #FF9933, #FF7700); padding:20px; color:white; text-align:center;">
+                <h3 style="margin:0; font-size:1.4rem;">Property Enquiry</h3>
+                <p style="margin:5px 0 0; font-size:0.85rem; opacity:0.9;">${p.title}</p>
+            </div>
+            <div style="padding:25px;">
+                <div style="display:flex; gap:15px; margin-bottom:20px; background:#f8f9fa; padding:10px; border-radius:12px; border:1px solid #eee;">
+                    <img src="${p.image}" style="width:70px; height:70px; object-fit:cover; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+                    <div style="display:flex; flex-direction:column; justify-content:center;">
+                        <div style="font-weight:800; color:#138808; font-size:1.1rem;">Rs. ${p.price}</div>
+                        <div style="font-size:0.8rem; color:#666;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:700; color:#1a2a3a;">आपका नाम (Your Name)</label>
+                    <input type="text" id="enq-name" value="${userName}" class="login-input" placeholder="Enter your name" style="width:100%; border:1.5px solid #eee; border-radius:10px; padding:12px;">
+                </div>
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:700; color:#1a2a3a;">मोबाइल नंबर (Mobile Number)</label>
+                    <input type="tel" id="enq-phone" value="${userPhone}" class="login-input" placeholder="Enter mobile number" style="width:100%; border:1.5px solid #eee; border-radius:10px; padding:12px;">
+                </div>
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:700; color:#1a2a3a;">आपका संदेश (Message)</label>
+                    <textarea id="enq-msg" class="login-input" placeholder="Interested in this property. Please call me." style="width:100%; height:80px; border:1.5px solid #eee; border-radius:10px; padding:12px; resize:none;">प्रॉपर्टी के बारे में और जानकारी चाहिए।</textarea>
+                </div>
+
+                <button class="login-btn enq-submit-btn" onclick="submitEnquiry(${pid})" style="background:#138808; border-radius:12px;">
+                    <i class="fas fa-paper-plane"></i> Submit Enquiry
+                </button>
+                <button class="prop-btn" style="background:none; color:#999; margin-top:10px;" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    `;
+}
+
+async function submitEnquiry(pid) {
+    const name = document.getElementById('enq-name').value.trim();
+    const phone = document.getElementById('enq-phone').value.trim();
+    const message = document.getElementById('enq-msg').value.trim();
+
+    if (!name || !phone) {
+        alert("कृपया अपना नाम और मोबाइल नंबर भरें।");
+        return;
+    }
+
+    const submitBtn = document.querySelector('.enq-submit-btn');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    submitBtn.disabled = true;
+
+    try {
+        const enquiry = {
+            id: Date.now(),
+            propertyId: pid,
+            propertyName: State.properties.find(x => x.id === pid).title,
+            name,
+            phone,
+            message,
+            date: new Date().toLocaleString(),
+            status: 'new'
+        };
+
+        if (!State.enquiries) State.enquiries = [];
+        State.enquiries.push(enquiry);
+
+        // In a real app, you'd push to Firebase here
+        if (typeof database !== 'undefined' \u0026\u0026 database) {
+            await database.ref('bhumi_v2/enquiries').push(enquiry);
+        }
+
+        const modal = document.querySelector('.modal-content');
+        modal.innerHTML = `
+            <div style="text-align:center; padding:40px 20px;">
+                <div style="width:80px; height:80px; background:#e8f5e9; color:#138808; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:2.5rem; animation: popIn 0.5s ease-out;">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h3 style="color:#1a2a3a; margin-bottom:10px;">Enquiry Sent!</h3>
+                <p style="color:#666; margin-bottom:25px;">हम आपसे जल्द ही संपर्क करेंगे। धन्यवाद।</p>
+                <button class="login-btn" onclick="closeModal()" style="background:#138808; width:auto; padding:10px 40px;">OK</button>
+            </div>
+        `;
+    } catch (err) {
+        console.error("Enquiry Error:", err);
+        alert("Something went wrong. Please try again.");
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Enquiry';
+        submitBtn.disabled = false;
+    }
+}
+
 
 function setupFirebaseListener() {
     if (typeof database === 'undefined' || !database) return;
@@ -1028,7 +1130,7 @@ window.editProfileName = async () => {
 
 
 // --- Shared Components ---
-function renderPropertyCard(p) {
+function renderPropertyCard(p, isLikeView = false) {
     const isLiked = State.likes.includes(p.id);
     return `
         <div class="prop-card" onclick="navigate('details', ${p.id})">
@@ -1055,6 +1157,11 @@ function renderPropertyCard(p) {
                     </div>
                 ` : ''}
                 <button class="prop-btn">${p.isOffline ? 'Sample View' : 'विवरण देखें'}</button>
+                ${isLikeView ? `
+                    <button class="prop-btn enquiry-btn" onclick="event.stopPropagation(); showEnquiryModal(${p.id})">
+                        <i class="fas fa-paper-plane"></i> Enquiry (पूछताछ करें)
+                    </button>
+                ` : ''}
             </div>
             ${p.isOffline ? `<div class="offline-badge">OFFLINE SAMPLE</div>` : ''}
         </div>
@@ -1252,7 +1359,7 @@ function renderLikes(container) {
             <div style="background: linear-gradient(to right, #FF9933, #FFFFFF, #138808); padding: 15px; border-radius: 15px; margin-bottom: 25px; text-align: center; border: 2px solid rgba(0,0,0,0.05);">
                 <h2 style="margin:0; color:#1a2a3a; font-size:1.4rem; font-weight:900;"><i class="fas fa-heart" style="color:#D32F2F;"></i> पसंदीदा प्रॉपर्टीज</h2>
             </div>
-            ${likedProps.length === 0 ? `<div style="text-align:center; padding:50px; color:#999;">कोई पसंदीदा प्रॉपर्टी नहीं मिली</div>` : `<div class="property-grid">${likedProps.map(p => renderPropertyCard(p)).join('')}</div>`}
+            ${likedProps.length === 0 ? `<div style="text-align:center; padding:50px; color:#999;">कोई पसंदीदा प्रॉपर्टी नहीं मिली</div>` : `<div class="property-grid">${likedProps.map(p => renderPropertyCard(p, true)).join('')}</div>`}
         </div>
     `;
 }
