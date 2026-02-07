@@ -2222,11 +2222,27 @@ function renderAgent(container) {
             </aside>
             <main class="dash-main">
                 <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-                    <div style="display:flex; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:15px;">
                         <i class="fas fa-bars mobile-menu-btn" style="display:none; margin-right:15px; font-size:1.5rem; cursor:pointer;" onclick="toggleSidebar()"></i>
+                        
+                        <!-- Agent Profile Photo with Edit -->
+                        <div style="position:relative; width:70px; height:70px; flex-shrink:0;">
+                            ${agent.photo ?
+            `<img src="${agent.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:3px solid #138808; box-shadow:0 4px 15px rgba(0,0,0,0.1);">` :
+            `<div style="width:100%; height:100%; background:#e8f5e9; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#138808; font-size:2rem; font-weight:800; border:3px solid #138808; box-shadow:0 4px 15px rgba(0,0,0,0.1);">${agent.name.charAt(0)}</div>`
+        }
+                            <label for="agent-profile-upload" style="position:absolute; bottom:0; right:0; background:#FF9933; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.3); border:2px solid white;">
+                                <i class="fas fa-camera" style="font-size:0.7rem; color:white;"></i>
+                            </label>
+                            <input type="file" id="agent-profile-upload" accept="image/*" style="display:none;" onchange="handleProfilePhotoUpload(this)">
+                        </div>
+                        
                         <div>
-                            <h1 style="font-size:1.6rem; color:#1a2a3a;">Welcome, ${State.user.name}</h1>
-                            <p style="font-size:0.85rem; color:#666;">Manage your listings and track performance.</p>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <h1 style="font-size:1.6rem; color:#1a2a3a; margin:0;">Welcome, ${State.user.name}</h1>
+                                <i class="fas fa-pen" onclick="editProfileName()" style="font-size:0.9rem; cursor:pointer; opacity:0.6; color:#138808;" title="Edit Name"></i>
+                            </div>
+                            <p style="font-size:0.85rem; color:#666; margin:5px 0 0 0;">Manage your listings and track performance.</p>
                         </div>
                     </div>
                 ${(tab === 'properties' || tab === 'dashboard') ? `
