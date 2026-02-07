@@ -2386,9 +2386,14 @@ function renderDetails(container) {
         let contentHtml = '';
         if (activeTab === 'Details') {
             contentHtml = `
-                <div style="margin-bottom:20px;">
-                    <h2 style="color:#1a2a3a; font-size:1.6rem; font-weight:900; margin-bottom:5px; line-height:1.2;">${p.title}</h2>
-                    <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
+                <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="flex:1;">
+                        <h2 style="color:#1a2a3a; font-size:1.6rem; font-weight:900; margin-bottom:5px; line-height:1.2;">${p.title}</h2>
+                        <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
+                    </div>
+                    <div onclick="toggleLike(event, ${p.id})" style="cursor:pointer; width:48px; height:48px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 15px rgba(0,0,0,0.1); flex-shrink:0; margin-left:15px; border:1px solid #eee;">
+                        <i class="${State.likes.includes(p.id) ? 'fas' : 'far'} fa-heart" style="color:${State.likes.includes(p.id) ? '#FF5252' : '#666'}; font-size:1.4rem;"></i>
+                    </div>
                 </div>
                 <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800; font-size:1.3rem;">विवरण एवं स्थान</h3>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -2475,9 +2480,6 @@ function renderDetails(container) {
                     ` : ''}
                     <div style="position:absolute; top:20px; left:20px; background:rgba(255,255,255,0.9); color:#1a2a3a; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.2); z-index:10;" onclick="navigate('home')">
                         <i class="fas fa-arrow-left"></i>
-                    </div>
-                    <div class="prop-like-btn" onclick="toggleLike(event, ${p.id})" style="top:20px; left:auto; right:20px; background:rgba(255,255,255,0.9); color:#1a2a3a; width:40px; height:40px; border-radius:50%; border:none; box-shadow:0 4px 10px rgba(0,0,0,0.2);">
-                        <i class="${State.likes.includes(p.id) ? 'fas' : 'far'} fa-heart" style="color:${State.likes.includes(p.id) ? '#FF5252' : '#666'}; font-size:1.3rem;"></i>
                     </div>
                 </div>
                 <div class="details-tabs" style="display:flex; gap:8px; padding:12px; background:white; position:sticky; top:0; z-index:100; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
