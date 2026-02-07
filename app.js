@@ -50,6 +50,7 @@ const State = {
     agentTab: 'dashboard',
     agentSearch: '',
     loadingMessage: 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...',
+    isCriticalTimeout: false,
     settings: {
         showDate: true,
         contactInfo: {
@@ -197,8 +198,8 @@ function loadFromFirebase(callback) {
     // Critical connection timer (10 seconds)
     const criticalNetTimer = setTimeout(() => {
         if (State.isLoading && !State.isDataLoaded) {
-            State.loadingMessage = '<i class="fas fa-wifi-slash"></i><br>Connection slow hai!<br>Please Check Internet';
-            render(); // Refresh to show new message in loader
+            State.isCriticalTimeout = true;
+            render(); // Refresh to show big warning instead of loader
         }
     }, 10000);
 
@@ -210,6 +211,7 @@ function loadFromFirebase(callback) {
             clearTimeout(slowNetTimer);
             clearTimeout(criticalNetTimer);
             hideSlowNetWarning();
+            State.isCriticalTimeout = false;
             State.loadingMessage = 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...'; // Reset
 
             const data = snapshot.val();
@@ -256,6 +258,7 @@ function loadFromFirebase(callback) {
             console.error("Firebase Load Error:", err);
             clearTimeout(slowNetTimer);
             clearTimeout(criticalNetTimer);
+            State.isCriticalTimeout = false;
             hideSlowNetWarning();
             State.isLoading = false; // ERROR, STOP LOADING
             if (callback) callback(false);
@@ -1146,7 +1149,7 @@ function renderHome(container) {
         </div>
 
         <div class="property-grid" id="home-prop-grid" style="position: relative;">
-            ${State.isLoading ? `
+            ${(State.isLoading && !State.isCriticalTimeout) ? `
                 <div class="smart-loader-overlay">
                     <div style="position: relative; width: 165px; height: 165px; display: flex; align-items: center; justify-content: center;">
                         <div class="loader-circle"></div>
@@ -1154,17 +1157,29 @@ function renderHome(container) {
                     </div>
                 </div>
             ` : ''}
-            ${initialProps.length > 0
-            ? initialProps.map(p => renderPropertyCard(p)).join('')
-            : (State.isLoading
-                ? `<!-- Skeleton Loading When Data is Fetching -->
+
+            ${(State.isCriticalTimeout && !State.isDataLoaded) ? `
+                <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: #fff3e0; border-radius: 18px; border: 2px dashed #FF9933; margin: 10px 0; animation: popIn 0.5s ease-out;">
+                    <div style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(255, 153, 51, 0.2);">
+                        <i class="fas fa-wifi-slash" style="font-size: 2.5rem; color: #FF9933;"></i>
+                    </div>
+                    <h2 style="color: #1a2a3a; margin-bottom: 8px; font-size: 1.5rem;">Connection slow hai!</h2>
+                    <p style="color: #666; font-weight: 600; font-size: 1rem; margin-bottom: 25px;">Please Check Your Internet Connection</p>
+                    <button onclick="location.reload()" style="padding: 12px 35px; background: #1a2a3a; color: white; border: none; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 5px 15px rgba(0,0,0,0.2); text-transform: uppercase; letter-spacing: 0.5px;">Retry Now</button>
+                    <div style="margin-top: 15px; font-size: 0.8rem; color: #999;">Searching for data in background...</div>
+                </div>
+            ` : (
+            initialProps.length > 0
+                ? initialProps.map(p => renderPropertyCard(p)).join('')
+                : (State.isLoading
+                    ? `<!-- Skeleton Loading When Data is Fetching -->
                        <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
                        <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
                        <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>
                        <div class="prop-card skeleton-card"><div class="prop-img-box skeleton" style="height:160px;"></div><div class="prop-body"><div class="skeleton sk-price"></div><div class="skeleton sk-title"></div><div class="skeleton sk-text"></div></div></div>`
-                : '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No properties found in this category.</div>'
-            )
-        }
+                    : '<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No properties found in this category.</div>'
+                )
+        )}
         </div>
         
         ${hasMore ? `
