@@ -40,7 +40,7 @@ const State = {
     user: null,
     selectedPropertyId: null,
     likes: [],
-    properties: [], // Cloud-First: Init empty, wait for Firebase
+    properties: [], // Will be initialized with Offline properties in loadGlobalData
     withdrawalRequests: [],
     agents: [
         { id: 101, name: "John Agent", email: "john.agent@bhumidekho.com", password: "admin123", phone: "9876543210", status: "approved", wallet: 5000 }
@@ -90,6 +90,66 @@ const State = {
     }
 };
 
+// --- Offline Data (Shown while internet is slow or loading) ---
+const OFFLINE_PROPERTIES = [
+    {
+        id: 'off_1',
+        title: "Modern 3BHK Apartment - Sample",
+        city: "Mumbai",
+        category: "Residential",
+        price: "1.2 Cr",
+        area: "1200 sq.ft",
+        priceSqft: "10,000",
+        image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: true,
+        isOffline: true,
+        createdAt: "Added Just Now"
+    },
+    {
+        id: 'off_2',
+        title: "Prime Commercial Plot - Sample",
+        city: "Delhi",
+        category: "Plot",
+        price: "85 Lakh",
+        area: "1500 sq.ft",
+        priceSqft: "5,666",
+        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: true,
+        isOffline: true,
+        createdAt: "Added Just Now"
+    },
+    {
+        id: 'off_3',
+        title: "Luxury Villa with Garden - Sample",
+        city: "Pune",
+        category: "Villa",
+        price: "2.5 Cr",
+        area: "3500 sq.ft",
+        priceSqft: "7,142",
+        image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: false,
+        isOffline: true,
+        createdAt: "Added Just Now"
+    },
+    {
+        id: 'off_4',
+        title: "Agricultural Land Near NH - Sample",
+        city: "Lucknow",
+        category: "Agricultural Land",
+        price: "45 Lakh",
+        area: "1 Acre",
+        priceSqft: "1.03",
+        image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80",
+        status: "approved",
+        featured: false,
+        isOffline: true,
+        createdAt: "Added Just Now"
+    }
+];
+
 // --- Firebase Helper Functions ---
 function saveToFirebase() {
     if (typeof database === 'undefined' || !database) return Promise.resolve();
@@ -126,8 +186,21 @@ function loadFromFirebase(callback) {
 
     State.isLoading = true; // Ensure loading mode on start
 
+    // Start a timer for slow internet warning
+    const slowNetTimer = setTimeout(() => {
+        if (State.isLoading && !State.isDataLoaded) {
+            showSlowNetWarning("Internet slow hai, kripya intezar karein...");
+        }
+    }, 6000);
+
+    // Initial check: if already offline
+    if (!navigator.onLine) showSlowNetWarning("No Internet! Please check your connection.");
+
     database.ref('bhumi_v2').once('value')
         .then(snapshot => {
+            clearTimeout(slowNetTimer);
+            hideSlowNetWarning();
+
             const data = snapshot.val();
 
             // Mark data as loaded successfully, allowing future saves
@@ -143,36 +216,74 @@ function loadFromFirebase(callback) {
                 if (data.otherPage) State.otherPage = data.otherPage;
 
                 // CRITICAL FIX: Firebase sometimes returns an Object instead of Array
+                // Merge Logic: Cloud Data + Offline Data
+                let cloudProps = [];
                 if (data.properties) {
-                    if (Array.isArray(data.properties)) {
-                        State.properties = data.properties;
-                    } else {
-                        // Convert Object {1: {...}, 2: {...}} to Array [{...}, {...}]
-                        State.properties = Object.values(data.properties);
-                    }
-                } else {
-                    State.properties = [];
+                    cloudProps = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
                 }
 
-                // Sanitization: Ensure no null/empty slots in array
-                State.properties = State.properties.filter(p => p != null);
+                // Keep Cloud Props at top, Offline Props at bottom (only if cloud is small, or just as fallback)
+                // Filter out any nulls
+                cloudProps = cloudProps.filter(p => p != null && !p.isOffline);
+
+                // Combine: Real Cloud Properties + Sample Offline Properties
+                State.properties = [...cloudProps, ...OFFLINE_PROPERTIES];
 
                 saveToLocalStorage(); // Sync back to local storage (Settings/Session only)
                 State.isLoading = false; // DATA LOADED
                 render(); // Explicitly re-render to remove skeleton and show data
                 if (callback) callback(true);
             } else {
+                State.properties = [...OFFLINE_PROPERTIES]; // If no data in Firebase, show offline samples
                 State.isLoading = false; // NO DATA FOUND (But loaded successfully)
+                render();
                 if (callback) callback(false);
             }
 
         })
         .catch(err => {
             console.error("Firebase Load Error:", err);
+            hideSlowNetWarning();
             State.isLoading = false; // ERROR, STOP LOADING
             if (callback) callback(false);
         });
 }
+
+// --- UX Helpers for Slow Internet ---
+function showSlowNetWarning(msg = "Internet slow hai, kripya intezar karein...") {
+    let warning = document.getElementById('slow-net-warning');
+    if (!warning) {
+        warning = document.createElement('div');
+        warning.id = 'slow-net-warning';
+        warning.innerHTML = `
+            <div style="background: rgba(255, 153, 51, 0.98); color: white; padding: 12px 25px; border-radius: 50px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); font-size: 0.9rem; font-weight: 700; border: 1.5px solid rgba(255,255,255,1); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                <i class="fas fa-wifi-slash" style="font-size: 1.1rem;"></i>
+                <span id="slow-net-msg">${msg}</span>
+            </div>
+        `;
+        warning.style.cssText = "position:fixed; top:85px; left:50%; transform:translateX(-50%); z-index:9999;";
+        document.body.appendChild(warning);
+    } else {
+        const msgEl = document.getElementById('slow-net-msg');
+        if (msgEl) msgEl.innerText = msg;
+    }
+}
+
+function hideSlowNetWarning() {
+    const warning = document.getElementById('slow-net-warning');
+    if (warning) {
+        warning.style.animation = "popOut 0.5s ease-in forwards";
+        setTimeout(() => { if (warning.parentElement) warning.remove(); }, 500);
+    }
+}
+
+// Online/Offline Listeners
+window.addEventListener('offline', () => showSlowNetWarning("No Internet Connection!"));
+window.addEventListener('online', () => {
+    showSlowNetWarning("Back Online! Loading data...");
+    setTimeout(hideSlowNetWarning, 2000);
+});
+
 
 function setupFirebaseListener() {
     if (typeof database === 'undefined' || !database) return;
@@ -190,21 +301,12 @@ function setupFirebaseListener() {
             if (data.otherPage) State.otherPage = data.otherPage;
 
             // CRITICAL FIX: Also handle Object-to-Array conversion here for live updates
-            if (data.properties) {
-                if (Array.isArray(data.properties)) {
-                    State.properties = data.properties;
-                } else {
-                    State.properties = Object.values(data.properties);
-                }
-                State.properties = State.properties.filter(p => p != null);
+            if (data.hasOwnProperty('properties')) {
+                let liveProps = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
+                liveProps = liveProps.filter(p => p != null && !p.isOffline);
+                State.properties = [...liveProps, ...OFFLINE_PROPERTIES];
             } else {
-                // If live update sends null/undefined properties, keep existing or set empty?
-                // Usually better to trust the live data if it's explicitly null (deleted)
-                // But if it's missing from packet, we might want to keep existing.
-                // For now, let's assume if it sends data, it sends the full state.
-                if (data.hasOwnProperty('properties')) {
-                    State.properties = [];
-                }
+                State.properties = [...OFFLINE_PROPERTIES];
             }
 
             // We usually don't want to live-sync settings or customers while user is active 
@@ -332,9 +434,8 @@ function loadGlobalData() {
         };
     }
 
-    // Cloud-First Mode: We do NOT load properties from localStorage anymore.
-    // This forces the UI to wait for Firebase (showing Skeletons).
-    State.properties = [];
+    // Initialize with Offline properties for instant display
+    State.properties = [...OFFLINE_PROPERTIES];
 
     // Only load critical session data
     /*
@@ -927,8 +1028,9 @@ function renderPropertyCard(p) {
                         <i class="fas fa-clock"></i> ${p.createdAt || 'N/A'}
                     </div>
                 ` : ''}
-                <button class="prop-btn">विवरण देखें</button>
+                <button class="prop-btn">${p.isOffline ? 'Sample View' : 'विवरण देखें'}</button>
             </div>
+            ${p.isOffline ? `<div class="offline-badge">OFFLINE SAMPLE</div>` : ''}
         </div>
     `;
 }
@@ -1030,7 +1132,15 @@ function renderHome(container) {
             </div>
         </div>
 
-        <div class="property-grid" id="home-prop-grid">
+        <div class="property-grid" id="home-prop-grid" style="position: relative;">
+            ${State.isLoading ? `
+                <div class="smart-loader-overlay">
+                    <div style="position: relative; width: 130px; height: 130px; display: flex; align-items: center; justify-content: center;">
+                        <div class="loader-circle"></div>
+                        <div class="loader-text-inner">आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...</div>
+                    </div>
+                </div>
+            ` : ''}
             ${initialProps.length > 0
             ? initialProps.map(p => renderPropertyCard(p)).join('')
             : (State.isLoading
