@@ -678,19 +678,28 @@ function updateUIForUser() {
 
     if (State.user) {
         nameSpan.innerText = State.user.name ? State.user.name.split(' ')[0] : 'User';
-        nameSpan.style.display = 'block';
+        nameSpan.style.display = 'block'; // Ensure name is visible
+
         if (State.user.photo) {
-            profileIconBox.innerHTML = `<img src="${State.user.photo}" style="width:100%; height:100%; object-fit:cover;">`;
+            // Use image
+            profileIconBox.innerHTML = `<img src="${State.user.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+            profileIconBox.style.border = '2px solid #138808'; // Active border
         } else {
-            profileIconBox.innerHTML = `<i class="fas fa-user-circle"></i>`;
+            // Use initial or default icon
+            const initial = State.user.name ? State.user.name.charAt(0).toUpperCase() : 'U';
+            profileIconBox.innerHTML = `<span style="font-size:1.2rem; font-weight:700; color:#138808;">${initial}</span>`;
+            profileIconBox.style.border = '2px solid #ddd';
         }
+
         profileAction.onclick = () => {
+            // Navigate based on role
             if (State.user.role === 'customer') navigate('profile');
             else navigate(State.user.role);
         };
     } else {
         nameSpan.style.display = 'none';
-        profileIconBox.innerHTML = `<i class="fas fa-user"></i>`;
+        profileIconBox.innerHTML = `<i class="fas fa-user" style="color:#666;"></i>`;
+        profileIconBox.style.border = '2px solid #ddd';
         profileAction.onclick = () => navigate('login');
     }
 
