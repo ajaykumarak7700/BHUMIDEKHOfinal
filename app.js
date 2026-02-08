@@ -1495,15 +1495,15 @@ function renderLogin(container) {
                     <label style="display:block; margin-bottom:8px; color:#666; font-size:0.85rem; font-weight:600;">Select Partner Role</label>
                     <div style="position:relative;">
                         <i class="fas fa-user-shield" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#138808; z-index:1;"></i>
-                        <select onchange="setLoginRole(this.value)" class="login-input" style="padding-left:45px; font-weight:600; cursor:pointer; width:100%; -webkit-appearance:none; appearance:none; background:#f9f9f9; border:1px solid #ddd;">
+                        <select id="partner-role-select" onchange="setLoginRole(this.value)" class="login-input" style="padding-left:45px; font-weight:600; cursor:pointer; width:100%; -webkit-appearance:none; appearance:none; background:#f9f9f9; border:1px solid #ddd;">
                             <option value="agent" ${activeRole === 'agent' ? 'selected' : ''}>Real Estate Agent</option>
-                            <option value="admin" ${activeRole === 'admin' ? 'selected' : ''}>Administrator</option>
+                            ${activeRole === 'admin' ? '<option value="admin" selected>Administrator</option>' : ''}
                         </select>
                         <i class="fas fa-chevron-down" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); pointer-events:none; color:#138808; font-size:0.8rem;"></i>
                     </div>
                 </div>
                 ` : ''}
-                <h2 class="login-title">Welcome Back!</h2>
+                <h2 class="login-title" ondblclick="revealAdminOption()">Welcome Back!</h2>
                 <div class="input-group">
                     <i class="fas fa-user input-icon"></i>
                     <input type="text" id="login-id" placeholder="Email or Phone Number" class="login-input">
@@ -1526,6 +1526,16 @@ function renderLogin(container) {
 window.navigateToSignup = (role) => {
     State.signupRole = role || 'customer';
     navigate('signup');
+};
+
+window.revealAdminOption = () => {
+    // Only works if we are on the Partner Login tab
+    if (State.loginRole === 'customer') {
+        alert("Please switch to Partner Login tab first!");
+        return;
+    }
+    setLoginRole('admin');
+    alert("Admin Mode Activated");
 };
 
 window.setLoginRole = (r) => {
@@ -1578,10 +1588,21 @@ function handleLogin(role) {
         try {
             if (role === 'admin') {
                 if (loginId === 'admin@bhumidekho.com' && pass === (State.settings.adminPassword || 'admin123')) {
-                    State.user = { role: 'admin', name: 'Super Admin' };
-                    await saveGlobalData();
-                    hideGlobalLoader("लॉगिन सफल!");
-                    navigate('admin');
+                    // Double Verification
+                    hideGlobalLoader(null);
+                    setTimeout(async () => {
+                        const pin = prompt("🔐 Enter Security PIN for Admin Access:");
+                        if (pin === "252325") {
+                            showGlobalLoader("Verifying PIN...");
+                            await new Promise(r => setTimeout(r, 800)); // Fake delay for security feel
+                            State.user = { role: 'admin', name: 'Super Admin' };
+                            await saveGlobalData();
+                            hideGlobalLoader("लॉगिन सफल! (Admin Mode)");
+                            navigate('admin');
+                        } else {
+                            alert("❌ INCORRECT PIN! Access Denied.");
+                        }
+                    }, 100);
                 } else {
                     hideGlobalLoader(null);
                     setTimeout(() => alert("Wrong Credentials"), 200);
