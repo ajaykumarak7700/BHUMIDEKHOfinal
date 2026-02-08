@@ -1485,18 +1485,24 @@ function renderLogin(container) {
     container.innerHTML = `
         <div class="login-wrap">
             <div class="login-box">
-                <div style="margin-bottom:25px; position:relative; text-align:left;">
-                    <label style="display:block; margin-bottom:8px; color:#666; font-size:0.85rem; font-weight:600;">Login Type</label>
+                <div class="role-tab-switcher" style="margin-bottom:20px;">
+                    <button class="role-tab ${activeRole === 'customer' ? 'active' : ''}" onclick="setLoginRole('customer')">Customer Login</button>
+                    <button class="role-tab ${activeRole !== 'customer' ? 'active' : ''}" onclick="setLoginRole('agent')">Partner Login</button>
+                </div>
+                
+                ${activeRole !== 'customer' ? `
+                <div style="margin-bottom:25px; position:relative; text-align:left; animation: fadeIn 0.3s ease;">
+                    <label style="display:block; margin-bottom:8px; color:#666; font-size:0.85rem; font-weight:600;">Select Partner Role</label>
                     <div style="position:relative;">
-                        <i class="fas fa-users-cog" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#138808; z-index:1;"></i>
-                        <select onchange="setLoginRole(this.value)" class="login-input" style="padding-left:45px; font-weight:600; cursor:pointer; width:100%; -webkit-appearance:none; appearance:none; background:#f9f9f9;">
-                            <option value="customer" ${activeRole === 'customer' ? 'selected' : ''}>Customer (User)</option>
+                        <i class="fas fa-user-shield" style="position:absolute; left:15px; top:50%; transform:translateY(-50%); color:#138808; z-index:1;"></i>
+                        <select onchange="setLoginRole(this.value)" class="login-input" style="padding-left:45px; font-weight:600; cursor:pointer; width:100%; -webkit-appearance:none; appearance:none; background:#f9f9f9; border:1px solid #ddd;">
                             <option value="agent" ${activeRole === 'agent' ? 'selected' : ''}>Real Estate Agent</option>
                             <option value="admin" ${activeRole === 'admin' ? 'selected' : ''}>Administrator</option>
                         </select>
                         <i class="fas fa-chevron-down" style="position:absolute; right:15px; top:50%; transform:translateY(-50%); pointer-events:none; color:#138808; font-size:0.8rem;"></i>
                     </div>
                 </div>
+                ` : ''}
                 <h2 class="login-title">Welcome Back!</h2>
                 <div class="input-group">
                     <i class="fas fa-user input-icon"></i>
