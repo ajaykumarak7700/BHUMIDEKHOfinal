@@ -366,6 +366,9 @@ async function submitEnquiry(pid) {
         return;
     }
 
+    const p = State.properties.find(x => x.id === pid);
+    if (!p) return;
+
     const submitBtn = document.querySelector('.enq-submit-btn');
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
     submitBtn.disabled = true;
@@ -374,7 +377,7 @@ async function submitEnquiry(pid) {
         const enquiry = {
             id: Date.now(),
             propertyId: pid,
-            propertyName: State.properties.find(x => x.id === pid).title,
+            propertyName: p.title,
             name,
             phone,
             message,
@@ -390,6 +393,21 @@ async function submitEnquiry(pid) {
             await database.ref('bhumi_v2/enquiries').push(enquiry);
         }
 
+        // --- WhatsApp Integration ---
+        const whatsappNumber = p.whatsapp || p.mobile || '0000000000';
+        const waMsg = `*New Property Enquiry*\n\n` +
+            `*Property:* ${p.title}\n` +
+            `*Price:* Rs. ${p.price}\n` +
+            `*Location:* ${p.city}\n` +
+            `*Category:* ${p.category}\n\n` +
+            `*Client Name:* ${name}\n` +
+            `*Client Phone:* ${phone}\n` +
+            `*Message:* ${message}\n\n` +
+            `Sent from BhumiDekho App`;
+
+        const waUrl = `https://wa.me/91${whatsappNumber}?text=${encodeURIComponent(waMsg)}`;
+
+        // Show success and open WhatsApp
         const modal = document.querySelector('.modal-content');
         modal.innerHTML = `
             <div style="text-align:center; padding:40px 20px;">
@@ -397,10 +415,16 @@ async function submitEnquiry(pid) {
                     <i class="fas fa-check"></i>
                 </div>
                 <h3 style="color:#1a2a3a; margin-bottom:10px;">Enquiry Sent!</h3>
-                <p style="color:#666; margin-bottom:25px;">हम आपसे जल्द ही संपर्क करेंगे। धन्यवाद।</p>
-                <button class="login-btn" onclick="closeModal()" style="background:#138808; width:auto; padding:10px 40px;">OK</button>
+                <p style="color:#666; margin-bottom:25px;">Redirecting to WhatsApp for property owner contact...</p>
+                <button class="login-btn" onclick="window.open('${waUrl}', '_blank'); closeModal();" style="background:#138808; width:auto; padding:10px 40px;">Open WhatsApp Now</button>
             </div>
         `;
+
+        // Automatically open after a short delay
+        setTimeout(() => {
+            window.open(waUrl, '_blank');
+        }, 1500);
+
     } catch (err) {
         console.error("Enquiry Error:", err);
         alert("Something went wrong. Please try again.");
