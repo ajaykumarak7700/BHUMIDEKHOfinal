@@ -309,6 +309,42 @@ function retryLoading() {
 }
 
 // --- Enquiry System ---
+function directWhatsAppEnquiry(pid) {
+    const p = State.properties.find(x => x.id === pid);
+    if (!p) return;
+
+    const whatsappNumber = p.whatsapp || p.mobile || '0000000000';
+    const userName = State.user ? State.user.name : 'Client';
+    const userPhone = State.user ? (State.user.phone || 'N/A') : 'N/A';
+
+    const waMsg = `*Property Enquiry*\n\n` +
+        `*Property:* ${p.title}\n` +
+        `*ID:* BD-${p.id}\n` +
+        `*Price:* Rs. ${p.price}\n` +
+        `*Location:* ${p.city}\n\n` +
+        `*Details:* I am interested in this property. Please provide more information.\n\n` +
+        `*Sent by:* ${userName} (${userPhone})\n` +
+        `Sent via BhumiDekho App`;
+
+    const waUrl = `https://wa.me/91${whatsappNumber}?text=${encodeURIComponent(waMsg)}`;
+
+    // Optional: Silently record enquiry in background
+    if (typeof database !== 'undefined' && database) {
+        database.ref('bhumi_v2/enquiries').push({
+            id: Date.now(),
+            propertyId: pid,
+            propertyName: p.title,
+            name: userName,
+            phone: userPhone,
+            message: 'Direct WhatsApp Enquiry',
+            date: new Date().toLocaleString(),
+            status: 'direct_wa'
+        });
+    }
+
+    window.open(waUrl, '_blank');
+}
+
 function showEnquiryModal(pid) {
     const p = State.properties.find(x => x.id === pid);
     if (!p) return;
@@ -1183,7 +1219,7 @@ function renderPropertyCard(p, isLikeView = false) {
                 ` : ''}
                 <button class="prop-btn">${p.isOffline ? 'Sample View' : 'विवरण देखें'}</button>
                 ${isLikeView ? `
-                    <button class="prop-btn enquiry-btn" onclick="event.stopPropagation(); showEnquiryModal(${p.id})">
+                    <button class="prop-btn enquiry-btn" onclick="event.stopPropagation(); directWhatsAppEnquiry(${p.id})">
                         <i class="fas fa-paper-plane"></i> Enquiry (पूछताछ करें)
                     </button>
                 ` : ''}
@@ -2641,7 +2677,7 @@ function renderDetails(container) {
                 <div id="details-content-grid" style="padding:20px; padding-bottom:120px;">${contentHtml}</div>
                 <div class="contact-footer" style="padding:15px 20px 25px; flex-direction:column; gap:12px;">
                     <div style="display:flex; gap:10px; width:100%;">
-                        <button class="login-btn" style="background:#e8f5e9; color:#138808; border:1.5px solid #c8e6c9; margin:0; flex:1; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="showEnquiryModal(${p.id})">
+                        <button class="login-btn" style="background:#e8f5e9; color:#138808; border:1.5px solid #c8e6c9; margin:0; flex:1; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="directWhatsAppEnquiry(${p.id})">
                             <i class="fas fa-paper-plane"></i> Enquiry (पूछताछ)
                         </button>
                         <button class="login-btn" style="background:#FFF9F3; color:#FF9933; border:1.5px solid #FFB366; margin:0; flex:1; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="shareProperty(${p.id})">
