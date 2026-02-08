@@ -49,6 +49,7 @@ const State = {
     adminSearch: '',
     agentTab: 'dashboard',
     agentSearch: '',
+    loginRole: 'customer', // Added for login page state
     detailsTab: 'Details',
     loadingMessage: 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...',
     isCriticalTimeout: false,
@@ -1478,38 +1479,40 @@ function renderLikes(container) {
 }
 
 function renderLogin(container) {
-    let activeRole = 'customer';
-    const renderContent = () => {
-        container.innerHTML = `
-            <div class="login-wrap">
-                <div class="login-box">
-                    <div class="role-tab-switcher">
-                        <button class="role-tab ${activeRole === 'customer' ? 'active' : ''}" onclick="setRole('customer')">Customer</button>
-                        <button class="role-tab ${activeRole === 'agent' ? 'active' : ''}" onclick="setRole('agent')">Agent</button>
-                        <button class="role-tab ${activeRole === 'admin' ? 'active' : ''}" onclick="setRole('admin')">Admin</button>
-                    </div>
-                    <h2 class="login-title">Welcome Back!</h2>
-                    <div class="input-group">
-                        <i class="fas fa-user input-icon"></i>
-                        <input type="text" id="login-id" placeholder="Email or Phone Number" class="login-input">
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="pass" placeholder="Password" class="login-input">
-                    </div>
-                    <button class="login-btn" onclick="handleLogin('${activeRole}')">LOGIN SECURELY</button>
-                    <div class="login-footer">
-                        <a href="#" onclick="openForgotPasswordModal()" class="forgot-link">Forgot Password?</a>
-                        ${activeRole !== 'admin' ? `<a href="#" onclick="navigate('signup')" class="signup-link">Create Account</a>` : ''}
-                    </div>
-                    <button class="prop-btn" style="background:none; color:#999; margin-top:15px; width:100%; border:1px solid #eee;" onclick="navigate('home')">Close</button>
+    const activeRole = State.loginRole || 'customer';
+
+    container.innerHTML = `
+        <div class="login-wrap">
+            <div class="login-box">
+                <div class="role-tab-switcher">
+                    <button class="role-tab ${activeRole === 'customer' ? 'active' : ''}" onclick="setLoginRole('customer')">Customer</button>
+                    <button class="role-tab ${activeRole === 'agent' ? 'active' : ''}" onclick="setLoginRole('agent')">Agent</button>
+                    <button class="role-tab ${activeRole === 'admin' ? 'active' : ''}" onclick="setLoginRole('admin')">Admin</button>
                 </div>
+                <h2 class="login-title">Welcome Back!</h2>
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="login-id" placeholder="Email or Phone Number" class="login-input">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="pass" placeholder="Password" class="login-input">
+                </div>
+                <button class="login-btn" onclick="handleLogin('${activeRole}')">LOGIN SECURELY</button>
+                <div class="login-footer">
+                    <a href="#" onclick="openForgotPasswordModal()" class="forgot-link">Forgot Password?</a>
+                    ${activeRole !== 'admin' ? `<a href="#" onclick="navigate('signup')" class="signup-link">Create Account</a>` : ''}
+                </div>
+                <button class="prop-btn" style="background:none; color:#999; margin-top:15px; width:100%; border:1px solid #eee;" onclick="navigate('home')">Close</button>
             </div>
-        `;
-    };
-    window.setRole = (r) => { activeRole = r; renderContent(); };
-    renderContent();
+        </div>
+    `;
 }
+
+window.setLoginRole = (r) => {
+    State.loginRole = r;
+    render();
+};
 
 function openForgotPasswordModal() {
     const modal = document.getElementById('modal-container');
