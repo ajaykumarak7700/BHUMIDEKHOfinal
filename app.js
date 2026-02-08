@@ -1359,8 +1359,7 @@ window.goToSlide = (idx) => { currentSlide = idx; updateSlider(); startSlider();
 let isCategoryScrolling = false;
 window.categoryScrollStart = (e) => {
     isCategoryScrolling = true;
-    // Stop event propagation to prevent page slide triggers
-    e.stopPropagation();
+    // Removed e.stopPropagation() to allow swipe navigation on category bar
 
     // Add listeners to detect when scrolling ends
     const catScroll = document.getElementById('cat-scroll');
@@ -4617,43 +4616,58 @@ function handleSwipeGesture(startX, startY, endX, endY) {
 
     // Minimum distance for swipe (pixels)
     // Also ensuring it's mostly horizontal (not a scroll)
-    if (Math.abs(diffX) < 80 || Math.abs(diffY) > 60) return;
+    if (Math.abs(diffX) < 60 || Math.abs(diffY) > 60) return;
 
-    // Main navigation sequence from footer
-    const mainTabs = ['home', 'likes', 'other', 'contact', 'login'];
+    // NEW Logic: If on Home page, swipe changes Property Category
+    if (State.view === 'home') {
+        const categories = State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
+        const activeCat = State.homeCategory || 'All';
+        let currentIndex = categories.indexOf(activeCat);
+        if (currentIndex === -1) currentIndex = 0;
 
-    // Determine effective current view for sequence
-    let currentView = State.view;
-    if (['profile', 'admin', 'agent', 'signup'].includes(currentView)) {
-        currentView = 'login'; // Group all auth/profile views into the login tab position
+        if (diffX > 0) {
+            // Swipe Right (Go Previous Category)
+            if (currentIndex > 0) {
+                setHomeCategory(categories[currentIndex - 1]);
+                setTimeout(scrollToActiveCategory, 100);
+            }
+        } else {
+            // Swipe Left (Go Next Category)
+            if (currentIndex < categories.length - 1) {
+                setHomeCategory(categories[currentIndex + 1]);
+                setTimeout(scrollToActiveCategory, 100);
+            }
+        }
+        return; // Done with Home swiping
     }
 
+    // Original footer navigation removed as per user request ("footer menu change ho raha usko hata ke")
+    // If you want to keep footer swipe for other pages, uncomment below
+    /*
+    const mainTabs = ['home', 'likes', 'other', 'contact', 'login'];
+    let currentView = State.view;
+    if (['profile', 'admin', 'agent', 'signup'].includes(currentView)) {
+        currentView = 'login';
+    }
     let currentIndex = mainTabs.indexOf(currentView);
-
-    // Only allow swipe navigation between main tabs
     if (currentIndex === -1) return;
 
     if (diffX > 0) {
-        // Swipe Right (Go Previous Tab)
-        if (currentIndex > 0) {
-            const prevView = mainTabs[currentIndex - 1];
-            if (prevView === 'login' && State.user) {
-                if (State.user.role === 'customer') navigate('profile');
-                else navigate(State.user.role);
-            } else {
-                navigate(prevView);
-            }
-        }
+        if (currentIndex > 0) navigate(mainTabs[currentIndex - 1]);
     } else {
-        // Swipe Left (Go Next Tab)
-        if (currentIndex < mainTabs.length - 1) {
-            const nextView = mainTabs[currentIndex + 1];
-            if (nextView === 'login' && State.user) {
-                if (State.user.role === 'customer') navigate('profile');
-                else navigate(State.user.role);
-            } else {
-                navigate(nextView);
-            }
-        }
+        if (currentIndex < mainTabs.length - 1) navigate(mainTabs[currentIndex + 1]);
+    }
+    */
+}
+
+function scrollToActiveCategory() {
+    const activeBtn = document.querySelector('.cat-btn.active');
+    const catScroll = document.getElementById('cat-scroll');
+    if (activeBtn && catScroll) {
+        const scrollLeft = activeBtn.offsetLeft - (catScroll.clientWidth / 2) + (activeBtn.clientWidth / 2);
+        catScroll.scrollTo({
+            left: scrollLeft,
+            behavior: 'smooth'
+        });
     }
 }
