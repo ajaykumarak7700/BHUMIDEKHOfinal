@@ -2680,13 +2680,9 @@ function showPropertyModal() {
                         <div class="form-group">
                             <div class="label-edit-wrap"><input class="editable-label" id="l-cat" value="Category" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
                             <select id="p-cat">
-                                <option>Plot</option>
-                                <option>Rented Room</option>
-                                <option>Agricultural Land</option>
-                                <option>Residential</option>
-                                <option>Commercial</option>
-                                <option>Villa</option>
-                                <option>Farm House</option>
+                                ${(State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'])
+            .filter(c => c !== 'All')
+            .map(c => `<option>${c}</option>`).join('')}
                             </select>
                         </div>
                     </div>
@@ -3050,13 +3046,9 @@ function editProperty(id) {
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                         <div class="form-group"><label>City</label><input id="pe-city" value="${p.city}" required></div>
                         <div class="form-group"><label>Category</label><select id="pe-cat">
-                            <option ${p.category === 'Plot' ? 'selected' : ''}>Plot</option>
-                            <option ${p.category === 'Rented Room' ? 'selected' : ''}>Rented Room</option>
-                            <option ${p.category === 'Agricultural Land' ? 'selected' : ''}>Agricultural Land</option>
-                            <option ${p.category === 'Residential' ? 'selected' : ''}>Residential</option>
-                            <option ${p.category === 'Commercial' ? 'selected' : ''}>Commercial</option>
-                            <option ${p.category === 'Villa' ? 'selected' : ''}>Villa</option>
-                            <option ${p.category === 'Farm House' ? 'selected' : ''}>Farm House</option>
+                            ${(State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'])
+            .filter(c => c !== 'All')
+            .map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
                         </select></div>
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
