@@ -4767,8 +4767,8 @@ function finishSwipeGesture(startX, startY, endX, endY) {
                         newGrid.classList.add('swipe-enter-left');
                         scrollToActiveCategory();
                     }
-                }, 20);
-            }, 250);
+                }, 10);
+            }, 300);
         } else if (diffX < 0 && currentIndex < categories.length - 1) {
             // Swipe Left -> Next Category
             grid.classList.add('swipe-exit-left');
@@ -4781,11 +4781,11 @@ function finishSwipeGesture(startX, startY, endX, endY) {
                         newGrid.classList.add('swipe-enter');
                         scrollToActiveCategory();
                     }
-                }, 20);
-            }, 250);
+                }, 10);
+            }, 300);
         } else {
             // Bounce Back
-            grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+            grid.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
             grid.style.transform = `translateX(0)`;
         }
     } else {
@@ -4817,8 +4817,8 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter-left');
-                }, 20);
-            }, 250);
+                }, 10);
+            }, 300);
         } else if (diffX < 0 && currentIndex < tabs.length - 1) {
             // Next
             grid.classList.add('swipe-exit-left');
@@ -4828,10 +4828,10 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter');
-                }, 20);
-            }, 250);
+                }, 10);
+            }, 300);
         } else {
-            grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+            grid.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
             grid.style.transform = `translateX(0)`;
         }
     } else {

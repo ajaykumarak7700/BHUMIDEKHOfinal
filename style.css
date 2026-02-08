@@ -1787,48 +1787,49 @@ a[data-page="other"] i {
     will-change: transform, opacity;
     backface-visibility: hidden;
     perspective: 1000px;
+    transition: transform 0.1s linear;
 }
 
 .swipe-exit-left {
-    transform: translateX(-20%) !important;
+    transform: translate3d(-30%, 0, 0) scale(0.96) !important;
     opacity: 0 !important;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease !important;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease !important;
 }
 
 .swipe-exit-right {
-    transform: translateX(20%) !important;
+    transform: translate3d(30%, 0, 0) scale(0.96) !important;
     opacity: 0 !important;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease !important;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease !important;
 }
 
 .swipe-enter {
-    animation: swipeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+    animation: swipeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both !important;
 }
 
 .swipe-enter-left {
-    animation: swipeInLeft 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+    animation: swipeInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) both !important;
 }
 
 @keyframes swipeIn {
     from {
-        transform: translateX(20%);
+        transform: translate3d(30%, 0, 0) scale(1.04);
         opacity: 0;
     }
 
     to {
-        transform: translateX(0);
+        transform: translate3d(0, 0, 0) scale(1);
         opacity: 1;
     }
 }
 
 @keyframes swipeInLeft {
     from {
-        transform: translateX(-50%);
+        transform: translate3d(-30%, 0, 0) scale(1.04);
         opacity: 0;
     }
 
     to {
-        transform: translateX(0);
+        transform: translate3d(0, 0, 0) scale(1);
         opacity: 1;
     }
 }
