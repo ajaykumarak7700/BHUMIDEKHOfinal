@@ -2639,9 +2639,14 @@ function renderDetails(container) {
                 </div>
                 <div style="padding:20px; padding-bottom:120px;">${contentHtml}</div>
                 <div class="contact-footer" style="padding:15px 20px 25px; flex-direction:column; gap:12px;">
-                    <button class="login-btn" style="background:#FFF9F3; color:#FF9933; border:1.5px solid #FFB366; margin:0 0 5px 0; width:100%; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="shareProperty(${p.id})">
-                        <i class="fas fa-share-alt"></i> Share Details (शेयर विवरण)
-                    </button>
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <button class="login-btn" style="background:#e8f5e9; color:#138808; border:1.5px solid #c8e6c9; margin:0; flex:1; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="showEnquiryModal(${p.id})">
+                            <i class="fas fa-paper-plane"></i> Enquiry (पूछताछ)
+                        </button>
+                        <button class="login-btn" style="background:#FFF9F3; color:#FF9933; border:1.5px solid #FFB366; margin:0; flex:1; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="shareProperty(${p.id})">
+                            <i class="fas fa-share-alt"></i> Share (शेयर)
+                        </button>
+                    </div>
                     <div style="display:flex; gap:10px; width:100%;">
                         <a href="tel:${p.mobile || '0000000000'}" class="btn-green-fill" style="flex:1;">
                             <i class="fas fa-phone-alt"></i> अभी कॉल करें
