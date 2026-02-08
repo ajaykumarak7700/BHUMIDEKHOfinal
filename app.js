@@ -1194,21 +1194,39 @@ function renderHome(container) {
     const searchQuery = (State.homeSearch || '').toLowerCase();
 
     const filteredProps = props.filter(p => {
-        const matchesSearch = !searchQuery || p.title.toLowerCase().includes(searchQuery) || p.city.toLowerCase().includes(searchQuery);
-        const matchesCat = activeCat === 'All' ||
-            p.category === activeCat ||
-            (activeCat === 'Villa' && p.title.toLowerCase().includes('villa')) ||
-            (activeCat === 'Rented Room' && (p.description.toLowerCase().includes('rent') || p.title.toLowerCase().includes('rent'))) ||
-            (activeCat === 'Agricultural Land' && (p.title.toLowerCase().includes('agri') || p.description.toLowerCase().includes('agri') || p.title.toLowerCase().includes('farm'))) ||
-            (activeCat === 'Farm House' && p.title.toLowerCase().includes('farm'));
-        return matchesSearch && matchesCat;
+        // Only filter by search query, not by category anymore (category is now used for sorting)
+        return !searchQuery || p.title.toLowerCase().includes(searchQuery) || p.city.toLowerCase().includes(searchQuery);
     });
 
-    // Sort by Display Order (Admin-controlled positioning)
+    // Custom sort to prioritize active category, then featured, then display order, then time
     filteredProps.sort((a, b) => {
+        // 1. Category Priority
+        if (activeCat !== 'All') {
+            const isMatch = (item) =>
+                item.category === activeCat ||
+                (activeCat === 'Villa' && item.title.toLowerCase().includes('villa')) ||
+                (activeCat === 'Rented Room' && (item.description?.toLowerCase().includes('rent') || item.title.toLowerCase().includes('rent'))) ||
+                (activeCat === 'Agricultural Land' && (item.title.toLowerCase().includes('agri') || item.description?.toLowerCase().includes('agri') || item.title.toLowerCase().includes('farm'))) ||
+                (activeCat === 'Farm House' && item.title.toLowerCase().includes('farm'));
+
+            const matchA = isMatch(a);
+            const matchB = isMatch(b);
+            if (matchA && !matchB) return -1;
+            if (!matchA && matchB) return 1;
+        }
+
+        // 2. Featured Priority
+        if (a.featured !== b.featured) return b.featured ? 1 : -1;
+
+        // 3. Display Order Priority
         const orderA = a.displayOrder !== undefined ? a.displayOrder : 9999;
         const orderB = b.displayOrder !== undefined ? b.displayOrder : 9999;
-        return orderA - orderB;
+        if (orderA !== orderB) return orderA - orderB;
+
+        // 4. Time/ID Fallback
+        const timeA = a.createdTimestamp || a.id;
+        const timeB = b.createdTimestamp || b.id;
+        return timeB - timeA;
     });
 
     const initialLoadCount = 8;
