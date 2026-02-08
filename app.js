@@ -49,6 +49,7 @@ const State = {
     adminSearch: '',
     agentTab: 'dashboard',
     agentSearch: '',
+    detailsTab: 'Details',
     loadingMessage: 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...',
     isCriticalTimeout: false,
     settings: {
@@ -2527,7 +2528,7 @@ window.toggleSidebar = () => {
 
 function renderDetails(container) {
     const p = State.properties.find(x => x.id === State.selectedPropertyId) || State.properties[0];
-    let activeTab = 'Details';
+    const activeTab = State.detailsTab || 'Details';
 
     const renderContent = () => {
         let contentHtml = '';
@@ -2637,7 +2638,7 @@ function renderDetails(container) {
                         <button class="detail-tab ${activeTab === t ? 'active' : ''}" onclick="setDetailTab('${t}')">${t}</button>
                     `).join('')}
                 </div>
-                <div style="padding:20px; padding-bottom:120px;">${contentHtml}</div>
+                <div id="details-content-grid" style="padding:20px; padding-bottom:120px;">${contentHtml}</div>
                 <div class="contact-footer" style="padding:15px 20px 25px; flex-direction:column; gap:12px;">
                     <div style="display:flex; gap:10px; width:100%;">
                         <button class="login-btn" style="background:#e8f5e9; color:#138808; border:1.5px solid #c8e6c9; margin:0; flex:1; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="showEnquiryModal(${p.id})">
@@ -2655,9 +2656,9 @@ function renderDetails(container) {
                             <i class="fab fa-whatsapp"></i> व्हाट्सऐप
                         </a>
                     </div>
-            </div>`;
+                </div>`;
     };
-    window.setDetailTab = (t) => { activeTab = t; renderContent(); };
+    window.setDetailTab = (t) => { State.detailsTab = t; render(); };
 
     // Full screen image viewer
     window.viewFullImage = (imgSrc) => {
@@ -4646,8 +4647,8 @@ function setupSwipeNavigation() {
     const appContainer = document.getElementById('app');
 
     document.addEventListener('touchstart', e => {
-        // Only trigger smooth swipe on Home page content
-        if (State.view !== 'home') {
+        // Trigger smooth swipe on Home or Details page
+        if (State.view !== 'home' && State.view !== 'details') {
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
             return;
@@ -4662,12 +4663,13 @@ function setupSwipeNavigation() {
         touchStartY = e.changedTouches[0].screenY;
         isSwiping = true;
 
-        const grid = document.getElementById('home-prop-grid');
+        const gridId = State.view === 'home' ? 'home-prop-grid' : 'details-content-grid';
+        const grid = document.getElementById(gridId);
         if (grid) grid.style.transition = 'none';
     }, { passive: true });
 
     document.addEventListener('touchmove', e => {
-        if (!isSwiping || State.view !== 'home') return;
+        if (!isSwiping || (State.view !== 'home' && State.view !== 'details')) return;
 
         const touchCurrentX = e.changedTouches[0].screenX;
         const touchCurrentY = e.changedTouches[0].screenY;
@@ -4676,27 +4678,29 @@ function setupSwipeNavigation() {
 
         // If move is mostly horizontal, block vertical scroll
         if (Math.abs(diffX) > Math.abs(diffY)) {
-            if (e.cancelable) e.preventDefault(); // IMPORTANT: Block vertical scroll
+            if (e.cancelable) e.preventDefault();
 
-            const grid = document.getElementById('home-prop-grid');
+            const gridId = State.view === 'home' ? 'home-prop-grid' : 'details-content-grid';
+            const grid = document.getElementById(gridId);
             if (grid) {
-                // Apply elastic drag resistance at boundaries
                 grid.style.transform = `translateX(${diffX}px)`;
             }
         } else {
-            // If user starts vertical scrolling, stop swiping tracker
             if (Math.abs(diffY) > 10) isSwiping = false;
         }
-    }, { passive: false }); // Needs to be NOT passive to prevent scrolling
+    }, { passive: false });
 
     document.addEventListener('touchend', e => {
-        if (State.view === 'home' && isSwiping) {
+        if (isSwiping) {
             const touchEndX = e.changedTouches[0].screenX;
             const touchEndY = e.changedTouches[0].screenY;
-            finishSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+            if (State.view === 'home') {
+                finishSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+            } else if (State.view === 'details') {
+                finishSwipeGestureDetails(touchStartX, touchStartY, touchEndX, touchEndY);
+            }
         } else {
-            const touchEndX = e.changedTouches[0].screenX;
-            touchStartX = 0; // Reset
+            touchStartX = 0;
         }
         isSwiping = false;
     }, { passive: true });
@@ -4744,6 +4748,49 @@ function finishSwipeGesture(startX, startY, endX, endY) {
         }
     } else {
         // Bounce Back
+        grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+        grid.style.transform = `translateX(0)`;
+    }
+}
+
+function finishSwipeGestureDetails(startX, startY, endX, endY) {
+    const grid = document.getElementById('details-content-grid');
+    if (!grid) return;
+
+    const diffX = endX - startX;
+    const threshold = window.innerWidth / 5;
+
+    if (Math.abs(diffX) > threshold) {
+        const tabs = ['Details', 'Photos', 'Video', 'Map'];
+        const activeTab = State.detailsTab || 'Details';
+        let currentIndex = tabs.indexOf(activeTab);
+        if (currentIndex === -1) currentIndex = 0;
+
+        if (diffX > 0 && currentIndex > 0) {
+            // Prev
+            grid.classList.add('swipe-exit-right');
+            setTimeout(() => {
+                setDetailTab(tabs[currentIndex - 1]);
+                setTimeout(() => {
+                    const newGrid = document.getElementById('details-content-grid');
+                    if (newGrid) newGrid.classList.add('swipe-enter-left');
+                }, 10);
+            }, 150);
+        } else if (diffX < 0 && currentIndex < tabs.length - 1) {
+            // Next
+            grid.classList.add('swipe-exit-left');
+            setTimeout(() => {
+                setDetailTab(tabs[currentIndex + 1]);
+                setTimeout(() => {
+                    const newGrid = document.getElementById('details-content-grid');
+                    if (newGrid) newGrid.classList.add('swipe-enter');
+                }, 10);
+            }, 150);
+        } else {
+            grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+            grid.style.transform = `translateX(0)`;
+        }
+    } else {
         grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
         grid.style.transform = `translateX(0)`;
     }
