@@ -4615,7 +4615,6 @@ function setupSwipeNavigation() {
         touchStartY = e.changedTouches[0].screenY;
         isSwiping = true;
 
-        // Reset translation state
         const grid = document.getElementById('home-prop-grid');
         if (grid) grid.style.transition = 'none';
     }, { passive: true });
@@ -4628,15 +4627,20 @@ function setupSwipeNavigation() {
         const diffX = touchCurrentX - touchStartX;
         const diffY = touchCurrentY - touchStartY;
 
-        // Ensure vertical scrolling isn't blocked and horizontal move is dominant
+        // If move is mostly horizontal, block vertical scroll
         if (Math.abs(diffX) > Math.abs(diffY)) {
+            if (e.cancelable) e.preventDefault(); // IMPORTANT: Block vertical scroll
+
             const grid = document.getElementById('home-prop-grid');
             if (grid) {
-                // Apply drag resistance or direct follow
+                // Apply elastic drag resistance at boundaries
                 grid.style.transform = `translateX(${diffX}px)`;
             }
+        } else {
+            // If user starts vertical scrolling, stop swiping tracker
+            if (Math.abs(diffY) > 10) isSwiping = false;
         }
-    }, { passive: true });
+    }, { passive: false }); // Needs to be NOT passive to prevent scrolling
 
     document.addEventListener('touchend', e => {
         if (State.view === 'home' && isSwiping) {
@@ -4645,8 +4649,7 @@ function setupSwipeNavigation() {
             finishSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
         } else {
             const touchEndX = e.changedTouches[0].screenX;
-            const touchEndY = e.changedTouches[0].screenY;
-            handleSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+            touchStartX = 0; // Reset
         }
         isSwiping = false;
     }, { passive: true });
@@ -4657,37 +4660,44 @@ function finishSwipeGesture(startX, startY, endX, endY) {
     if (!grid) return;
 
     const diffX = endX - startX;
-    const threshold = window.innerWidth / 4; // 25% of screen width to trigger change
-
-    grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+    const threshold = window.innerWidth / 5; // Slightly more sensitive
 
     if (Math.abs(diffX) > threshold) {
-        // Change category
         const categories = State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
         const activeCat = State.homeCategory || 'All';
         let currentIndex = categories.indexOf(activeCat);
         if (currentIndex === -1) currentIndex = 0;
 
         if (diffX > 0 && currentIndex > 0) {
-            // Swipe Right (Prev)
-            grid.style.transform = `translateX(100%)`;
+            // Swipe Right -> Prev Category
+            grid.classList.add('swipe-exit-right');
             setTimeout(() => {
                 setHomeCategory(categories[currentIndex - 1]);
-                setTimeout(scrollToActiveCategory, 50);
-            }, 200);
+                setTimeout(() => {
+                    const newGrid = document.getElementById('home-prop-grid');
+                    if (newGrid) newGrid.classList.add('swipe-enter-left');
+                    scrollToActiveCategory();
+                }, 10);
+            }, 150);
         } else if (diffX < 0 && currentIndex < categories.length - 1) {
-            // Swipe Left (Next)
-            grid.style.transform = `translateX(-100%)`;
+            // Swipe Left -> Next Category
+            grid.classList.add('swipe-exit-left');
             setTimeout(() => {
                 setHomeCategory(categories[currentIndex + 1]);
-                setTimeout(scrollToActiveCategory, 50);
-            }, 200);
+                setTimeout(() => {
+                    const newGrid = document.getElementById('home-prop-grid');
+                    if (newGrid) newGrid.classList.add('swipe-enter');
+                    scrollToActiveCategory();
+                }, 10);
+            }, 150);
         } else {
-            // Snap back if at boundaries
+            // Bounce Back
+            grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
             grid.style.transform = `translateX(0)`;
         }
     } else {
-        // Snap back
+        // Bounce Back
+        grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
         grid.style.transform = `translateX(0)`;
     }
 }
