@@ -1616,7 +1616,7 @@ function handleLogin(role) {
                         setTimeout(() => alert("Your account has been blocked."), 200);
                         return;
                     }
-                    State.user = { role: 'customer', name: cust.name, id: cust.id, phone: cust.phone, photo: null };
+                    State.user = { role: 'customer', name: cust.name, id: cust.id, phone: cust.phone, photo: cust.photo || null };
                     if (!cust.likes) cust.likes = [];
                     State.likes = cust.likes;
                     await saveGlobalData();
