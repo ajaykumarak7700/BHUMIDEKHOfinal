@@ -4719,7 +4719,8 @@ function setupSwipeNavigation() {
             const gridId = State.view === 'home' ? 'home-prop-grid' : 'details-content-grid';
             const grid = document.getElementById(gridId);
             if (grid) {
-                grid.style.transform = `translateX(${diffX}px)`;
+                grid.style.transition = 'none';
+                grid.style.transform = `translate3d(${diffX}px, 0, 0)`;
             }
         } else {
             if (Math.abs(diffY) > 10) isSwiping = false;
@@ -4767,8 +4768,8 @@ function finishSwipeGesture(startX, startY, endX, endY) {
                         newGrid.classList.add('swipe-enter-left');
                         scrollToActiveCategory();
                     }
-                }, 10);
-            }, 300);
+                }, 5);
+            }, 200);
         } else if (diffX < 0 && currentIndex < categories.length - 1) {
             // Swipe Left -> Next Category
             grid.classList.add('swipe-exit-left');
@@ -4781,8 +4782,8 @@ function finishSwipeGesture(startX, startY, endX, endY) {
                         newGrid.classList.add('swipe-enter');
                         scrollToActiveCategory();
                     }
-                }, 10);
-            }, 300);
+                }, 5);
+            }, 200);
         } else {
             // Bounce Back
             grid.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
@@ -4817,8 +4818,8 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter-left');
-                }, 10);
-            }, 300);
+                }, 5);
+            }, 200);
         } else if (diffX < 0 && currentIndex < tabs.length - 1) {
             // Next
             grid.classList.add('swipe-exit-left');
@@ -4828,8 +4829,8 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter');
-                }, 10);
-            }, 300);
+                }, 5);
+            }, 200);
         } else {
             grid.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
             grid.style.transform = `translateX(0)`;
