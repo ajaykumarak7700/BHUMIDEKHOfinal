@@ -797,11 +797,19 @@ function render() {
             if (modal && modal.style.display !== 'flex') {
                 modal.style.display = 'flex';
                 modal.innerHTML = `
-                    <div class="modal-content scale-in" style="max-width:400px; text-align:center; padding:30px; border-radius:20px; border-top: 5px solid #138808;">
-                        <i class="fas fa-bullhorn" style="font-size:3rem; color:#138808; margin-bottom:20px;"></i>
-                        <h2 style="color:#1a2a3a; margin-bottom:15px; font-size:1.2rem;">Important Message</h2>
-                        <div style="font-size:1.1rem; color:#000; font-weight:700; line-height:1.6; margin-bottom:25px; white-space:pre-wrap;">${b.message}</div>
-                        <button class="login-btn" onclick="dismissBroadcast(${b.id})" style="padding:8px 20px; font-size:0.9rem; width:auto; height:auto; min-height:0;">Close</button>
+                    <div class="modal-content scale-in" style="max-width:420px; text-align:center; padding:0; border-radius:24px; border:none; overflow:hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); background: linear-gradient(135deg, #ffffff 0%, #f9fff9 100%);">
+                        <div style="background: linear-gradient(135deg, #138808 0%, #0d5f05 100%); padding:25px; color:white;">
+                            <i class="fas fa-bullhorn" style="font-size:2.5rem; margin-bottom:10px; opacity:0.9;"></i>
+                            <h2 style="margin:0; font-size:1.4rem; font-weight:800; letter-spacing:0.5px;">ANNOUNCEMENT</h2>
+                        </div>
+                        <div style="padding:30px 25px;">
+                            <div style="font-size:1.15rem; color:#2c3e50; font-weight:600; line-height:1.7; margin-bottom:25px; white-space:pre-wrap; background: #fff; padding:15px; border-radius:12px; border: 1px solid #eef2e6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                                ${b.message}
+                            </div>
+                            <button class="login-btn" onclick="dismissBroadcast(${b.id})" style="padding:12px 35px; font-size:1rem; width:100%; border-radius:12px; font-weight:700; background: #138808; box-shadow: 0 4px 15px rgba(19, 136, 8, 0.3); transition: transform 0.2s;">
+                                Got it <i class="fas fa-check-circle" style="margin-left:8px;"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             }
