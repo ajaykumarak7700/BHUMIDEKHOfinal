@@ -797,17 +797,29 @@ function render() {
             if (modal && modal.style.display !== 'flex') {
                 modal.style.display = 'flex';
                 modal.innerHTML = `
-                    <div class="modal-content scale-in" style="max-width:420px; text-align:center; padding:0; border-radius:24px; border:none; overflow:hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); background: linear-gradient(135deg, #ffffff 0%, #f9fff9 100%);">
-                        <div style="background: linear-gradient(135deg, #138808 0%, #0d5f05 100%); padding:25px; color:white;">
-                            <i class="fas fa-bullhorn" style="font-size:2.5rem; margin-bottom:10px; opacity:0.9;"></i>
-                            <h2 style="margin:0; font-size:1.4rem; font-weight:800; letter-spacing:0.5px;">ANNOUNCEMENT</h2>
+                    <style>
+                        @keyframes blinkTiranga {
+                            0% { border-color: #FF9933; box-shadow: 0 0 10px #FF9933; }
+                            33% { border-color: #ffffff; box-shadow: 0 0 10px #cccccc; }
+                            66% { border-color: #138808; box-shadow: 0 0 10px #138808; }
+                            100% { border-color: #FF9933; box-shadow: 0 0 10px #FF9933; }
+                        }
+                    </style>
+                    <div class="modal-content scale-in" style="max-width:420px; text-align:center; padding:0; border-radius:24px; border: 3px solid #FF9933; animation: blinkTiranga 4s infinite linear; overflow:hidden; background: #fff;">
+                        <!-- Header with Tiranga Gradient -->
+                        <div style="background: linear-gradient(to right, #FF9933, #ffffff, #138808); padding:4px;">
+                            <div style="background: #fff; padding:20px 25px; border-radius: 20px 20px 0 0;">
+                                <i class="fas fa-bullhorn" style="font-size:3rem; margin-bottom:10px; background: -webkit-linear-gradient(#FF9933, #138808); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                <h2 style="margin:0; font-size:1.6rem; font-weight:800; color:#1a2a3a; text-transform:uppercase; letter-spacing:1px;">Announcement</h2>
+                            </div>
                         </div>
-                        <div style="padding:30px 25px;">
-                            <div style="font-size:1.15rem; color:#2c3e50; font-weight:600; line-height:1.7; margin-bottom:25px; white-space:pre-wrap; background: #fff; padding:15px; border-radius:12px; border: 1px solid #eef2e6; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                        
+                        <div style="padding:25px 30px 35px 30px;">
+                            <div style="font-size:1.25rem; color:#333; font-family: 'Poppins', sans-serif; font-weight:600; line-height:1.6; margin-bottom:30px; white-space:pre-wrap; text-align:center;">
                                 ${b.message}
                             </div>
-                            <button class="login-btn" onclick="dismissBroadcast(${b.id})" style="padding:12px 35px; font-size:1rem; width:100%; border-radius:12px; font-weight:700; background: #138808; box-shadow: 0 4px 15px rgba(19, 136, 8, 0.3); transition: transform 0.2s;">
-                                Got it <i class="fas fa-check-circle" style="margin-left:8px;"></i>
+                            <button class="login-btn" onclick="dismissBroadcast(${b.id})" style="padding:12px 40px; font-size:1.1rem; width:100%; border-radius:50px; font-weight:700; background: linear-gradient(90deg, #FF9933, #138808); border:none; color:white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                                OK, Jai Hind! 🇮🇳
                             </button>
                         </div>
                     </div>
