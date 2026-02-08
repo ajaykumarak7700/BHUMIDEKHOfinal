@@ -4759,24 +4759,30 @@ function finishSwipeGesture(startX, startY, endX, endY) {
             // Swipe Right -> Prev Category
             grid.classList.add('swipe-exit-right');
             setTimeout(() => {
-                setHomeCategory(categories[currentIndex - 1]);
+                State.homeCategory = categories[currentIndex - 1];
+                render();
                 setTimeout(() => {
                     const newGrid = document.getElementById('home-prop-grid');
-                    if (newGrid) newGrid.classList.add('swipe-enter-left');
-                    scrollToActiveCategory();
-                }, 10);
-            }, 150);
+                    if (newGrid) {
+                        newGrid.classList.add('swipe-enter-left');
+                        scrollToActiveCategory();
+                    }
+                }, 20);
+            }, 250);
         } else if (diffX < 0 && currentIndex < categories.length - 1) {
             // Swipe Left -> Next Category
             grid.classList.add('swipe-exit-left');
             setTimeout(() => {
-                setHomeCategory(categories[currentIndex + 1]);
+                State.homeCategory = categories[currentIndex + 1];
+                render();
                 setTimeout(() => {
                     const newGrid = document.getElementById('home-prop-grid');
-                    if (newGrid) newGrid.classList.add('swipe-enter');
-                    scrollToActiveCategory();
-                }, 10);
-            }, 150);
+                    if (newGrid) {
+                        newGrid.classList.add('swipe-enter');
+                        scrollToActiveCategory();
+                    }
+                }, 20);
+            }, 250);
         } else {
             // Bounce Back
             grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
@@ -4806,22 +4812,24 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
             // Prev
             grid.classList.add('swipe-exit-right');
             setTimeout(() => {
-                setDetailTab(tabs[currentIndex - 1]);
+                State.detailsTab = tabs[currentIndex - 1];
+                render();
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter-left');
-                }, 10);
-            }, 150);
+                }, 20);
+            }, 250);
         } else if (diffX < 0 && currentIndex < tabs.length - 1) {
             // Next
             grid.classList.add('swipe-exit-left');
             setTimeout(() => {
-                setDetailTab(tabs[currentIndex + 1]);
+                State.detailsTab = tabs[currentIndex + 1];
+                render();
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter');
-                }, 10);
-            }, 150);
+                }, 20);
+            }, 250);
         } else {
             grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
             grid.style.transform = `translateX(0)`;
