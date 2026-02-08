@@ -1515,13 +1515,18 @@ function renderLogin(container) {
                 <button class="login-btn" onclick="handleLogin('${activeRole}')">LOGIN SECURELY</button>
                 <div class="login-footer">
                     <a href="#" onclick="openForgotPasswordModal()" class="forgot-link">Forgot Password?</a>
-                    ${activeRole !== 'admin' ? `<a href="#" onclick="navigate('signup')" class="signup-link">Create Account</a>` : ''}
+                    ${activeRole !== 'admin' ? `<a href="#" onclick="navigateToSignup('${activeRole}')" class="signup-link">Create Account</a>` : ''}
                 </div>
                 <button class="prop-btn" style="background:none; color:#999; margin-top:15px; width:100%; border:1px solid #eee;" onclick="navigate('home')">Close</button>
             </div>
         </div>
     `;
 }
+
+window.navigateToSignup = (role) => {
+    State.signupRole = role || 'customer';
+    navigate('signup');
+};
 
 window.setLoginRole = (r) => {
     State.loginRole = r;
