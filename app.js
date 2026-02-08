@@ -798,29 +798,31 @@ function render() {
                 modal.style.display = 'flex';
                 modal.innerHTML = `
                     <style>
-                        @keyframes blinkTiranga {
-                            0% { border-color: #FF9933; box-shadow: 0 0 10px #FF9933; }
-                            33% { border-color: #ffffff; box-shadow: 0 0 10px #cccccc; }
-                            66% { border-color: #138808; box-shadow: 0 0 10px #138808; }
-                            100% { border-color: #FF9933; box-shadow: 0 0 10px #FF9933; }
+                        @keyframes borderMove {
+                            0% { background-position: 0% 50%; }
+                            100% { background-position: 100% 50%; }
                         }
                     </style>
-                    <div class="modal-content scale-in" style="max-width:420px; text-align:center; padding:0; border-radius:24px; border: 3px solid #FF9933; animation: blinkTiranga 4s infinite linear; overflow:hidden; background: #fff;">
-                        <!-- Header with Tiranga Gradient -->
-                        <div style="background: linear-gradient(to right, #FF9933, #ffffff, #138808); padding:4px;">
-                            <div style="background: #fff; padding:20px 25px; border-radius: 20px 20px 0 0;">
-                                <i class="fas fa-bullhorn" style="font-size:3rem; margin-bottom:10px; background: -webkit-linear-gradient(#FF9933, #138808); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    <!-- Wrapper for Animated Border -->
+                    <div class="modal-content scale-in" style="max-width:420px; padding:5px; border-radius:24px; border:none; overflow:hidden; background: linear-gradient(90deg, #FF9933, #ffffff, #138808, #FF9933); background-size: 300% 100%; animation: borderMove 4s linear infinite; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+                        
+                        <!-- Inner Content Box -->
+                        <div style="background: #fff; border-radius: 20px; overflow:hidden; height:100%;">
+                            <!-- Header -->
+                            <div style="background: #fff; padding:25px 25px 10px 25px; text-align:center;">
+                                <i class="fas fa-bullhorn" style="font-size:3rem; margin-bottom:15px; background: -webkit-linear-gradient(#FF9933, #138808); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                                 <h2 style="margin:0; font-size:1.6rem; font-weight:800; color:#1a2a3a; text-transform:uppercase; letter-spacing:1px;">Announcement</h2>
                             </div>
-                        </div>
-                        
-                        <div style="padding:25px 30px 35px 30px;">
-                            <div style="font-size:1.25rem; color:#333; font-family: 'Poppins', sans-serif; font-weight:600; line-height:1.6; margin-bottom:30px; white-space:pre-wrap; text-align:center;">
-                                ${b.message}
+                            
+                            <!-- Scrollable Content Area -->
+                            <div style="padding:10px 30px 30px 30px; text-align:center;">
+                                <div style="font-size:1.2rem; color:#444; font-family: 'Poppins', sans-serif; font-weight:500; line-height:1.6; margin-bottom:30px; white-space:pre-wrap; display:inline-block; max-width:100%;">
+                                    ${b.message}
+                                </div>
+                                <button class="login-btn" onclick="dismissBroadcast(${b.id})" style="padding:10px 40px; font-size:1rem; width:auto; min-width:120px; border-radius:50px; font-weight:700; background: #333; border:none; color:white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                                    Close
+                                </button>
                             </div>
-                            <button class="login-btn" onclick="dismissBroadcast(${b.id})" style="padding:12px 40px; font-size:1.1rem; width:100%; border-radius:50px; font-weight:700; background: linear-gradient(90deg, #FF9933, #138808); border:none; color:white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
-                                OK, Jai Hind! 🇮🇳
-                            </button>
                         </div>
                     </div>
                 `;
