@@ -4591,17 +4591,105 @@ window.deleteExploreCard = function (index) {
 let touchStartX = 0;
 let touchStartY = 0;
 
+let isSwiping = false;
+let currentTranslate = 0;
+let prevTranslate = 0;
+
 function setupSwipeNavigation() {
+    const appContainer = document.getElementById('app');
+
     document.addEventListener('touchstart', e => {
+        // Only trigger smooth swipe on Home page content
+        if (State.view !== 'home') {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+            return;
+        }
+
+        const modal = document.getElementById('modal-container');
+        const sidePanel = document.getElementById('side-panel');
+        if (modal && modal.style.display === 'flex') return;
+        if (sidePanel && sidePanel.classList.contains('active')) return;
+
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
+        isSwiping = true;
+
+        // Reset translation state
+        const grid = document.getElementById('home-prop-grid');
+        if (grid) grid.style.transition = 'none';
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+        if (!isSwiping || State.view !== 'home') return;
+
+        const touchCurrentX = e.changedTouches[0].screenX;
+        const touchCurrentY = e.changedTouches[0].screenY;
+        const diffX = touchCurrentX - touchStartX;
+        const diffY = touchCurrentY - touchStartY;
+
+        // Ensure vertical scrolling isn't blocked and horizontal move is dominant
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            const grid = document.getElementById('home-prop-grid');
+            if (grid) {
+                // Apply drag resistance or direct follow
+                grid.style.transform = `translateX(${diffX}px)`;
+            }
+        }
     }, { passive: true });
 
     document.addEventListener('touchend', e => {
-        const touchEndX = e.changedTouches[0].screenX;
-        const touchEndY = e.changedTouches[0].screenY;
-        handleSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+        if (State.view === 'home' && isSwiping) {
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            finishSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+        } else {
+            const touchEndX = e.changedTouches[0].screenX;
+            const touchEndY = e.changedTouches[0].screenY;
+            handleSwipeGesture(touchStartX, touchStartY, touchEndX, touchEndY);
+        }
+        isSwiping = false;
     }, { passive: true });
+}
+
+function finishSwipeGesture(startX, startY, endX, endY) {
+    const grid = document.getElementById('home-prop-grid');
+    if (!grid) return;
+
+    const diffX = endX - startX;
+    const threshold = window.innerWidth / 4; // 25% of screen width to trigger change
+
+    grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+
+    if (Math.abs(diffX) > threshold) {
+        // Change category
+        const categories = State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
+        const activeCat = State.homeCategory || 'All';
+        let currentIndex = categories.indexOf(activeCat);
+        if (currentIndex === -1) currentIndex = 0;
+
+        if (diffX > 0 && currentIndex > 0) {
+            // Swipe Right (Prev)
+            grid.style.transform = `translateX(100%)`;
+            setTimeout(() => {
+                setHomeCategory(categories[currentIndex - 1]);
+                setTimeout(scrollToActiveCategory, 50);
+            }, 200);
+        } else if (diffX < 0 && currentIndex < categories.length - 1) {
+            // Swipe Left (Next)
+            grid.style.transform = `translateX(-100%)`;
+            setTimeout(() => {
+                setHomeCategory(categories[currentIndex + 1]);
+                setTimeout(scrollToActiveCategory, 50);
+            }, 200);
+        } else {
+            // Snap back if at boundaries
+            grid.style.transform = `translateX(0)`;
+        }
+    } else {
+        // Snap back
+        grid.style.transform = `translateX(0)`;
+    }
 }
 
 function handleSwipeGesture(startX, startY, endX, endY) {
