@@ -50,6 +50,7 @@ const State = {
     agentTab: 'dashboard',
     agentSearch: '',
     loginRole: 'customer', // Added for login page state
+    signupRole: 'customer', // Added for signup page state
     detailsTab: 'Details',
     loadingMessage: 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...',
     isCriticalTimeout: false,
@@ -1623,52 +1624,54 @@ function handleLogin(role) {
 }
 
 function renderSignup(container) {
-    let signupRole = 'customer';
-    const renderForm = () => {
-        container.innerHTML = `
-            <div class="login-wrap">
-                <div class="login-box" style="max-width:400px;">
-                    <div class="role-tab-switcher" style="margin-bottom:15px;">
-                        <button class="role-tab ${signupRole === 'customer' ? 'active' : ''}" onclick="setSignupRole('customer')">Customer</button>
-                        <button class="role-tab ${signupRole === 'agent' ? 'active' : ''}" onclick="setSignupRole('agent')">Agent</button>
-                    </div>
-                    <h2 style="color:#1a2a3a; margin-bottom:20px;">${signupRole === 'agent' ? 'Agent Registration' : 'Customer Sign Up'}</h2>
-                    <div class="form-group"><label>Full Name</label><input type="text" id="s-name" class="login-input"></div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group"><label>Phone</label><input type="text" id="s-phone" class="login-input"></div>
-                        <div class="form-group"><label>City</label><input type="text" id="s-city" class="login-input"></div>
-                    </div>
-                    ${signupRole === 'agent' ? `<div class="form-group"><label>Email Address</label><input type="email" id="s-email" class="login-input"></div>` : ''}
-                    ${signupRole === 'agent' ? `
-                        <div class="form-group"><label>Experience</label>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                                <select id="s-exp-years" class="login-input">
-                                    <option value="0">0 Years</option>
-                                    ${Array.from({ length: 50 }, (_, i) => `<option value="${i + 1}">${i + 1} Years</option>`).join('')}
-                                </select>
-                                <select id="s-exp-months" class="login-input">
-                                    <option value="0">0 Months</option>
-                                    ${Array.from({ length: 11 }, (_, i) => `<option value="${i + 1}">${i + 1} Months</option>`).join('')}
-                                </select>
-                            </div>
-                        </div>
-                    ` : ''}
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group"><label>Password</label><input type="password" id="s-pass" class="login-input"></div>
-                        <div class="form-group"><label>Confirm</label><input type="password" id="s-cpass" class="login-input"></div>
-                    </div>
-                    ${signupRole === 'agent' ? `<div class="form-group"><label>Profile Photo</label><input type="file" id="s-photo" accept="image/*" class="login-input"></div>` : ''}
-                    <button class="login-btn" onclick="handleSignup('${signupRole}')">Register Now</button>
-                    <div class="auth-redirect-box">
-                        Already have an account? <a href="#" onclick="navigate('login')" class="auth-redirect-link">Login Here</a>
-                    </div>
-                    <button class="prop-btn" style="background:#f5f5f5; color:#555; margin-top:15px; width:100%; border:1px solid #ddd; padding:12px; font-weight:700; font-size:1rem;" onclick="navigate('home')">CLOSE</button>
+    const signupRole = State.signupRole || 'customer';
+
+    container.innerHTML = `
+        <div class="login-wrap">
+            <div class="login-box" style="max-width:400px;">
+                <div class="role-tab-switcher" style="margin-bottom:15px;">
+                    <button class="role-tab ${signupRole === 'customer' ? 'active' : ''}" onclick="setSignupRole('customer')">Customer</button>
+                    <button class="role-tab ${signupRole === 'agent' ? 'active' : ''}" onclick="setSignupRole('agent')">Agent</button>
                 </div>
-            </div>`;
-    };
-    window.setSignupRole = (r) => { signupRole = r; renderForm(); };
-    renderForm();
+                <h2 style="color:#1a2a3a; margin-bottom:20px;">${signupRole === 'agent' ? 'Agent Registration' : 'Customer Sign Up'}</h2>
+                <div class="form-group"><label>Full Name</label><input type="text" id="s-name" class="login-input"></div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group"><label>Phone</label><input type="text" id="s-phone" class="login-input"></div>
+                    <div class="form-group"><label>City</label><input type="text" id="s-city" class="login-input"></div>
+                </div>
+                ${signupRole === 'agent' ? `<div class="form-group"><label>Email Address</label><input type="email" id="s-email" class="login-input"></div>` : ''}
+                ${signupRole === 'agent' ? `
+                    <div class="form-group"><label>Experience</label>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <select id="s-exp-years" class="login-input">
+                                <option value="0">0 Years</option>
+                                ${Array.from({ length: 50 }, (_, i) => `<option value="${i + 1}">${i + 1} Years</option>`).join('')}
+                            </select>
+                            <select id="s-exp-months" class="login-input">
+                                <option value="0">0 Months</option>
+                                ${Array.from({ length: 11 }, (_, i) => `<option value="${i + 1}">${i + 1} Months</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                ` : ''}
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group"><label>Password</label><input type="password" id="s-pass" class="login-input"></div>
+                    <div class="form-group"><label>Confirm</label><input type="password" id="s-cpass" class="login-input"></div>
+                </div>
+                ${signupRole === 'agent' ? `<div class="form-group"><label>Profile Photo</label><input type="file" id="s-photo" accept="image/*" class="login-input"></div>` : ''}
+                <button class="login-btn" onclick="handleSignup('${signupRole}')">Register Now</button>
+                <div class="auth-redirect-box">
+                    Already have an account? <a href="#" onclick="navigate('login')" class="auth-redirect-link">Login Here</a>
+                </div>
+                <button class="prop-btn" style="background:#f5f5f5; color:#555; margin-top:15px; width:100%; border:1px solid #ddd; padding:12px; font-weight:700; font-size:1rem;" onclick="navigate('home')">CLOSE</button>
+            </div>
+        </div>`;
 }
+
+window.setSignupRole = (r) => {
+    State.signupRole = r;
+    render();
+};
 
 async function handleSignup(role) {
     if (window.isRealTaskRunning) return;
