@@ -1174,7 +1174,10 @@ function renderHome(container) {
     let props = State.properties.filter(p => p.status === 'approved');
     props.sort((a, b) => {
         if (a.featured !== b.featured) return b.featured ? 1 : -1;
-        return b.id - a.id;
+        // Sort by timestamp if available, fallback to ID
+        const timeA = a.createdTimestamp || a.id;
+        const timeB = b.createdTimestamp || b.id;
+        return timeB - timeA;
     });
 
     const banners = (State.settings.appDetails && State.settings.appDetails.banners && State.settings.appDetails.banners.length > 0) ?
@@ -1730,7 +1733,7 @@ function renderAdmin(container) {
                         <table style="width:100%; border-collapse:collapse; min-width:800px;">
                             <thead style="background:#f8f9fa;"><tr><th style="padding:15px; text-align:left;">S.No</th><th style="padding:15px; text-align:left;">Property ID</th><th style="padding:15px; text-align:left;">Property</th><th style="padding:15px; text-align:left;">Agent Info</th><th style="padding:15px; text-align:left;">Price</th><th style="padding:15px; text-align:left;">Status</th><th style="padding:15px; text-align:left;">Featured</th><th style="padding:15px; text-align:right;">Action</th></tr></thead>
                             <tbody>
-                                ${[...State.properties].sort((a, b) => b.id - a.id).filter(p => p.title.toLowerCase().includes(State.adminSearch.toLowerCase())).map((p, index) => {
+                                    ${[...State.properties].sort((a, b) => (b.createdTimestamp || b.id) - (a.createdTimestamp || a.id)).filter(p => p.title.toLowerCase().includes(State.adminSearch.toLowerCase())).map((p, index) => {
         const agent = State.agents.find(a => a.name === p.agent);
         const agentPhone = agent ? agent.phone : (p.agent.includes('John') ? '9876543210' : 'N/A');
         return `
@@ -2263,7 +2266,7 @@ function renderAgent(container) {
     const agentProps = State.properties.filter(p =>
         (p.agent === agent.name || p.agent.includes(agent.name.split(' ')[0])) &&
         p.title.toLowerCase().includes((State.agentSearch || '').toLowerCase())
-    ).sort((a, b) => b.id - a.id);
+    ).sort((a, b) => (b.createdTimestamp || b.id) - (a.createdTimestamp || a.id));
 
     // Calculate Stats
     const totalViews = agentProps.reduce((acc, p) => acc + (p.views || 0), 0);
@@ -2949,8 +2952,15 @@ window.processPropertySubmit = async function () {
         // Use images from tempPropertyImages (already base64)
         const allImages = window.tempPropertyImages;
 
+        // Generate a unique 4-digit ID
+        let newId;
+        const existingIds = State.properties.map(p => p.id);
+        do {
+            newId = Math.floor(1000 + Math.random() * 9000);
+        } while (existingIds.includes(newId));
+
         const newProp = {
-            id: Date.now(),
+            id: newId,
             title: document.getElementById('p-title').value.trim(),
             city: document.getElementById('p-city').value.trim(),
             category: document.getElementById('p-cat').value,
@@ -2969,6 +2979,7 @@ window.processPropertySubmit = async function () {
             featured: false,
             views: 0,
             leads: 0,
+            createdTimestamp: Date.now(), // Numeric timestamp for sorting
             showAgentContact: false,
             createdAt: new Date().toLocaleString('en-IN', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
