@@ -1780,3 +1780,48 @@ a[data-page="other"] i {
         transform: scale(1);
     }
 }
+
+/* Swipe Transitions */
+.swipe-exit-left {
+    transform: translateX(-100%) !important;
+    opacity: 0 !important;
+    transition: all 0.3s ease-out !important;
+}
+
+.swipe-exit-right {
+    transform: translateX(100%) !important;
+    opacity: 0 !important;
+    transition: all 0.3s ease-out !important;
+}
+
+.swipe-enter {
+    animation: swipeIn 0.3s ease-out forwards;
+}
+
+.swipe-enter-left {
+    animation: swipeInLeft 0.3s ease-out forwards;
+}
+
+@keyframes swipeIn {
+    from {
+        transform: translateX(50%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes swipeInLeft {
+    from {
+        transform: translateX(-50%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
