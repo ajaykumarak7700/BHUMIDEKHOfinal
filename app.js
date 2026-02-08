@@ -1136,6 +1136,9 @@ function renderPropertyCard(p, isLikeView = false) {
                 <div class="prop-like-btn" onclick="toggleLike(event, ${p.id})" title="Like this property">
                     <i class="${isLiked ? 'fas' : 'far'} fa-heart" style="color:${isLiked ? '#FF5252' : 'white'}"></i>
                 </div>
+                <div class="prop-id" style="font-size: 0.7rem; color: #138808; font-weight: 800; margin-bottom: 2px;">
+                    <i class="fas fa-fingerprint"></i> ID: BD-${p.id}
+                </div>
             </div>
             <div class="prop-body">
                 <div class="prop-price">
@@ -1725,7 +1728,7 @@ function renderAdmin(container) {
                     <div class="stat-box" style="margin-bottom:20px;"><input type="text" placeholder="Search properties..." oninput="updateAdminSearch(this.value)" value="${State.adminSearch}" style="width:100%; border:none; outline:none;"></div>
                     <div class="stat-box" style="padding:0; overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; min-width:800px;">
-                            <thead style="background:#f8f9fa;"><tr><th style="padding:15px; text-align:left;">S.No</th><th style="padding:15px; text-align:left;">Property</th><th style="padding:15px; text-align:left;">Agent Info</th><th style="padding:15px; text-align:left;">Price</th><th style="padding:15px; text-align:left;">Status</th><th style="padding:15px; text-align:left;">Featured</th><th style="padding:15px; text-align:right;">Action</th></tr></thead>
+                            <thead style="background:#f8f9fa;"><tr><th style="padding:15px; text-align:left;">S.No</th><th style="padding:15px; text-align:left;">Property ID</th><th style="padding:15px; text-align:left;">Property</th><th style="padding:15px; text-align:left;">Agent Info</th><th style="padding:15px; text-align:left;">Price</th><th style="padding:15px; text-align:left;">Status</th><th style="padding:15px; text-align:left;">Featured</th><th style="padding:15px; text-align:right;">Action</th></tr></thead>
                             <tbody>
                                 ${[...State.properties].sort((a, b) => b.id - a.id).filter(p => p.title.toLowerCase().includes(State.adminSearch.toLowerCase())).map((p, index) => {
         const agent = State.agents.find(a => a.name === p.agent);
@@ -1733,6 +1736,7 @@ function renderAdmin(container) {
         return `
                                         <tr style="border-top:1px solid #eee;">
                                             <td style="padding:15px; font-weight:700; color:#138808;">#${index + 1}</td>
+                                            <td style="padding:15px; font-family:monospace; font-weight:800; color:#1a2a3a;">BD-${p.id}</td>
                                             <td style="padding:15px;">
                                                 <div><strong>${p.title}</strong></div>
                                                 <div style="font-size:0.75rem; color:#999;">${p.city}</div>
@@ -2377,6 +2381,7 @@ function renderAgent(container) {
                                             <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">Rs. ${p.price}</div>
                                             <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                         </div>
+                                        <div style="font-size:0.7rem; color:#138808; font-weight:800; margin-bottom:2px;">ID: BD-${p.id}</div>
                                         <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
                                         <div style="display:flex; gap:8px;">
                                             <button class="prop-btn" style="background:#1a2a3a; font-size:0.75rem; flex:1;" onclick="editProperty(${p.id})">Edit Details</button>
@@ -2412,6 +2417,7 @@ function renderAgent(container) {
                                         <div style="color:#138808; font-weight:800; font-size:1.1rem; margin-bottom:5px;">Rs. ${p.price}</div>
                                         <div style="font-size:0.65rem; color:#999; text-align:right;">${p.createdAt || ''}</div>
                                     </div>
+                                    <div style="font-size:0.7rem; color:#138808; font-weight:800; margin-bottom:2px;">ID: BD-${p.id}</div>
                                     <h4 style="color:white; font-size:1rem; margin-bottom:10px;">${p.title}</h4>
                                     <div style="display:flex; gap:8px;">
                                         <button class="prop-btn" style="background:#1a2a3a; font-size:0.75rem; flex:1;" onclick="editProperty(${p.id})">Edit Details</button>
@@ -2486,7 +2492,10 @@ function renderDetails(container) {
                 <div style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:flex-start;">
                     <div style="flex:1;">
                         <h2 style="color:#1a2a3a; font-size:1.6rem; font-weight:900; margin-bottom:5px; line-height:1.2;">${p.title}</h2>
-                        <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                            <div style="background:#e8f5e9; color:#138808; font-weight:800; padding:4px 10px; border-radius:30px; font-size:0.8rem; border:1px solid #c8e6c9;"><i class="fas fa-fingerprint"></i> ID: BD-${p.id}</div>
+                            <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
+                        </div>
                     </div>
                     <div onclick="toggleLike(event, ${p.id})" style="cursor:pointer; width:56px; height:56px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(0,0,0,0.12); flex-shrink:0; margin-left:15px; border:1px solid #eee;">
                         <i class="${State.likes.includes(p.id) ? 'fas' : 'far'} fa-heart" style="color:${State.likes.includes(p.id) ? '#FF5252' : '#666'}; font-size:1.8rem;"></i>
@@ -2995,7 +3004,7 @@ window.processPropertySubmit = async function () {
             closeModal();
             render();
             if (State.user.role === 'agent') setAgentTab('properties');
-            alert("Success: Property has been added!");
+            alert(`Success: Property has been added!\nProperty ID: BD-${newProp.id}`);
         }, 200);
 
     } catch (err) {
