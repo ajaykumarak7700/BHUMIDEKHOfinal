@@ -767,21 +767,21 @@ function attachNavListeners() {
 }
 
 // --- Main Render Function ---
+// --- Main Render Function ---
 function render() {
     const app = document.getElementById('app');
+    if (!app) return;
 
-    // Broadcast check
+    // Broadcast check (only if modal isn't already active)
     if (State.settings.broadcast && State.settings.broadcast.active) {
         const b = State.settings.broadcast;
         const recipient = b.recipient || 'all';
         const userRole = State.user ? State.user.role : 'guest';
-
         let shouldShow = false;
         if (recipient === 'all') shouldShow = true;
         else if (recipient === 'agents' && userRole === 'agent') shouldShow = true;
 
         if (shouldShow && !localStorage.getItem('dismissed_broadcast_' + b.id)) {
-            // Show broadcast modal if not already showing something else
             const modal = document.getElementById('modal-container');
             if (modal && modal.style.display !== 'flex') {
                 modal.style.display = 'flex';
@@ -800,24 +800,27 @@ function render() {
     const logoText = document.getElementById('app-logo-text');
     if (logoText) logoText.innerHTML = State.settings.appName || 'Bhumi<span style="color: #FF9933;">Dekho</span>';
 
-    // Update Dynamic Elements
     updateOtherButton();
 
-    app.innerHTML = '';
+    // DOUBLE BUFFERING: Render to a temporary element first to avoid "Blink"
+    const tempContainer = document.createElement('div');
 
     switch (State.view) {
-        case 'home': renderHome(app); break;
-        case 'likes': renderLikes(app); break;
-        case 'other': renderOther(app); break;
-        case 'login': renderLogin(app); break;
-        case 'admin': renderAdmin(app); break;
-        case 'agent': renderAgent(app); break;
-        case 'details': renderDetails(app); break;
-        case 'signup': renderSignup(app); break;
-        case 'signup': renderSignup(app); break;
-        case 'profile': renderProfile(app); break;
-        case 'contact': renderContactUs(app); break;
+        case 'home': renderHome(tempContainer); break;
+        case 'likes': renderLikes(tempContainer); break;
+        case 'other': renderOther(tempContainer); break;
+        case 'login': renderLogin(tempContainer); break;
+        case 'admin': renderAdmin(tempContainer); break;
+        case 'agent': renderAgent(tempContainer); break;
+        case 'details': renderDetails(tempContainer); break;
+        case 'signup': renderSignup(tempContainer); break;
+        case 'profile': renderProfile(tempContainer); break;
+        case 'contact': renderContactUs(tempContainer); break;
+        default: renderHome(tempContainer);
     }
+
+    // Direct swap to eliminate the 806: app.innerHTML = ''; blink
+    app.innerHTML = tempContainer.innerHTML;
 }
 
 function renderOther(container) {
@@ -4757,7 +4760,8 @@ function finishSwipeGesture(startX, startY, endX, endY) {
         if (currentIndex === -1) currentIndex = 0;
 
         if (diffX > 0 && currentIndex > 0) {
-            // Swipe Right -> Prev Category
+            // Swipe Right -> Prev Category (Entering from Left)
+            grid.style.transform = `translate3d(${diffX}px, 0, 0)`; // Keep current pos
             grid.classList.add('swipe-exit-right');
             setTimeout(() => {
                 State.homeCategory = categories[currentIndex - 1];
@@ -4768,10 +4772,11 @@ function finishSwipeGesture(startX, startY, endX, endY) {
                         newGrid.classList.add('swipe-enter-left');
                         scrollToActiveCategory();
                     }
-                }, 5);
-            }, 200);
+                }, 1);
+            }, 350); // Match CSS 0.4s (slightly early for overlap)
         } else if (diffX < 0 && currentIndex < categories.length - 1) {
-            // Swipe Left -> Next Category
+            // Swipe Left -> Next Category (Entering from Right)
+            grid.style.transform = `translate3d(${diffX}px, 0, 0)`; // Keep current pos
             grid.classList.add('swipe-exit-left');
             setTimeout(() => {
                 State.homeCategory = categories[currentIndex + 1];
@@ -4782,12 +4787,12 @@ function finishSwipeGesture(startX, startY, endX, endY) {
                         newGrid.classList.add('swipe-enter');
                         scrollToActiveCategory();
                     }
-                }, 5);
-            }, 200);
+                }, 1);
+            }, 350);
         } else {
             // Bounce Back
-            grid.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-            grid.style.transform = `translateX(0)`;
+            grid.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            grid.style.transform = `translate3d(0,0,0)`;
         }
     } else {
         // Bounce Back
@@ -4811,6 +4816,7 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
 
         if (diffX > 0 && currentIndex > 0) {
             // Prev
+            grid.style.transform = `translate3d(${diffX}px, 0, 0)`;
             grid.classList.add('swipe-exit-right');
             setTimeout(() => {
                 State.detailsTab = tabs[currentIndex - 1];
@@ -4818,10 +4824,11 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter-left');
-                }, 5);
-            }, 200);
+                }, 1);
+            }, 350);
         } else if (diffX < 0 && currentIndex < tabs.length - 1) {
             // Next
+            grid.style.transform = `translate3d(${diffX}px, 0, 0)`;
             grid.classList.add('swipe-exit-left');
             setTimeout(() => {
                 State.detailsTab = tabs[currentIndex + 1];
@@ -4829,11 +4836,11 @@ function finishSwipeGestureDetails(startX, startY, endX, endY) {
                 setTimeout(() => {
                     const newGrid = document.getElementById('details-content-grid');
                     if (newGrid) newGrid.classList.add('swipe-enter');
-                }, 5);
-            }, 200);
+                }, 1);
+            }, 350);
         } else {
-            grid.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-            grid.style.transform = `translateX(0)`;
+            grid.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            grid.style.transform = `translate3d(0,0,0)`;
         }
     } else {
         grid.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';

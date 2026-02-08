@@ -33,9 +33,14 @@ body {
     line-height: 1.5;
     overflow-x: hidden;
     padding-top: 65px;
-    /* Tighter spacing */
     padding-bottom: 75px;
-    /* Footer height */
+}
+
+#app {
+    position: relative;
+    min-height: calc(100vh - 140px);
+    background: #f8f9fa;
+    contain: content;
 }
 
 @media (max-width: 480px) {
@@ -1781,24 +1786,30 @@ a[data-page="other"] i {
     }
 }
 
-/* Swipe Transitions - WhatsApp Style Smoothness */
+/* Swipe Transitions - Ultra Smooth & Transparent */
 #home-prop-grid,
 #details-content-grid {
     will-change: transform, opacity;
     backface-visibility: hidden;
     perspective: 1000px;
+    contain: layout paint;
+    /* Optimize for performance */
 }
 
 .swipe-exit-left {
-    transform: translate3d(-15%, 0, 0) scale(0.97) !important;
+    transform: translate3d(-100%, 0, 0) scale(0.95) !important;
     opacity: 0 !important;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out !important;
+    filter: blur(10px) grayscale(80%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out, filter 0.4s ease !important;
+    pointer-events: none;
 }
 
 .swipe-exit-right {
-    transform: translate3d(15%, 0, 0) scale(0.97) !important;
+    transform: translate3d(100%, 0, 0) scale(0.95) !important;
     opacity: 0 !important;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out !important;
+    filter: blur(10px) grayscale(80%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out, filter 0.4s ease !important;
+    pointer-events: none;
 }
 
 .swipe-enter {
@@ -1811,24 +1822,28 @@ a[data-page="other"] i {
 
 @keyframes swipeIn {
     from {
-        transform: translate3d(20%, 0, 0) scale(1.02);
+        transform: translate3d(30%, 0, 0) scale(1.05);
         opacity: 0;
+        filter: blur(8px);
     }
 
     to {
         transform: translate3d(0, 0, 0) scale(1);
         opacity: 1;
+        filter: blur(0);
     }
 }
 
 @keyframes swipeInLeft {
     from {
-        transform: translate3d(-20%, 0, 0) scale(1.02);
+        transform: translate3d(-30%, 0, 0) scale(1.05);
         opacity: 0;
+        filter: blur(8px);
     }
 
     to {
         transform: translate3d(0, 0, 0) scale(1);
         opacity: 1;
+        filter: blur(0);
     }
 }
