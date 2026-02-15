@@ -3260,18 +3260,18 @@ function renderDetails(container) {
                 </div>
                 <div class="details-tabs" style="display:flex; gap:12px; padding:15px; background:white; position:sticky; top:60px; z-index:90; overflow-x:auto; box-shadow:0 10px 30px rgba(0,0,0,0.05); border-radius: 0 0 20px 20px; border-bottom:1px solid #f0f0f0;">
                     ${[
-                { id: 'Details', icon: 'fas fa-info-circle', label: 'Details' },
-                { id: 'Photos', icon: 'fas fa-images', label: 'Photos' },
-                { id: 'Video', icon: 'fas fa-play-circle', label: 'Video' },
-                { id: 'Map', icon: 'fas fa-map-marked-alt', label: 'Map' }
+                { id: 'Details', icon: 'fas fa-info-circle', label: 'Details', color: '#1976D2' },
+                { id: 'Photos', icon: 'fas fa-images', label: 'Photos', color: '#138808' },
+                { id: 'Video', icon: 'fas fa-play-circle', label: 'Video', color: '#D32F2F' },
+                { id: 'Map', icon: 'fas fa-map-marked-alt', label: 'Map', color: '#FF9933' }
             ].map(t => `
-                        <button class="detail-tab ${activeTab === t.id ? 'active' : ''}" onclick="setDetailTab('${t.id}')" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 15px; border-radius:12px; border:none; background:${activeTab === t.id ? 'linear-gradient(135deg, #FF9933, #138808)' : '#f8f9fa'}; color:${activeTab === t.id ? 'white' : '#666'}; font-weight:700; cursor:pointer; min-width:80px; transition:transform 0.2s; box-shadow:${activeTab === t.id ? '0 5px 15px rgba(19, 136, 8, 0.3)' : 'none'};">
+                        <button class="detail-tab ${activeTab === t.id ? 'active' : ''}" onclick="setDetailTab('${t.id}')" style="display:flex; flex-direction:column; align-items:center; gap:5px; padding:10px 15px; border-radius:12px; border:1.5px solid ${activeTab === t.id ? 'transparent' : t.color}; background:${activeTab === t.id ? 'linear-gradient(135deg, #FF9933, #138808)' : '#ffffff'}; color:${activeTab === t.id ? 'white' : t.color}; font-weight:700; cursor:pointer; min-width:80px; transition:transform 0.2s; box-shadow:${activeTab === t.id ? '0 5px 15px rgba(19, 136, 8, 0.3)' : '0 2px 8px rgba(0,0,0,0.05)'};">
                             <i class="${t.icon}" style="font-size:1.2rem; margin-bottom:2px;"></i>
                             <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">${t.label}</span>
                         </button>
                     `).join('')}
                 </div>
-                <div id="details-content-grid" style="padding:20px; padding-bottom:120px;">${contentHtml}</div>
+                <div id="details-content-grid" style="padding:20px; padding-bottom:20px;">${contentHtml}</div>
                 <div class="contact-footer" style="padding:15px 20px 25px; flex-direction:column; gap:12px;">
                     <div style="display:flex; gap:10px; width:100%;">
                         <button class="login-btn" style="background:#e8f5e9; color:#138808; border:1.5px solid #c8e6c9; margin:0; flex:1; border-radius:12px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:8px; height:44px; font-size:0.95rem; box-shadow: none;" onclick="directWhatsAppEnquiry(${p.id})">
