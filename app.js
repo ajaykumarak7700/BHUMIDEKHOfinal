@@ -3180,9 +3180,15 @@ function renderDetails(container) {
                 ${p.video ? `
                 <div style="margin-top:25px; background:#ffffff; padding:20px; border-radius:18px; border:1.5px solid #eee; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
                     <h4 style="margin-bottom:15px; color:#138808; font-weight:800;"><i class="fas fa-play-circle"></i> Property Video Tour</h4>
-                    <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:15px; overflow:hidden; border:1px solid #eee;">
-                        <iframe style="position:absolute; top:0; left:0; width:100%; height:100%;" 
-                            src="https://www.youtube.com/embed/${getYouTubeID(p.video)}" frameborder="0" allowfullscreen></iframe>
+                    <div id="inline-video-${p.id}" onclick="window.open('${p.video}', '_blank')" style="position:relative; padding-bottom:45%; height:0; border-radius:15px; overflow:hidden; border:1px solid #eee; background:#000; cursor:pointer; transition:transform 0.2s;">
+                        <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center;">
+                            <div style="width:100px; height:100px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 30px rgba(255,255,255,0.1); border:3px solid #333;">
+                                <i class="fab fa-youtube" style="color:#FF0000; font-size:4.5rem; margin-left:2px;"></i>
+                            </div>
+                        </div>
+                    </div>
+                     <div style="text-align:center; margin-top:10px;">
+                        <span style="font-size:0.85rem; color:#666; font-weight:600;"><i class="fas fa-hand-pointer"></i> Click to watch on YouTube</span>
                     </div>
                 </div>
                 ` : ''}
@@ -3202,17 +3208,25 @@ function renderDetails(container) {
         } else if (activeTab === 'Video') {
             const vidId = getYouTubeID(p.video);
             contentHtml = `
-            <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Video Tour</h3>
-        ${vidId ? `
-                    <div style="position:relative; padding-bottom:56.25%; height:0; border-radius:15px; overflow:hidden; border:1px solid #eee;">
-                        <iframe style="position:absolute; top:0; left:0; width:100%; height:100%;" 
-                            src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen></iframe>
-                    </div>
-                ` : `
+            <div style="background:#ffffff; padding:20px; border-radius:18px; border:1.5px solid #eee; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+                <h3 style="color:#1a2a3a; margin-bottom:15px; font-weight:800;">Video Tour</h3>
+            ${vidId ? `
+                        <div id="tab-video-${p.id}" onclick="window.open('${p.video}', '_blank')" style="position:relative; padding-bottom:45%; height:0; border-radius:15px; overflow:hidden; border:1px solid #eee; background:#000; cursor:pointer; transition:transform 0.2s;">
+                            <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:#000; display:flex; align-items:center; justify-content:center;">
+                                <div style="width:120px; height:120px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 0 40px rgba(255,255,255,0.1); border:4px solid #333;">
+                                    <i class="fab fa-youtube" style="color:#FF0000; font-size:5.5rem; margin-left:2px;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align:center; margin-top:15px;">
+                             <span style="font-size:0.9rem; color:#666; font-weight:600;"><i class="fas fa-hand-pointer"></i> Click above to watch video</span>
+                        </div>
+            ` : `
                     <div style="text-align:center; padding:50px; background:white; border-radius:15px; border:1px solid #eee; color:#999;">
                         <i class="fab fa-youtube" style="font-size:3rem; margin-bottom:10px;"></i><br>वीडियो उपलब्ध नहीं है
                     </div>
-                `}
+            `}
+            </div>
 `;
         } else if (activeTab === 'Map') {
             contentHtml = `
@@ -3899,6 +3913,11 @@ const toBase64 = (file, maxWidth = 800, quality = 0.5) => new Promise((resolve, 
     };
     reader.onerror = error => reject(error);
 });
+
+window.playPropertyVideo = (videoId, containerId) => {
+    // Open YouTube app/site directly since embedding is restricted for some videos or causing errors
+    window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+};
 
 function getYouTubeID(input) {
     if (!input) return "";
