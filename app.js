@@ -1641,10 +1641,27 @@ function renderHome(container) {
     const categories = State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
     const activeCat = State.homeCategory || 'All';
     const searchQuery = (State.homeSearch || '').toLowerCase();
+    const searchState = State.searchState || '';
+    const searchDistrict = State.searchDistrict || '';
+    const searchType = State.searchType || '';
 
     const filteredProps = props.filter(p => {
-        // Only filter by search query, not by category anymore (category is now used for sorting)
-        return !searchQuery || p.title.toLowerCase().includes(searchQuery) || p.city.toLowerCase().includes(searchQuery);
+        // Filter by Category (Top Nav)
+        if (activeCat !== 'All' && p.category !== activeCat) return false;
+
+        // Filter by Search Text (Title or City)
+        if (searchQuery && !p.title.toLowerCase().includes(searchQuery) && !p.city.toLowerCase().includes(searchQuery)) return false;
+
+        // Filter by State
+        if (searchState && p.state !== searchState) return false;
+
+        // Filter by District
+        if (searchDistrict && p.district !== searchDistrict) return false;
+
+        // Filter by Property Type (Search Modal)
+        if (searchType && searchType !== 'All' && p.category !== searchType) return false;
+
+        return true;
     });
 
     // Custom sort to prioritize active category, then featured, then display order, then time
@@ -1724,10 +1741,31 @@ function renderHome(container) {
         <!-- Search Box & Messenger Container -->
         <div style="padding: 0 12px; margin-bottom: 20px; position: relative; z-index: 10; display: flex; gap: 8px; align-items: center;">
             <div style="background: #ffffff; border-radius: 50px; padding: 5px 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 5px; height: 50px; flex: 1; min-width: 0;">
-                <input type="text" placeholder="City, Property..." 
-                    value="${State.homeSearch || ''}"
-                    oninput="updateHomeSearch(this.value)"
-                    style="border: none; outline: none; flex: 1; font-size: 0.85rem; padding-left: 10px; background: transparent; min-width: 0;">
+                ${(() => {
+            const hasFilters = State.searchState || State.searchDistrict || State.homeSearch || State.searchType;
+            if (hasFilters) {
+                const filterParts = [];
+                if (State.searchState) filterParts.push(State.searchState);
+                if (State.searchDistrict) filterParts.push(State.searchDistrict);
+                if (State.homeSearch) filterParts.push(State.homeSearch);
+                if (State.searchType && State.searchType !== 'All') filterParts.push(State.searchType);
+
+                return `
+                            <div onclick="clearAllFilters()" style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: #fff3e0; border-radius: 25px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#ffe0b2'" onmouseout="this.style.background='#fff3e0'">
+                                <i class="fas fa-filter" style="color: #FF9933; font-size: 0.85rem;"></i>
+                                <span style="font-size: 0.8rem; color: #333; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${filterParts.join(' > ')}</span>
+                                <i class="fas fa-times-circle" style="color: #FF9933; font-size: 0.9rem;"></i>
+                            </div>
+                        `;
+            } else {
+                return `
+                            <input type="text" placeholder="City, Property..." 
+                                value=""
+                                oninput="updateHomeSearch(this.value)"
+                                style="border: none; outline: none; flex: 1; font-size: 0.85rem; padding-left: 10px; background: transparent; min-width: 0;">
+                        `;
+            }
+        })()}
                 
                 <span style="font-size: 1.1rem; opacity: 0.4; margin-right: -2px; animation: finger-point 1.5s infinite ease-in-out; pointer-events: none; flex-shrink: 0;">👉</span>
 
@@ -2848,7 +2886,7 @@ function renderAdmin(container) {
                             </div>
                             
                             <!-- Property Types Management -->
-                            <div class="stat-box" style="padding:25px; margin-top:20px;">
+                             <div class="stat-box" style="padding:25px; margin-top:20px;">
                                  <h3 style="margin-bottom:15px; color:#138808;"><i class="fas fa-tags"></i> Property Types Management</h3>
                                  <p style="color:#666; margin-bottom:15px; font-size:0.9rem;">Manage property categories shown on the home page filter.</p>
                                  
@@ -2866,6 +2904,31 @@ function renderAdmin(container) {
                                          <input type="text" id="new-property-type" placeholder="Enter new property type..." class="login-input" style="flex:1;">
                                          <button class="login-btn" onclick="addPropertyType()" style="width:auto; padding:12px 20px; margin:0;">
                                              <i class="fas fa-plus"></i> Add Type
+                                         </button>
+                                     </div>
+                                 </div>
+                            </div>
+
+                            <!-- City Management -->
+                            <div class="stat-box" style="padding:25px; margin-top:20px;">
+                                 <h3 style="margin-bottom:15px; color:#138808;"><i class="fas fa-map-marker-alt"></i> City Management</h3>
+                                 <p style="color:#666; margin-bottom:15px; font-size:0.9rem;">Manage cities available in the property form dropdown.</p>
+                                 
+                                 <div style="margin-bottom:20px;">
+                                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                                         ${(State.settings.cities || []).map((city, idx) => `
+                                             <div style="background:#e8f5e9; padding:8px 15px; border-radius:20px; display:flex; align-items:center; gap:8px; border:1px solid #c8e6c9;">
+                                                 <span style="font-weight:600; color:#138808;">${city}</span>
+                                                 <i class="fas fa-times-circle" onclick="deleteCity(${idx})" style="color:#D32F2F; cursor:pointer; font-size:0.9rem;" title="Delete"></i>
+                                             </div>
+                                         `).join('')}
+                                         ${(!State.settings.cities || State.settings.cities.length === 0) ? '<span style="color:#999; font-style:italic;">No custom cities added. Using defaults from active properties.</span>' : ''}
+                                     </div>
+                                     
+                                     <div style="display:flex; gap:10px; align-items:center;">
+                                         <input type="text" id="new-city-name" placeholder="Enter new city name..." class="login-input" style="flex:1;">
+                                         <button class="login-btn" onclick="addCity()" style="width:auto; padding:12px 20px; margin:0;">
+                                             <i class="fas fa-plus"></i> Add City
                                          </button>
                                      </div>
                                  </div>
@@ -3140,7 +3203,7 @@ function renderDetails(container) {
                         <h2 style="color:#1a2a3a; font-size:1.6rem; font-weight:900; margin-bottom:5px; line-height:1.2;">${p.title}</h2>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
                             <div style="background:#e8f5e9; color:#138808; font-weight:800; padding:4px 10px; border-radius:30px; font-size:0.8rem; border:1px solid #c8e6c9;"><i class="fas fa-fingerprint"></i> ID: BD-${p.id}</div>
-                            <div style="color:#138808; font-weight:700; font-size:1.1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
+                            <div style="color:#138808; font-weight:700; font-size:1rem;"><i class="fas fa-map-marker-alt"></i> ${p.city}${p.pincode ? ', ' + p.pincode : ''}</div>
                         </div>
                     </div>
                     <div onclick="toggleLike(event, ${p.id})" style="cursor:pointer; width:56px; height:56px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(0,0,0,0.12); flex-shrink:0; margin-left:15px; border:1px solid #eee;">
@@ -3334,116 +3397,390 @@ function renderDetails(container) {
 
 
 
-function showPropertyModal() {
-    window.isRealTaskRunning = false; // Reset to ensure submission works
-    window.tempPropertyImages = []; // Reset images array for new property
+// Allow Admin to populate properties for editing
+window.setAdminProperties = (props) => {
+    State.properties = props || [];
+};
+
+// Multi-step Property Form
+window.propertyFormStep = 1;
+window.editingPropId = null;
+
+window.showPropertyModal = (propId = null) => {
+    window.isRealTaskRunning = false;
+    window.tempPropertyImages = [];
+    window.propertyFormStep = 1;
+    window.editingPropId = propId;
+
+    // Clear previous form data
+    window.tempFormData = {};
+
+    // If editing, populate form data
+    if (propId) {
+        const prop = State.properties.find(p => p.id == propId);
+        if (prop) {
+            // Map property fields to form fields
+            window.tempFormData['p-title'] = prop.title;
+            window.tempFormData['p-desc'] = prop.description;
+            window.tempFormData['p-price'] = prop.price;
+            window.tempFormData['p-area'] = prop.area;
+            window.tempFormData['p-state'] = prop.state;
+            window.tempFormData['p-district'] = prop.district;
+            window.tempFormData['p-city'] = prop.city;
+            window.tempFormData['p-pincode'] = prop.pincode; // Added missing pincode
+            window.tempFormData['p-cat'] = prop.category || prop.type; // Check category
+            window.tempFormData['p-mobile'] = prop.mobile || prop.contact_mobile; // Check mobile
+            window.tempFormData['p-whatsapp'] = prop.whatsapp || prop.contact_whatsapp;
+            window.tempFormData['p-video'] = prop.video || prop.youtube_video; // Check video
+            window.tempFormData['p-map'] = prop.map || prop.map_link;
+
+            // Populate images
+            if (prop.images && prop.images.length > 0) {
+                window.tempPropertyImages = [...prop.images];
+            } else if (prop.image) {
+                window.tempPropertyImages = [prop.image];
+            }
+
+            // Handle custom fields (extra details)
+            if (prop.extraDetails || prop.extra_details) {
+                const details = prop.extraDetails || prop.extra_details;
+                try {
+                    window.tempFormData['extraDetails'] = typeof details === 'string' ? JSON.parse(details) : details;
+                } catch (e) { console.error('Error parsing extra details', e); }
+            }
+        }
+    }
+
     const modal = document.getElementById('modal-container');
     if (!modal) return;
+
+    // Set proper modal styling
     modal.style.display = 'flex';
-    modal.innerHTML = `
-        <div class="modal-content scale-in" style="display:flex; flex-direction:column; padding:0 !important; max-height:85vh; overflow:hidden;">
-            <div class="prop-form-header" style="flex-shrink:0; margin:0; border-radius:0;">
-                <h3>ADD PROPERTY</h3>
-                <p><i class="fas fa-edit"></i> Tap labels to rename them</p>
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modal.style.zIndex = '9999';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.overflow = 'auto';
+    modal.style.padding = '20px';
+
+    renderPropertyForm(true); // Initial Render (pass true to avoid capturing old DOM data)
+}
+
+// Global handler for state change in property form
+window.handleStateChange = (select) => {
+    if (window.tempFormData) {
+        window.tempFormData['p-state'] = select.value;
+        window.tempFormData['p-district'] = ''; // Reset district
+    }
+    renderPropertyForm(); // Re-render to update districts
+};
+
+window.renderPropertyForm = (initial = false) => {
+    const modal = document.getElementById('modal-container');
+    const step = window.propertyFormStep;
+    const isEditMode = !!window.editingPropId; // Check if we are in Edit Mode
+
+    // Get existing values if any (to persist during step change)
+    const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : '';
+
+    // Store current values in a temporary object if we are re-rendering
+    if (!window.tempFormData) window.tempFormData = {};
+
+    // Helper to capture data before re-rendering (only needed for multi-step)
+    const captureData = () => {
+        const inputs = document.querySelectorAll('#add-prop-form input, #add-prop-form select, #add-prop-form textarea');
+        inputs.forEach(input => {
+            if (input.id) window.tempFormData[input.id] = input.value;
+        });
+    };
+    if (!initial) captureData(); // Capture data unless it's the initial load
+
+    // ---------------------------------------------------------
+    // RENDER CONTENT
+    // ---------------------------------------------------------
+    let contentHtml = '';
+
+    // Unified Form Layout (Same for Add & Edit)
+    // We removed the special "isEditMode" single-page layout to ensure
+    // the Edit experience matches the Add experience (Multi-step).
+
+    // Step Indicators
+    const stepsIndicator = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; padding:0 10px;">
+                ${[1, 2, 3, 4].map(s => `
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <div style="width:30px; height:30px; border-radius:50%; background:${step >= s ? '#138808' : '#eee'}; color:${step >= s ? 'white' : '#999'}; display:flex; align-items:center; justify-content:center; font-weight:700; margin-bottom:5px;">${s}</div>
+                        <span style="font-size:0.7rem; color:${step >= s ? '#138808' : '#999'}; font-weight:${step >= s ? '700' : '400'};">
+                            ${s === 1 ? 'Location' : (s === 2 ? 'Details' : (s === 3 ? 'Price' : 'Media'))}
+                        </span>
+                    </div>
+                `).join('<div style="flex:1; height:2px; background:#eee; margin-top:15px;"></div>')}
             </div>
-            <div style="overflow-y:auto; padding:20px; flex:1;">
+        `;
+
+    // Step 1: Title & Address (Location)
+    if (step === 1) {
+        contentHtml = `
+                ${stepsIndicator}
+                <div class="form-group">
+                    <div class="label-edit-wrap"><input class="editable-label" id="l-title" value="Property Title" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                    <input id="p-title" value="${window.tempFormData['p-title'] || ''}" required placeholder="e.g. 3BHK Luxury Apartment">
+                </div>
+                
+                <!-- State & District -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-state" value="State" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <select id="p-state" onchange="window.handleStateChange(this)">
+                            <option value="">Select State</option>
+                            ${Object.keys(window.indianStates || {}).map(s => `<option value="${s}" ${window.tempFormData['p-state'] === s ? 'selected' : ''}>${s}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-district" value="District" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <select id="p-district" onchange="window.tempFormData['p-district']=this.value">
+                            <option value="">Select District</option>
+                            ${(window.indianStates && window.tempFormData['p-state'] ? window.indianStates[window.tempFormData['p-state']] || [] : []).map(d => `<option value="${d}" ${window.tempFormData['p-district'] === d ? 'selected' : ''}>${d}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Area Pincode & City -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                     <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-city" value="City/Town" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-city" value="${window.tempFormData['p-city'] || ''}" placeholder="Enter City Name">
+                    </div>
+                     <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-pincode" value="Pincode" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-pincode" type="number" value="${window.tempFormData['p-pincode'] || ''}" required placeholder="Enter Pincode">
+                    </div>
+                </div>
+            `;
+    }
+    // Step 2: Property Details (Category, Area, Desc)
+    else if (step === 2) {
+        contentHtml = `
+                ${stepsIndicator}
+                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-cat" value="Category" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <select id="p-cat">
+                            ${(State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'])
+                .filter(c => c !== 'All')
+                .map(c => `<option ${window.tempFormData['p-cat'] === c ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-area" value="Size (Sq.ft)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-area" value="${window.tempFormData['p-area'] || ''}" required placeholder="e.g. 1200 Sq.ft">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="label-edit-wrap"><input class="editable-label" id="l-desc" value="Description" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                    <textarea id="p-desc" rows="5" placeholder="Detailed description of the property...">${window.tempFormData['p-desc'] || ''}</textarea>
+                </div>
+            `;
+    }
+    // Step 3: Price & Contact
+    else if (step === 3) {
+        contentHtml = `
+                ${stepsIndicator}
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-price" value="Total Price" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-price" value="${window.tempFormData['p-price'] || ''}" required placeholder="e.g. 50 Lakh">
+                    </div>
+                     <div class="form-group">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-mobile" value="Mobile Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <input id="p-mobile" type="tel" value="${window.tempFormData['p-mobile'] || ''}" required placeholder="10 Digit Mobile">
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <div class="label-edit-wrap"><input class="editable-label" id="l-whatsapp" value="WhatsApp Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                    <input id="p-whatsapp" type="tel" value="${window.tempFormData['p-whatsapp'] || ''}" required placeholder="WhatsApp Number">
+                </div>
+            `;
+    }
+    // Step 4: Media (Photos, Video, Map)
+    else if (step === 4) {
+        contentHtml = `
+                ${stepsIndicator}
+                 <div class="form-group">
+                    <div class="label-edit-wrap"><input class="editable-label" id="l-img" value="Property Images" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                    <div id="image-preview-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; min-height:80px; background:#f9f9f9; border-radius:10px; padding:10px; border:1px dashed #ddd;"></div>
+                    <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
+                        <div style="display:flex; gap:8px;">
+                            <input id="p-img-url-input" placeholder="Paste Image URL" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;">
+                            <button type="button" class="prop-btn" style="width:auto; background:#1a2a3a; font-size:0.8rem;" onclick="addUrlImage()">Add URL</button>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px; color:#999; font-size:0.8rem;">
+                            <div style="flex:1; height:1px; background:#ddd;"></div> OR <div style="flex:1; height:1px; background:#ddd;"></div>
+                        </div>
+                        <input type="file" id="p-img-single" accept="image/*" style="display:none;" onchange="addSingleImage(this)">
+                        <button type="button" id="add-image-btn" class="prop-btn" style="background:#e8f5e9; color:#138808; border:2px dashed #138808;" onclick="document.getElementById('p-img-single').click()">
+                            <i class="fas fa-camera"></i> Upload from Gallery (<span id="img-count">${window.tempPropertyImages.length}</span>/5)
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="label-edit-wrap"><input class="editable-label" id="l-video" value="YouTube Link (Optional)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                    <input id="p-video" value="${window.tempFormData['p-video'] || ''}" placeholder="https://youtube.com/...">
+                </div>
+                <div class="form-group">
+                    <div class="label-edit-wrap"><input class="editable-label" id="l-map" value="Map Link (Optional)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                    <input id="p-map" value="${window.tempFormData['p-map'] || ''}" placeholder="Google Maps Link">
+                </div>
+                 <div id="extra-fields-area"></div>
+                 <button type="button" class="prop-btn" style="background:#f0f0f0; color:#1a2a3a; margin-bottom:20px; border:2px dashed #ccc;" onclick="addCustomField()">
+                    <i class="fas fa-plus"></i> Add Info Field
+                </button>
+            `;
+    }
+
+
+    modal.innerHTML = `
+        <div style="
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        ">
+            <!-- Header -->
+            <div style="
+                background: linear-gradient(135deg, #138808 0%, #0d5c05 100%);
+                color: white;
+                padding: 20px;
+                text-align: center;
+                flex-shrink: 0;
+            ">
+                <h3 style="margin: 0; font-size: 1.4rem; font-weight: 700;">${isEditMode ? 'EDIT PROPERTY' : 'ADD PROPERTY'}</h3>
+                ${isEditMode ? '<p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 0.9rem;">Modify Property Details</p>' : `<p style="margin: 8px 0 0 0; opacity: 0.9; font-size: 0.9rem;">Step ${step} of 4</p>`}
+            </div>
+            
+            <!-- Scrollable Content -->
+            <div style="
+                flex: 1;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 25px;
+                -webkit-overflow-scrolling: touch;
+            ">
                 <form id="add-prop-form">
-                    <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-title" value="Property Title" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <input id="p-title" required placeholder="Please Enter Property Title">
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group">
-                            <div class="label-edit-wrap"><input class="editable-label" id="l-city" value="City" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                            <input id="p-city" required placeholder="Please Enter City">
-                        </div>
-                        <div class="form-group">
-                            <div class="label-edit-wrap"><input class="editable-label" id="l-cat" value="Category" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                            <select id="p-cat">
-                                ${(State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'])
-            .filter(c => c !== 'All')
-            .map(c => `<option>${c}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group">
-                            <div class="label-edit-wrap"><input class="editable-label" id="l-price" value="Total Price" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                            <input id="p-price" required placeholder="Please Enter Total Price">
-                        </div>
-                        <div class="form-group">
-                            <div class="label-edit-wrap"><input class="editable-label" id="l-area" value="Area (Sq.ft/Bigha)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                            <input id="p-area" required placeholder="Please Enter Area">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-sqft" value="Price per Sq.ft" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <input id="p-sqft" required placeholder="Please Enter Price per Sq.ft">
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group">
-                            <div class="label-edit-wrap"><input class="editable-label" id="l-mobile" value="Mobile Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                            <input id="p-mobile" type="tel" required placeholder="Please Enter Mobile Number">
-                        </div>
-                        <div class="form-group">
-                            <div class="label-edit-wrap"><input class="editable-label" id="l-whatsapp" value="WhatsApp Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                            <input id="p-whatsapp" type="tel" required placeholder="Please Enter WhatsApp Number">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-desc" value="Description" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <textarea id="p-desc" rows="3" placeholder="Please Enter Description"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-img" value="Property Images" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        
-                        <!-- Image Preview Area -->
-                        <div id="image-preview-container" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; min-height:80px; background:#f9f9f9; border-radius:10px; padding:10px; border:1px dashed #ddd;"></div>
-                        
-                        <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
-                            <!-- Option 1: URL Input -->
-                            <div style="display:flex; gap:8px;">
-                                <input id="p-img-url-input" placeholder="Paste Image URL (e.g. from ImgBB)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;">
-                                <button type="button" class="prop-btn" style="width:auto; background:#1a2a3a; font-size:0.8rem;" onclick="addUrlImage()">
-                                    <i class="fas fa-link"></i> Add URL
-                                </button>
-                            </div>
+                    ${contentHtml}
 
-                            <div style="display:flex; align-items:center; gap:10px; color:#999; font-size:0.8rem;">
-                                <div style="flex:1; height:1px; background:#ddd;"></div> OR <div style="flex:1; height:1px; background:#ddd;"></div>
-                            </div>
-
-                            <!-- Option 2: Gallery Upload -->
-                            <input type="file" id="p-img-single" accept="image/*" style="display:none;" onchange="addSingleImage(this)">
-                            <button type="button" id="add-image-btn" class="prop-btn" style="background:#e8f5e9; color:#138808; border:2px dashed #138808;" onclick="document.getElementById('p-img-single').click()">
-                                <i class="fas fa-camera"></i> Upload from Gallery (<span id="img-count">0</span>/5)
-                            </button>
-                        </div>
+                    <div style="display:flex; gap:10px; margin-top:25px;">
+                        ${step > 1 ? `<button type="button" class="login-btn" style="background:#ddd; color:#333; flex:1;" onclick="prevPropStep()"><i class="fas fa-arrow-left"></i> Previous</button>` : ''}
                         
-                        <p style="font-size:0.75rem; color:#666; margin-top:8px;">
-                            <i class="fas fa-info-circle"></i> Use URL loads faster. First image will be main. Max 5 images.
-                        </p>
+                         ${step < 4 ?
+            `<button type="button" class="login-btn" style="flex:1;" onclick="nextPropStep()">Next <i class="fas fa-arrow-right"></i></button>` :
+            (isEditMode ?
+                `<button type="button" class="login-btn" style="flex:1;" onclick="window.processPropertySubmit()">UPDATE PROPERTY</button>` :
+                `<button type="button" class="login-btn" style="flex:1;" onclick="window.processPropertySubmit()">Submit Property</button>`)
+        }
                     </div>
-                    <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-video" value="YouTube Link (Optional)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <input id="p-video" placeholder="Please Enter YouTube Link">
-                    </div>
-                    <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-map" value="Map Link (Optional)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <input id="p-map" placeholder="Please Enter Map Link">
-                    </div>
-                    
-                    <div id="extra-fields-area"></div>
-                    
-                    <button type="button" class="prop-btn" style="background:#f0f2f5; color:#1a2a3a; margin-bottom:20px; border:2px dashed #ccc;" onclick="addCustomField()">
-                        <i class="fas fa-plus"></i> Add More Details
-                    </button>
-
-                    <button type="button" class="login-btn" onclick="window.processPropertySubmit()">Submit Property</button>
-                    <button type="button" class="prop-btn" style="background:#D32F2F; color:white; margin-top:10px; padding:15px; font-weight:800; border-radius:12px;" onclick="closeModal()">CLOSE</button>
                 </form>
             </div>
-        </div>`;
+            
+            <!-- Cancel Button -->
+            <button type="button" onclick="closePropertyModal()" style="
+                background: white;
+                color: #D32F2F;
+                border: none;
+                border-top: 2px solid #eee;
+                padding: 18px;
+                font-weight: 700;
+                font-size: 1rem;
+                cursor: pointer;
+                flex-shrink: 0;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#ffebee'" onmouseout="this.style.background='white'">
+                CANCEL
+            </button>
+        </div>
+    `;
+
+    // Re-attach images if on step 4 or Edit Mode
+    if (step === 4 || isEditMode) {
+        updateImagePreviews();
+        updateImageCount();
+
+        // Populate custom fields if any
+        const details = window.tempFormData['extraDetails'];
+        const container = document.getElementById('extra-fields-area');
+        if (details && Array.isArray(details) && container && container.children.length === 0) {
+            details.forEach(d => {
+                if (window.addCustomField) window.addCustomField(d.label || d.title, d.value);
+            });
+        }
+    }
+}
+
+window.closePropertyModal = () => {
+    const modal = document.getElementById('modal-container');
+    if (modal) modal.style.display = 'none';
+};
+
+window.nextPropStep = () => {
+    // Validate current step
+    const inputs = document.querySelectorAll('#add-prop-form input[required], #add-prop-form select');
+    let valid = true;
+    inputs.forEach(i => {
+        // Skip validation for hidden/disabled inputs
+        if (i.disabled || i.style.display === 'none') return;
+
+        if (!i.value.trim()) {
+            i.style.borderColor = 'red';
+            valid = false;
+        } else {
+            i.style.borderColor = '#ddd';
+        }
+    });
+
+    // Specific check for district if state is selected
+    if (window.propertyFormStep === 1) {
+        const stateVal = document.getElementById('p-state').value;
+        const districtEl = document.getElementById('p-district');
+        if (stateVal && !districtEl.value) {
+            districtEl.style.borderColor = 'red';
+            valid = false;
+        }
+    }
+
+    if (!valid) return alert("Please fill all required fields.");
+
+    // Save current data
+    const allInputs = document.querySelectorAll('#add-prop-form input, #add-prop-form select, #add-prop-form textarea');
+    if (!window.tempFormData) window.tempFormData = {};
+    allInputs.forEach(input => {
+        if (input.id) window.tempFormData[input.id] = input.value;
+    });
+
+    window.propertyFormStep++;
+    renderPropertyForm();
+}
+
+window.prevPropStep = () => {
+    // Save current data even when going back
+    const allInputs = document.querySelectorAll('#add-prop-form input, #add-prop-form select, #add-prop-form textarea');
+    if (!window.tempFormData) window.tempFormData = {};
+    allInputs.forEach(input => {
+        if (input.id) window.tempFormData[input.id] = input.value;
+    });
+
+    window.propertyFormStep--;
+    renderPropertyForm();
 }
 
 // Enable label editing when pen icon is clicked
@@ -3474,20 +3811,57 @@ window.enableLabelEdit = function (iconEl) {
     }
 };
 
-window.addCustomField = () => {
+window.addCustomField = (titleStr = "New Detail Title", valStr = "") => {
     const container = document.getElementById('extra-fields-area');
+    if (!container) return;
+
     const id = Date.now();
     const div = document.createElement('div');
     div.className = 'form-group extra-field-group';
-    div.style.position = 'relative';
+    div.style.cssText = 'position: relative; border: 1px solid #eee; padding: 15px; padding-top: 20px; border-radius: 10px; margin-bottom: 15px; background: #f9f9f9;';
     div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-             <input class="editable-label" value="New Detail Title" style="width:80%; color:#138808;">
-             <i class="fas fa-times" style="color:#D32F2F; cursor:pointer;" onclick="this.parentElement.parentElement.remove()"></i>
+        <button type="button" onclick="this.parentElement.remove()" style="position: absolute; top: 8px; right: 8px; background: #D32F2F; color: white; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(211,47,47,0.3); z-index: 10;">
+            <i class="fas fa-times"></i>
+        </button>
+        <div style="margin-bottom: 10px; padding-right: 35px;">
+            <div class="label-edit-wrap" style="position: relative; display: flex; align-items: center; gap: 8px; background: white; padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd;">
+                <input type="text" class="editable-label custom-title-${id}" value="${titleStr}" placeholder="e.g. Parking, Furnishing" readonly style="flex: 1; color: #138808; font-weight: 600; border: none; background: transparent; padding: 0; font-size: 1rem; outline: none;">
+                <i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)" style="color: #999; font-size: 0.9rem; flex-shrink: 0; cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#138808'" onmouseout="this.style.color='#999'"></i>
+            </div>
         </div>
-        <input class="extra-field-value" placeholder="Please Enter Value">
+        <div>
+            <label style="font-size: 0.85rem; color: #666; font-weight: 600; display: block; margin-bottom: 5px;">Field Value</label>
+            <input type="text" class="extra-field-value" value="${valStr}" placeholder="e.g. Available, Fully Furnished" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; cursor: text;">
+        </div>
     `;
     container.appendChild(div);
+
+    // Auto-focus and enable edit mode only if it is a NEW field
+    if (titleStr === "New Detail Title") {
+        setTimeout(() => {
+            const titleInput = div.querySelector(`.custom-title-${id}`);
+            const penIcon = titleInput?.nextElementSibling;
+            if (titleInput && penIcon) {
+                // Trigger edit mode
+                enableLabelEdit(penIcon);
+                titleInput.focus();
+                titleInput.select();
+            }
+        }, 100);
+    }
+};
+
+// Handle City Select Change
+window.toggleCityInput = (selectEl) => {
+    const inputEl = document.getElementById('p-city');
+    if (selectEl.value === 'Other') {
+        inputEl.style.display = 'block';
+        inputEl.value = '';
+        inputEl.focus();
+    } else {
+        inputEl.style.display = 'none';
+        inputEl.value = selectEl.value;
+    }
 };
 
 window.showPropertyModal = showPropertyModal;
@@ -3598,22 +3972,26 @@ window.processPropertySubmit = async function () {
     }
 
     // Basic validation check
-    const fields = [
-        { id: 'p-title', name: 'Title' },
-        { id: 'p-city', name: 'City' },
-        { id: 'p-price', name: 'Price' },
-        { id: 'p-area', name: 'Area' },
-        { id: 'p-mobile', name: 'Mobile' },
-        { id: 'p-whatsapp', name: 'WhatsApp' }
-    ];
+    // Sync current step data first
+    const allSyncInputs = document.querySelectorAll('#add-prop-form input, #add-prop-form select, #add-prop-form textarea');
+    if (!window.tempFormData) window.tempFormData = {};
+    allSyncInputs.forEach(input => {
+        if (input.id) window.tempFormData[input.id] = input.value;
+    });
 
-    for (const f of fields) {
-        const el = document.getElementById(f.id);
-        if (!el || !el.value.trim()) {
-            alert(`Please fill the ${f.name} field.`);
-            return;
-        }
-    }
+    const getValCheck = (id) => window.tempFormData[id] ? window.tempFormData[id].trim() : '';
+
+    // Validation
+    if (!getValCheck('p-title')) return alert("Please fill the Title field.");
+    if (!getValCheck('p-state')) return alert("Please select a State.");
+    if (!getValCheck('p-district')) return alert("Please select a District.");
+    if (!getValCheck('p-pincode')) return alert("Please fill the Pincode field.");
+    if (!getValCheck('p-city')) return alert("Please fill the City field.");
+
+    if (!getValCheck('p-price')) return alert("Please fill the Price field.");
+    if (!getValCheck('p-area')) return alert("Please fill the Size/Area field.");
+    if (!getValCheck('p-mobile')) return alert("Please fill the Mobile field.");
+    if (!getValCheck('p-whatsapp')) return alert("Please fill the WhatsApp field.");
 
     // Check if at least one image is added
     if (!window.tempPropertyImages || window.tempPropertyImages.length === 0) {
@@ -3628,52 +4006,76 @@ window.processPropertySubmit = async function () {
         // Use images from tempPropertyImages (already base64)
         const allImages = window.tempPropertyImages;
 
-        // Generate a unique 4-digit ID
-        let newId;
-        const existingIds = State.properties.map(p => p.id);
-        do {
-            newId = Math.floor(1000 + Math.random() * 9000);
-        } while (existingIds.includes(newId));
+        // Ensure form data is synced one last time if we are on the final step
+        const allInputs = document.querySelectorAll('#add-prop-form input, #add-prop-form select, #add-prop-form textarea');
+        if (!window.tempFormData) window.tempFormData = {};
+        allInputs.forEach(input => {
+            if (input.id) window.tempFormData[input.id] = input.value;
+        });
 
-        const newProp = {
+        // Determine ID: Use existing if editing, else generate new
+        let newId = window.editingPropId;
+        let existingProp = null;
+
+        if (newId) {
+            existingProp = State.properties.find(p => p.id == newId);
+        } else {
+            const existingIds = State.properties.map(p => p.id);
+            do {
+                newId = Math.floor(1000 + Math.random() * 9000);
+            } while (existingIds.includes(newId));
+        }
+
+        const getVal = (id) => window.tempFormData[id] ? window.tempFormData[id].trim() : '';
+        const getRaw = (id) => window.tempFormData[id] || '';
+
+        const propData = {
             id: newId,
-            title: document.getElementById('p-title').value.trim(),
-            city: document.getElementById('p-city').value.trim(),
-            category: document.getElementById('p-cat').value,
-            price: document.getElementById('p-price').value.trim(),
-            area: document.getElementById('p-area').value.trim(),
-            priceSqft: document.getElementById('p-sqft').value.trim(),
-            mobile: document.getElementById('p-mobile').value.trim(),
-            whatsapp: document.getElementById('p-whatsapp').value.trim(),
-            description: document.getElementById('p-desc').value.trim(),
-            image: allImages[0], // Main image (backward compatibility)
-            images: allImages,   // All images array
-            video: document.getElementById('p-video').value.trim(),
-            map: document.getElementById('p-map').value.trim(),
-            status: State.user.role === 'admin' ? 'approved' : 'pending', // Pending for everyone except admin
+            title: getVal('p-title'),
+            state: getVal('p-state'),
+            district: getVal('p-district'),
+            city: getVal('p-city'),
+            pincode: getVal('p-pincode'),
+            category: getRaw('p-cat'),
+            price: getVal('p-price'),
+            area: getVal('p-area'),
+            priceSqft: getVal('p-sqft'), // Note: this field might be empty if input not present
+            mobile: getVal('p-mobile'),
+            whatsapp: getVal('p-whatsapp'),
+            description: getVal('p-desc'),
+            image: allImages[0],
+            images: allImages,
+            video: getVal('p-video'),
+            map: getVal('p-map'),
+            // Preserve status if editing, else default
+            // If Admin: preserve existing status or approve. Else (Agent/Customer): always set to pending for approval
+            status: State.user.role === 'admin' ? (existingProp ? existingProp.status : 'approved') : 'pending',
             agent: State.user.name || 'Unknown Agent',
-            agentId: State.user.id, // Store ID to track ownership
-            role: State.user.role || 'customer', // Track who added it
-            featured: false,
-            views: 0,
-            leads: 0,
-            createdTimestamp: Date.now(), // Numeric timestamp for sorting
-            showAgentContact: false,
-            createdAt: new Date().toLocaleString('en-IN', {
+            agentId: State.user.id,
+            role: State.user.role || 'customer',
+            featured: existingProp ? existingProp.featured : false,
+            views: existingProp ? existingProp.views : 0,
+            leads: existingProp ? existingProp.leads : 0,
+            createdTimestamp: existingProp ? existingProp.createdTimestamp : Date.now(),
+            showAgentContact: existingProp ? existingProp.showAgentContact : false,
+            createdAt: existingProp ? existingProp.createdAt : new Date().toLocaleString('en-IN', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit', hour12: true
             }),
             labels: {
-                title: document.getElementById('l-title').value.trim(),
-                city: document.getElementById('l-city').value.trim(),
-                category: document.getElementById('l-cat').value.trim(),
-                price: document.getElementById('l-price').value.trim(),
-                area: document.getElementById('l-area').value.trim(),
-                sqft: document.getElementById('l-sqft').value.trim(),
-                mobile: document.getElementById('l-mobile').value.trim(),
-                whatsapp: document.getElementById('l-whatsapp').value.trim(),
-                video: document.getElementById('l-video').value.trim(),
-                map: document.getElementById('l-map').value.trim()
+                title: getVal('l-title') || 'Property Title',
+                state: getVal('l-state') || 'State',
+                district: getVal('l-district') || 'District',
+                city: getVal('l-city') || 'City',
+                pincode: getVal('l-pincode') || 'Area Pincode',
+                category: getVal('l-cat') || 'Category',
+                price: getVal('l-price') || 'Total Price',
+                area: getVal('l-area') || 'Size (Sq.ft)',
+                sqft: getVal('l-sqft') || 'Price per Sq.ft',
+                mobile: getVal('l-mobile') || 'Mobile Number',
+                whatsapp: getVal('l-whatsapp') || 'WhatsApp Number',
+                video: getVal('l-video') || 'YouTube Link',
+                map: getVal('l-map') || 'Map Link'
             },
             extraDetails: Array.from(document.querySelectorAll('.extra-field-group')).map(div => ({
                 label: div.querySelector('.editable-label').value.trim(),
@@ -3681,25 +4083,39 @@ window.processPropertySubmit = async function () {
             }))
         };
 
-        if (!State.properties) State.properties = [];
-        State.properties.push(newProp);
+        // Add new city to admin list if it's new
+        if (propData.city && !State.settings.cities?.includes(propData.city)) {
+            if (!State.settings.cities) State.settings.cities = [];
+            State.settings.cities.push(propData.city);
+        }
+
+        if (existingProp) {
+            // Update existing property
+            Object.assign(existingProp, propData);
+        } else {
+            // Create new property
+            if (!State.properties) State.properties = [];
+            State.properties.push(propData);
+        }
 
         await saveGlobalData();
 
-        hideGlobalLoader("प्रॉपर्टी सफलतापूर्वक अपलोड!");
+        hideGlobalLoader(existingProp ? "प्रॉपर्टी अपडेट सफल!" : "प्रॉपर्टी सफलतापूर्वक अपलोड!");
 
         setTimeout(() => {
             window.tempPropertyImages = []; // Reset images array
             closeModal();
             render();
-            if (State.user.role === 'agent') {
+            if (existingProp) {
+                // No alert needed for simple update, usually
+                // But maybe good to confirm
+            } else if (State.user.role === 'agent') {
                 setAgentTab('properties');
-                alert(`Success: Property submitted for approval!\nProperty ID: BD-${newProp.id}\nStatus: Pending Approval`);
+                alert(`Success: Property submitted for approval!\nProperty ID: BD-${newId}\nStatus: Pending Approval`);
             } else if (State.user.role === 'customer') {
-                // For customer, maybe redirect to a 'My Listings' or just show success
-                alert(`Success! Your property has been submitted.\nIt will be visible after Admin approval.\nProperty ID: BD-${newProp.id}`);
+                alert(`Success! Your property has been submitted.\nIt will be visible after Admin approval.\nProperty ID: BD-${newId}`);
             } else {
-                alert(`Success: Property has been added!\\nProperty ID: BD-${newProp.id}`);
+                alert(`Success: Property has been added!\\nProperty ID: BD-${newId}`);
             }
         }, 200);
 
@@ -3713,6 +4129,11 @@ window.processPropertySubmit = async function () {
 };
 
 function editProperty(id) {
+    // Redirect to main property form for editing (same design as Add Property)
+    showPropertyModal(id);
+    return;
+
+    // OLD SIMPLIFIED EDIT LOGIC BELOW (Deprecated but kept for reference if needed, though unreachable now)
     const p = State.properties.find(x => x.id === id);
     if (!p) return;
     const modal = document.getElementById('modal-container');
@@ -3734,7 +4155,9 @@ function editProperty(id) {
                     <div class="form-group"><label>Title</label><input id="pe-title" value="${p.title}" required></div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                         <div class="form-group"><label>City</label><input id="pe-city" value="${p.city}" required></div>
-                        <div class="form-group"><label>Category</label><select id="pe-cat">
+                        <div class="form-group"><label>Pincode</label><input id="pe-pincode" value="${p.pincode || ''}" required></div>
+                    </div>
+                    <div class="form-group"><label>Category</label><select id="pe-cat">
                             ${(State.settings.propertyTypes || ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'])
             .filter(c => c !== 'All')
             .map(c => `<option ${p.category === c ? 'selected' : ''}>${c}</option>`).join('')}
@@ -3776,11 +4199,12 @@ function editProperty(id) {
                     <button type="button" class="prop-btn" style="background:#D32F2F; color:white; margin-top:10px; padding:15px; font-weight:800; border-radius:12px;" onclick="closeModal()">CLOSE</button>
                 </form>
             </div>
-        </div>`;
+        </div > `;
     document.getElementById('edit-prop-form').onsubmit = (e) => {
         e.preventDefault();
         p.title = document.getElementById('pe-title').value;
         p.city = document.getElementById('pe-city').value;
+        p.pincode = document.getElementById('pe-pincode').value;
         p.category = document.getElementById('pe-cat').value;
         p.price = document.getElementById('pe-price').value;
         p.area = document.getElementById('pe-area').value;
@@ -3833,44 +4257,151 @@ function editProperty(id) {
     };
 }
 
-function openSearchModal() {
+window.openSearchModal = () => {
     const modal = document.getElementById('modal-container');
-    modal.style.display = 'flex';
+    const states = Object.keys(INDIA_LOCATIONS).sort();
 
-    // Get unique cities from all properties
-    const cities = [...new Set(State.properties.map(p => p.city).filter(c => c && c.trim() !== ''))];
-    const cityOptions = cities.map(city => `<option>${city}</option>`).join('');
+    // Get current search state or defaults
+    const sState = State.searchState || '';
+    const sDistrict = State.searchDistrict || '';
+    const districts = sState ? (INDIA_LOCATIONS[sState] || []).sort() : [];
+
+    // Get cities filtered by state and district
+    let filteredCities = State.properties.map(p => p.city).filter(c => c && c.trim());
+
+    if (sState) {
+        filteredCities = State.properties
+            .filter(p => p.state === sState)
+            .map(p => p.city)
+            .filter(c => c && c.trim());
+    }
+
+    if (sDistrict) {
+        filteredCities = State.properties
+            .filter(p => p.state === sState && p.district === sDistrict)
+            .map(p => p.city)
+            .filter(c => c && c.trim());
+    }
+
+    const allCities = [...new Set(filteredCities)].sort();
 
     modal.innerHTML = `
-        <div class="modal-content scale-in" style="max-width: 350px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h3 style="margin:0;">Advanced Search</h3>
-                <i class="fas fa-times" onclick="closeModal()" style="cursor:pointer; color:#999;"></i>
+        <div class="modal-content scale-in" style="max-height:90vh; display:flex; flex-direction:column; overflow:hidden;">
+            <h3 style="margin-bottom:20px; color:#138808; text-align:center;">Find Your Property</h3>
+
+            <div style="overflow-y:auto; flex:1; padding-right:5px;">
+                <div class="form-group">
+                    <label>State</label>
+                    <select id="search-state" class="login-input" onchange="updateSearchDistricts(this)">
+                        <option value="">All States</option>
+                        ${states.map(s => `<option value="${s}" ${sState === s ? 'selected' : ''}>${s}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>District</label>
+                    <select id="search-district" class="login-input" ${!sState ? 'disabled' : ''} onchange="updateSearchCities()">
+                        <option value="">All Districts</option>
+                        ${districts.map(d => `<option value="${d}" ${sDistrict === d ? 'selected' : ''}>${d}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>City / Location</label>
+                    <select id="search-city" class="login-input">
+                        <option value="">All Cities</option>
+                        ${allCities.map(c => `<option value="${c}" ${State.homeSearch === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Property Type</label>
+                    <select id="search-type" class="login-input">
+                        <option value="">All Types</option>
+                        ${(State.settings.propertyTypes || []).map(t => `<option value="${t}" ${State.searchType === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Select City</label>
-                <select id="s-city" class="login-input">
-                    <option>All Cities</option>
-                    ${cityOptions}
-                </select>
+
+            <div style="padding-top:15px; border-top:1px solid #eee; margin-top:10px;">
+                <button class="login-btn" onclick="applySearch()" style="width:100%; margin-bottom:10px;">
+                    <i class="fas fa-search"></i> Search Properties
+                </button>
+                <button class="prop-btn" onclick="closeModal()" style="width:100%; padding:15px; border:none; color:#666; background:#f5f5f5;">Cancel</button>
             </div>
-            <div class="form-group">
-                <label>Property Type</label>
-                <select id="s-type" class="login-input">
-                    <option>All Types</option>
-                    <option>Plot</option>
-                    <option>Rented Room</option>
-                    <option>Agricultural Land</option>
-                    <option>Residential</option>
-                    <option>Commercial</option>
-                    <option>Villa</option>
-                    <option>Farm House</option>
-                </select>
-            </div>
-            <button class="login-btn" onclick="closeModal()" style="background:#138808; margin-top:20px;">Apply Search</button>
-            <button class="prop-btn" style="background:none; color:#D32F2F;" onclick="closeModal()">Close</button>
-        </div>`;
-}
+        </div>
+    `;
+    modal.style.display = 'flex';
+};
+
+window.updateSearchDistricts = (stateSelect) => {
+    const val = stateSelect.value;
+    const districtSelect = document.getElementById('search-district');
+
+    // Update State in memory
+    State.searchState = val;
+    State.searchDistrict = ''; // Reset district when state changes
+
+    if (!val) {
+        districtSelect.innerHTML = '<option value="">All Districts</option>';
+        districtSelect.disabled = true;
+        updateSearchCities(); // Update cities when state is cleared
+        return;
+    }
+
+    const districts = (INDIA_LOCATIONS[val] || []).sort();
+    districtSelect.innerHTML = '<option value="">All Districts</option>' +
+        districts.map(d => `<option value="${d}">${d}</option>`).join('');
+    districtSelect.disabled = false;
+
+    updateSearchCities(); // Update cities when state changes
+};
+
+window.updateSearchCities = () => {
+    const stateVal = document.getElementById('search-state').value;
+    const districtVal = document.getElementById('search-district').value;
+    const citySelect = document.getElementById('search-city');
+
+    // Update District in memory
+    State.searchDistrict = districtVal;
+
+    // Filter cities based on state and district
+    let filteredCities = State.properties.map(p => p.city).filter(c => c && c.trim());
+
+    if (stateVal) {
+        filteredCities = State.properties
+            .filter(p => p.state === stateVal)
+            .map(p => p.city)
+            .filter(c => c && c.trim());
+    }
+
+    if (districtVal) {
+        filteredCities = State.properties
+            .filter(p => p.state === stateVal && p.district === districtVal)
+            .map(p => p.city)
+            .filter(c => c && c.trim());
+    }
+
+    const uniqueCities = [...new Set(filteredCities)].sort();
+
+    citySelect.innerHTML = '<option value="">All Cities</option>' +
+        uniqueCities.map(c => `<option value="${c}">${c}</option>`).join('');
+};
+
+window.applySearch = () => {
+    const stateVal = document.getElementById('search-state').value;
+    const districtVal = document.getElementById('search-district').value;
+    const cityVal = document.getElementById('search-city').value;
+    const typeVal = document.getElementById('search-type').value;
+
+    State.searchState = stateVal;
+    State.searchDistrict = districtVal;
+    State.homeSearch = cityVal;
+    State.searchType = typeVal;
+
+    closeModal();
+    render(); // Main render will handle the filtering
+};
 
 function closeModal() { document.getElementById('modal-container').style.display = 'none'; }
 
@@ -6028,4 +6559,422 @@ window.saveSellRentGlobalSettings = () => {
     saveGlobalData();
     alert('Layout Settings Saved!');
     render();
+};
+
+window.addCity = () => {
+    const input = document.getElementById('new-city-name');
+    const val = input.value.trim();
+    if (!val) return alert("Please enter a city name");
+
+    if (!State.settings.cities) State.settings.cities = [];
+    if (State.settings.cities.includes(val)) return alert("City already exists!");
+
+    State.settings.cities.push(val);
+    saveGlobalData();
+    input.value = '';
+    render();
+    alert("City Added!");
+};
+
+window.deleteCity = (idx) => {
+    if (confirm("Remove this city from the list?")) {
+        State.settings.cities.splice(idx, 1);
+        saveGlobalData();
+        render();
+    }
+};
+
+window.addPropertyType = () => {
+    const input = document.getElementById('new-property-type');
+    const val = input.value.trim();
+    if (!val) return alert("Please enter a property type");
+
+    if (!State.settings.propertyTypes) State.settings.propertyTypes = ['All', 'Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House'];
+    if (State.settings.propertyTypes.includes(val)) return alert("Type already exists!");
+
+    State.settings.propertyTypes.push(val);
+    saveGlobalData();
+    input.value = '';
+    render();
+    alert("Property Type Added!");
+};
+
+window.deletePropertyType = (idx) => {
+    if (confirm("Remove this property type?")) {
+        State.settings.propertyTypes.splice(idx, 1);
+        saveGlobalData();
+        render();
+    }
+};
+// Indian States and Districts Data
+const INDIA_LOCATIONS = {
+    "Andhra Pradesh": ["Anantapur", "Chittoor", "East Godavari", "Guntur", "Krishna", "Kurnool", "Prakasam", "Srikakulam", "Sri Potti Sriramulu Nellore", "Visakhapatnam", "Vizianagaram", "West Godavari", "YSR District", "Kadapa (Cuddapah)"],
+    "Arunachal Pradesh": ["Anjaw", "Changlang", "Dibang Valley", "East Kameng", "East Siang", "Kra Daadi", "Kurung Kumey", "Lohit", "Longding", "Lower Dibang Valley", "Lower Siang", "Lower Subansiri", "Namsai", "Papum Pare", "Siang", "Tawang", "Tirap", "Upper Siang", "Upper Subansiri", "West Kameng", "West Siang", "Itanagar"],
+    "Assam": ["Baksa", "Barpeta", "Biswanath", "Bongaigaon", "Cachar", "Charaideo", "Chirang", "Darrang", "Dhemaji", "Dhubri", "Dibrugarh", "Dima Hasao (North Cachar Hills)", "Goalpara", "Golaghat", "Hailakandi", "Hojai", "Jorhat", "Kamrup", "Kamrup Metropolitan", "Karbi Anglong", "Karimganj", "Kokrajhar", "Lakhimpur", "Majuli", "Morigaon", "Nagaon", "Nalbari", "Sivasagar", "Sonitpur", "South Salmara-Mankachar", "Tinsukia", "Udalguri", "West Karbi Anglong"],
+    "Bihar": ["Araria", "Arwal", "Aurangabad", "Banka", "Begusarai", "Bhagalpur", "Bhojpur", "Buxar", "Darbhanga", "East Champaran (Motihari)", "Gaya", "Gopalganj", "Jamui", "Jehanabad", "Kaimur (Bhabua)", "Katihar", "Khagaria", "Kishanganj", "Lakhisarai", "Madhepura", "Madhubani", "Munger (Monghyr)", "Muzaffarpur", "Nalanda", "Nawada", "Patna", "Purnia (Purnea)", "Rohtas", "Saharsa", "Samastipur", "Saran", "Sheikhpura", "Sheohar", "Sitamarhi", "Siwan", "Supaul", "Vaishali", "West Champaran"],
+    "Chhattisgarh": ["Balod", "Baloda Bazar", "Balrampur", "Bastar", "Bemetara", "Bijapur", "Bilaspur", "Dantewada (South Bastar)", "Dhamtari", "Durg", "Gariyaband", "Janjgir-Champa", "Jashpur", "Kabirdham (Kawardha)", "Kanker (North Bastar)", "Kondagaon", "Korba", "Koriya", "Mahasamund", "Mungeli", "Narayanpur", "Raigarh", "Raipur", "Rajnandgaon", "Sukma", "Surajpur", "Surguja"],
+    "Goa": ["North Goa", "South Goa"],
+    "Gujarat": ["Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha (Palanpur)", "Bharuch", "Bhavnagar", "Botad", "Chhota Udepur", "Dahod", "Dang (Ahwa)", "Devbhoomi Dwarka", "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kachchh", "Kheda (Nadiad)", "Mahisagar", "Mehsana", "Morbi", "Narmada (Rajpipla)", "Navsari", "Panchmahal (Godhra)", "Patan", "Porbandar", "Rajkot", "Sabarkantha (Himmatnagar)", "Surat", "Surendranagar", "Tapi (Vyara)", "Vadodara", "Valsad"],
+    "Haryana": ["Ambala", "Bhiwani", "Charkhi Dadri", "Faridabad", "Fatehabad", "Gurugram (Gurgaon)", "Hisar", "Jhajjar", "Jind", "Kaithal", "Karnal", "Kurukshetra", "Mahendragarh", "Nuh", "Palwal", "Panchkula", "Panipat", "Rewari", "Rohtak", "Sirsa", "Sonipat", "Yamunanagar"],
+    "Himachal Pradesh": ["Bilaspur", "Chamba", "Hamirpur", "Kangra", "Kinnaur", "Kullu", "Lahaul &amp; Spiti", "Mandi", "Shimla", "Sirmaur (Sirmour)", "Solan", "Una"],
+    "Jammu & Kashmir": ["Anantnag", "Bandipora", "Baramulla", "Budgam", "Doda", "Ganderbal", "Jammu", "Kathua", "Kishtwar", "Kulgam", "Kupwara", "Poonch", "Pulwama", "Rajouri", "Ramban", "Reasi", "Samba", "Shopian", "Srinagar", "Udhampur"],
+    "Jharkhand": ["Bokaro", "Chatra", "Deoghar", "Dhanbad", "Dumka", "East Singhbhum (Jamshedpur)", "Garhwa", "Giridih", "Godda", "Gumla", "Hazaribag", "Jamtara", "Khunti", "Koderma", "Latehar", "Lohardaga", "Pakur", "Palamu", "Ramgarh", "Ranchi", "Sahibganj", "Seraikela-Kharsawan", "Simdega", "West Singhbhum (Chaibasa)"],
+    "Karnataka": ["Bagalkot", "Ballari (Bellary)", "Belagavi (Belgaum)", "Bengaluru (Bangalore) Rural", "Bengaluru (Bangalore) Urban", "Bidar", "Chamarajanagar", "Chikballapur", "Chikkamagaluru (Chikmagalur)", "Chitradurga", "Dakshina Kannada", "Davangere", "Dharwad", "Gadag", "Hassan", "Haveri", "Kalaburagi (Gulbarga)", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysuru (Mysore)", "Raichur", "Ramanagara", "Shivamogga (Shimoga)", "Tumakuru (Tumkur)", "Udupi", "Uttara Kannada (Karwar)", "Vijayapura (Bijapur)", "Yadgir"],
+    "Kerala": ["Alappuzha", "Ernakulam", "Idukki", "Kannur", "Kasaragod", "Kollam", "Kottayam", "Kozhikode", "Malappuram", "Palakkad", "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad"],
+    "Madhya Pradesh": ["Agar Malwa", "Alirajpur", "Anuppur", "Ashoknagar", "Balaghat", "Barwani", "Betul", "Bhind", "Bhopal", "Burhanpur", "Chhatarpur", "Chhindwara", "Damoh", "Datia", "Dewas", "Dhar", "Dindori", "Guna", "Gwalior", "Harda", "Hoshangabad", "Indore", "Jabalpur", "Jhabua", "Katni", "Khandwa", "Khargone", "Mandla", "Mandsaur", "Morena", "Narsinghpur", "Neemuch", "Panna", "Raisen", "Rajgarh", "Ratlam", "Rewa", "Sagar", "Satna", "Sehore", "Seoni", "Shahdol", "Shajapur", "Sheopur", "Shivpuri", "Sidhi", "Singrauli", "Tikamgarh", "Ujjain", "Umaria", "Vidisha"],
+    "Maharashtra": ["Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nandurbar", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal"],
+    "Manipur": ["Bishnupur", "Chandel", "Churachandpur", "Imphal East", "Imphal West", "Jiribam", "Kakching", "Kamjong", "Kangpokpi", "Noney", "Pherzawl", "Senapati", "Tamenglong", "Tengnoupal", "Thoubal", "Ukhrul"],
+    "Meghalaya": ["East Garo Hills", "East Jaintia Hills", "East Khasi Hills", "North Garo Hills", "Ri Bhoi", "South Garo Hills", "South West Garo Hills", "South West Khasi Hills", "West Garo Hills", "West Jaintia Hills", "West Khasi Hills"],
+    "Mizoram": ["Aizawl", "Champhai", "Kolasib", "Lawngtlai", "Lunglei", "Mamit", "Saiha", "Serchhip"],
+    "Nagaland": ["Dimapur", "Kiphire", "Kohima", "Longleng", "Mokokchung", "Mon", "Peren", "Phek", "Tuensang", "Wokha", "Zunheboto"],
+    "Odisha": ["Angul", "Balangir", "Balasore", "Bargarh", "Bhadrak", "Cuttack", "Deogarh", "Dhenkanal", "Gajapati", "Ganjam", "Jagatsinghpur", "Jajpur", "Jharsuguda", "Kalahandi", "Kandhamal", "Kendrapara", "Kendujhar (Keonjhar)", "Khordha", "Koraput", "Malkangiri", "Mayurbhanj", "Nabarangpur", "Nayagarh", "Nuapada", "Puri", "Rayagada", "Sambalpur", "Subarnapur (Sonepur)", "Sundargarh"],
+    "Punjab": ["Amritsar", "Barnala", "Bathinda", "Faridkot", "Fatehgarh Sahib", "Fazilka", "Ferozepur", "Gurdaspur", "Hoshiarpur", "Jalandhar", "Kapurthala", "Ludhiana", "Mansa", "Moga", "Muktsar", "Nawanshahr (Shahid Bhagat Singh Nagar)", "Pathankot", "Patiala", "Rupnagar", "Sahibzada Ajit Singh Nagar (Mohali)", "Sangrur", "Tarn Taran"],
+    "Rajasthan": ["Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner", "Bundi", "Chittorgarh", "Churu", "Dausa", "Dholpur", "Dungarpur", "Hanumangarh", "Jaipur", "Jaisalmer", "Jalore", "Jhalawar", "Jhunjhunu", "Jodhpur", "Karauli", "Kota", "Nagaur", "Pali", "Pratapgarh", "Rajsamand", "Sawai Madhopur", "Sikar", "Sirohi", "Sri Ganganagar", "Tonk", "Udaipur"],
+    "Sikkim": ["East Sikkim", "North Sikkim", "South Sikkim", "West Sikkim"],
+    "Tamil Nadu": ["Ariyalur", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Salem", "Sivaganga", "Thanjavur", "Theni", "Thoothukudi (Tuticorin)", "Tiruchirappalli", "Tirunelveli", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"],
+    "Telangana": ["Adilabad", "Bhadradri Kothagudem", "Hyderabad", "Jagtial", "Jangaon", "Jayashankar Bhoopalpally", "Jogulamba Gadwal", "Kamareddy", "Karimnagar", "Khammam", "Komaram Bheem Asifabad", "Mahabubabad", "Mahabubnagar", "Mancherial", "Medak", "Medchal", "Nagarkurnool", "Nalgonda", "Nirmal", "Nizamabad", "Peddapalli", "Rajanna Sircilla", "Rangareddy", "Sangareddy", "Siddipet", "Suryapet", "Vikarabad", "Wanaparthy", "Warangal (Rural)", "Warangal (Urban)", "Yadadri Bhuvanagiri"],
+    "Tripura": ["Dhalai", "Gomati", "Khowai", "North Tripura", "Sepahijala", "South Tripura", "Unakoti", "West Tripura"],
+    "Uttarakhand": ["Almora", "Bageshwar", "Chamoli", "Champawat", "Dehradun", "Haridwar", "Nainital", "Pauri Garhwal", "Pithoragarh", "Rudraprayag", "Tehri Garhwal", "Udham Singh Nagar", "Uttarkashi"],
+    "Uttar Pradesh": ["Agra", "Aligarh", "Allahabad", "Ambedkar Nagar", "Amethi", "Amroha", "Auraiya", "Azamgarh", "Baghpat", "Bahraich", "Ballia", "Balrampur", "Banda", "Barabanki", "Bareilly", "Basti", "Bhadohi", "Bijnor", "Budaun", "Bulandshahr", "Chandauli", "Chitrakoot", "Deoria", "Etah", "Etawah", "Faizabad", "Farrukhabad", "Fatehpur", "Firozabad", "Gautam Buddha Nagar", "Ghaziabad", "Ghazipur", "Gonda", "Gorakhpur", "Hamirpur", "Hapur", "Hardoi", "Hathras", "Jalaun", "Jaunpur", "Jhansi", "Kannauj", "Kanpur Dehat", "Kanpur Nagar", "Kasganj", "Kaushambi", "Kheri", "Kushinagar", "Lalitpur", "Lucknow", "Maharajganj", "Mahoba", "Mainpuri", "Mathura", "Mau", "Meerut", "Mirzapur", "Moradabad", "Muzaffarnagar", "Pilibhit", "Pratapgarh", "Raebareli", "Rampur", "Saharanpur", "Sambhal", "Sant Kabir Nagar", "Shahjahanpur", "Shamli", "Shravasti", "Siddharthnagar", "Sitapur", "Sonbhadra", "Sultanpur", "Unnao", "Varanasi"],
+    "West Bengal": ["Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur (South Dinajpur)", "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram", "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia", "North 24 Parganas", "Paschim Medinipur (West Medinipur)", "Paschim (West) Burdwan (Bardhaman)", "Purba Medinipur (East Medinipur)", "Purba (East) Burdwan (Bardhaman)", "Purulia", "South 24 Parganas", "Uttar Dinajpur (North Dinajpur)"],
+};
+window.indianStates = INDIA_LOCATIONS;
+
+// Helper to handle state change updates
+window.handleStateChange = (selectEl) => {
+    // We need to capture existing data first!
+    const allInputs = document.querySelectorAll('#add-prop-form input, #add-prop-form select, #add-prop-form textarea');
+    if (!window.tempFormData) window.tempFormData = {};
+    allInputs.forEach(input => {
+        if (input.id) window.tempFormData[input.id] = input.value;
+    });
+
+    // Update specific changed value
+    window.tempFormData['p-state'] = selectEl.value;
+    window.tempFormData['p-district'] = ''; // Reset district
+
+    // Re-render
+    renderPropertyForm();
+};
+
+// Clear all search filters
+window.clearAllFilters = () => {
+    State.searchState = '';
+    State.searchDistrict = '';
+    State.homeSearch = '';
+    State.searchType = '';
+    render();
+};
+
+// ==========================================
+// ADMIN EDIT PROPERTY (FRESH IMPLEMENTATION)
+// ==========================================
+
+// Helper: Set properties from admin list (called by admin.php)
+window.setAdminProperties = (list) => { State.properties = list || []; };
+
+window.openAdminEditProperty = (propId) => {
+    console.log('Opening Admin Edit for:', propId);
+
+    // Find Property
+    const prop = State.properties.find(p => p.id == propId);
+    if (!prop) {
+        alert('Property data not found in local state. Please wait for list to load or refresh.');
+        return;
+    }
+
+    // Parse Extra Details safely
+    let extraDetails = [];
+    try {
+        extraDetails = typeof prop.extra_details === 'string' ? JSON.parse(prop.extra_details) : (prop.extra_details || []);
+    } catch (e) { console.error(e); }
+
+    // RENDER MODAL HTML
+    const modal = document.getElementById('modal-container');
+    if (!modal) return;
+
+    modal.style.display = 'block'; // Make sure container is visible
+    modal.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(5px);
+        ">
+            <div style="
+                background: white;
+                width: 100%;
+                max-width: 700px;
+                max-height: 90vh;
+                border-radius: 12px;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+                overflow: hidden;
+                animation: slideUp 0.3s ease-out;
+            ">
+                <!-- Header -->
+                <div style="padding: 15px 20px; background: linear-gradient(135deg, #1a2a3a 0%, #2c3e50 100%); color: white; display:flex; justify-content:space-between; align-items:center; flex-shrink: 0;">
+                    <h3 style="margin:0; font-size:1.1rem; font-weight:600;"><i class="fas fa-edit"></i> Edit Property #${propId}</h3>
+                    <button onclick="document.getElementById('modal-container').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+
+                <!-- Scrollable Form -->
+                <div style="flex: 1; overflow-y: auto; padding: 25px; background: #f8f9fa;">
+                    <form id="admin-edit-form" onsubmit="event.preventDefault(); window.submitAdminEdit(${propId});">
+                        
+                        <!-- 1. Basic Info -->
+                        <div class="edit-section" style="background:white; padding:20px; border-radius:10px; margin-bottom:20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <h4 style="margin:0 0 15px 0; color:#138808; border-bottom:1px solid #eee; padding-bottom:10px; font-size:1rem;">Basic Details</h4>
+                            
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Title</label>
+                            <input type="text" id="ae-title" value="${prop.title}" required style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; font-size:1rem;">
+
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Category</label>
+                                    <select id="ae-cat" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                        ${(State.settings.propertyTypes || ['Plot', 'Residential', 'Commercial', 'Agricultural Land']).map(c =>
+        `<option value="${c}" ${prop.type === c ? 'selected' : ''}>${c}</option>`
+    ).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Area / Size</label>
+                                    <input type="text" id="ae-area" value="${prop.area}" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                </div>
+                            </div>
+                            
+                            <label style="display:block; margin-top:15px; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Description</label>
+                            <textarea id="ae-desc" rows="4" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; resize:vertical;">${prop.description}</textarea>
+                        </div>
+
+                        <!-- 2. Location -->
+                        <div class="edit-section" style="background:white; padding:20px; border-radius:10px; margin-bottom:20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <h4 style="margin:0 0 15px 0; color:#138808; border-bottom:1px solid #eee; padding-bottom:10px; font-size:1rem;">Location</h4>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">State</label>
+                                    <select id="ae-state" onchange="updateAdminDistricts(this.value)" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                        ${Object.keys(window.indianStates || {}).length > 0 ? Object.keys(window.indianStates).map(s => `<option value="${s}" ${prop.state === s ? 'selected' : ''}>${s}</option>`).join('') : '<option value="Bihar">Bihar</option>'}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">District</label>
+                                    <select id="ae-district" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                        <option value="${prop.district}">${prop.district}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">City</label>
+                                    <input type="text" id="ae-city" value="${prop.city}" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                </div>
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Pincode</label>
+                                    <input type="number" id="ae-pincode" value="${prop.pincode || ''}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Price & Contacts -->
+                        <div class="edit-section" style="background:white; padding:20px; border-radius:10px; margin-bottom:20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <h4 style="margin:0 0 15px 0; color:#138808; border-bottom:1px solid #eee; padding-bottom:10px; font-size:1rem;">Price & Contacts</h4>
+                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Total Price</label>
+                                    <input type="text" id="ae-price" value="${prop.price}" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                </div>
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Price per Sq.ft</label>
+                                    <input type="text" id="ae-sqft" value="${prop.price_per_sqft || ''}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                </div>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Contact Mobile</label>
+                                    <input type="tel" id="ae-mobile" value="${prop.contact_mobile}" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                </div>
+                                <div>
+                                    <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">WhatsApp</label>
+                                    <input type="tel" id="ae-whatsapp" value="${prop.contact_whatsapp}" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Media & Links -->
+                        <div class="edit-section" style="background:white; padding:20px; border-radius:10px; margin-bottom:20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <h4 style="margin:0 0 15px 0; color:#138808; border-bottom:1px solid #eee; padding-bottom:10px; font-size:1rem;">Media & Links</h4>
+                            
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">YouTube Video URL</label>
+                            <input type="text" id="ae-video" value="${prop.youtube_video || ''}" placeholder="https://youtube.com/..." style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px;">
+
+                            <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Map Location URL</label>
+                            <input type="text" id="ae-map" value="${prop.map_link || ''}" placeholder="Google Maps Link" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                        </div>
+
+                        <!-- 5. Custom Details -->
+                        <div class="edit-section" style="background:white; padding:20px; border-radius:10px; margin-bottom:20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">
+                                <h4 style="margin:0; color:#138808; font-size:1rem;">Extra Details</h4>
+                                <button type="button" onclick="addAdminCustomField()" style="background:#e8f5e9; color:#138808; border:1px dashed #138808; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600;">+ Add Field</button>
+                            </div>
+                            <div id="ae-custom-fields"></div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display:flex; gap:15px; margin-top:10px;">
+                            <button type="submit" style="flex:1; background:#138808; color:white; padding:15px; border:none; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; box-shadow: 0 4px 10px rgba(19,136,8,0.3);">UPDATE PROPERTY</button>
+                            <button type="button" onclick="document.getElementById('modal-container').style.display='none'" style="flex:1; background:white; color:#D32F2F; border:1px solid #D32F2F; padding:15px; border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer;">CANCEL</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+            <style>
+                @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            </style>
+        </div>
+    `;
+
+    // Populate Custom Fields
+    const customContainer = document.getElementById('ae-custom-fields');
+    if (extraDetails && extraDetails.length > 0) {
+        extraDetails.forEach(d => {
+            appendAdminCustomField(d.label || d.title, d.value);
+        });
+    }
+
+    // Populate District options properly
+    updateAdminDistricts(prop.state, prop.district);
+};
+
+// Helper: Update Districts in Admin Edit
+window.updateAdminDistricts = (state, selectedDist = null) => {
+    const dSelect = document.getElementById('ae-district');
+    if (!dSelect) return;
+
+    // Add check to ensure state exists in INDIAN_LOCATIONS (window.indianStates might be undefined if not initialized yet, but it should be)
+    // Using global check
+    const statesMap = window.indianStates || window.INDIA_LOCATIONS || {};
+    const districts = statesMap[state] || [];
+
+    dSelect.innerHTML = districts.map(d => `<option value="${d}" ${d === selectedDist ? 'selected' : ''}>${d}</option>`).join('');
+
+    // If no selected district provided, select first
+    if (!selectedDist && districts.length > 0) dSelect.value = districts[0];
+    // If selected provided, it is set by 'selected' attr above
+};
+
+// Helper: Add Custom Field in Admin Edit
+window.addAdminCustomField = () => {
+    appendAdminCustomField("New Title", "");
+};
+
+window.appendAdminCustomField = (label, val) => {
+    const container = document.getElementById('ae-custom-fields');
+    const div = document.createElement('div');
+    div.className = 'ae-extra-row';
+    div.style.cssText = 'display:flex; gap:10px; margin-bottom:10px; align-items:center;';
+
+    // Very simple input structure
+    div.innerHTML = `
+        <div style="flex:1;">
+            <input type="text" class="ae-extra-label" value="${label}" placeholder="Label" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+        </div>
+        <div style="flex:2;">
+            <input type="text" class="ae-extra-val" value="${val}" placeholder="Value" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px;">
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" style="color:#D32F2F; border:none; background:none; cursor:pointer; font-size:1.2rem; padding:0 5px;">&times;</button>
+    `;
+    container.appendChild(div);
+};
+
+// Submit Logic
+window.submitAdminEdit = async (propId) => {
+    if (!confirm('Save changes to this property?')) return;
+
+    // Collect Data
+    const formData = new FormData();
+    formData.append('is_admin_edit', '1');
+    formData.append('action', 'edit_property_full'); // Using a specific action name helps backend distinguishing
+    // Note: ensure api/property.php handles 'edit_property_full' OR uses fallback to 'add_property' + id update logic. 
+    // I will stick to 'add_user_property' if that is what was used, but that might imply user logic.
+    // Safest is 'edit_property' + check for ID.
+    formData.append('action', 'edit_property');
+
+    formData.append('id', propId);
+    formData.append('title', document.getElementById('ae-title').value);
+    formData.append('category', document.getElementById('ae-cat').value);
+    formData.append('area', document.getElementById('ae-area').value);
+    formData.append('description', document.getElementById('ae-desc').value);
+    formData.append('state', document.getElementById('ae-state').value);
+    formData.append('district', document.getElementById('ae-district').value);
+    formData.append('city', document.getElementById('ae-city').value);
+    formData.append('pincode', document.getElementById('ae-pincode').value);
+    formData.append('price', document.getElementById('ae-price').value);
+    formData.append('price_per_sqft', document.getElementById('ae-sqft').value);
+    formData.append('contact_mobile', document.getElementById('ae-mobile').value);
+    formData.append('contact_whatsapp', document.getElementById('ae-whatsapp').value);
+    formData.append('youtube_video', document.getElementById('ae-video').value);
+    formData.append('map_link', document.getElementById('ae-map').value);
+
+    // Custom Details
+    const extras = [];
+    document.querySelectorAll('.ae-extra-row').forEach(row => {
+        extras.push({
+            label: row.querySelector('.ae-extra-label').value,
+            value: row.querySelector('.ae-extra-val').value
+        });
+    });
+    formData.append('extra_details', JSON.stringify(extras));
+
+    try {
+        // Show loader
+        const btn = document.querySelector('#admin-edit-form button[type="submit"]');
+        const oldText = btn.innerText;
+        btn.innerText = 'SAVING...';
+        btn.disabled = true;
+
+        const res = await fetch('api/property.php', { method: 'POST', body: formData });
+
+        // Handle non-JSON response (e.g. PHP warnings)
+        const text = await res.text();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (e) {
+            console.error('Server returned invalid JSON:', text);
+            alert('Server Error (Check Console for details)');
+            btn.innerText = oldText;
+            btn.disabled = false;
+            return;
+        }
+
+        if (result.status === 'success') {
+            alert('Property Updated Successfully!');
+            document.getElementById('modal-container').style.display = 'none';
+            // Reload list
+            if (window.loadAdminProps) window.loadAdminProps();
+        } else {
+            alert('Error: ' + (result.message || 'Update failed'));
+        }
+
+        btn.innerText = oldText;
+        btn.disabled = false;
+
+    } catch (err) {
+        console.error(err);
+        alert('Request Failed');
+    }
 };

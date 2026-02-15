@@ -95,6 +95,52 @@ if ($action === 'add') {
     } else {
          echo json_encode(['status' => 'error']);
     }
+
+} elseif ($action === 'edit_property') {
+    // Admin Edit Full Property
+    if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+         exit;
+    }
+    
+    $id = $_POST['id'];
+    $title = $_POST['title'];
+    $cat = $_POST['category'];
+    $area = $_POST['area'];
+    $desc = $_POST['description'];
+    $price = $_POST['price'];
+    $sqft = $_POST['price_per_sqft'] ?? '';
+    
+    $state = $_POST['state'] ?? '';
+    $dist = $_POST['district'] ?? '';
+    $city = $_POST['city'];
+    $pin = $_POST['pincode'] ?? '';
+    
+    $mobile = $_POST['contact_mobile'];
+    $wa = $_POST['contact_whatsapp'];
+    $vid = $_POST['youtube_video'] ?? '';
+    $map = $_POST['map_link'] ?? '';
+    $extras = $_POST['extra_details'] ?? '[]';
+
+    $sql = "UPDATE properties SET 
+            title=?, type=?, area=?, description=?, price=?, price_per_sqft=?,
+            state=?, district=?, city=?, pincode=?, 
+            contact_mobile=?, contact_whatsapp=?, youtube_video=?, map_link=?, extra_details=?
+            WHERE id=?";
+            
+    $stmt = $pdo->prepare($sql);
+    try {
+        if($stmt->execute([$title, $cat, $area, $desc, $price, $sqft, $state, $dist, $city, $pin, $mobile, $wa, $vid, $map, $extras, $id])) {
+            echo json_encode(['status' => 'success']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'DB Update Failed']);
+        }
+    } catch (PDOException $e) {
+        // Fallback if some columns don't exist (e.g. older schema)
+        // We log error but try to return informative message
+        echo json_encode(['status' => 'error', 'message' => 'DB Schema Error: ' . $e->getMessage()]);
+    }
+
 } elseif ($action === 'update_status') {
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
