@@ -1,0 +1,6 @@
+# Exclude user uploads
+uploads/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db

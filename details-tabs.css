@@ -1,0 +1,68 @@
+/* Details Tabs */
+.details-tabs {
+    display: flex;
+    overflow-x: auto;
+    background: #ffffff;
+    padding: 15px;
+    gap: 12px;
+    border-bottom: 2px solid #f0f2f5;
+    position: sticky;
+    top: 60px; /* Adjust based on header height, typically 60px */
+    z-index: 90;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    border-radius: 0 0 15px 15px;
+}
+
+.detail-tab {
+    flex: 1;
+    min-width: 90px;
+    padding: 12px 18px;
+    border: none;
+    background: #f8f9fa;
+    color: #666;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.detail-tab::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 153, 51, 0.1), rgba(19, 136, 8, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.detail-tab:hover {
+    transform: translateY(-2px);
+    background: #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    color: #333;
+}
+
+.detail-tab:hover::before {
+    opacity: 1;
+}
+
+.detail-tab.active {
+    background: linear-gradient(135deg, #FF9933, #138808);
+    color: white;
+    box-shadow: 0 8px 20px rgba(19, 136, 8, 0.25);
+    font-weight: 800;
+    transform: translateY(-2px) scale(1.02);
+}
+
+.detail-tab.active:active {
+    transform: scale(0.98);
+}

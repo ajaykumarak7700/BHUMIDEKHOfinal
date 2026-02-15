@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BhumiDekho | India's #1 Real Estate App</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="description"
+        content="Find your dream property with BhumiDekho - India's most trusted real estate platform.">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF9933">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BhumiDekho">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .offline-badge {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: linear-gradient(135deg, #1a2a3a, #34495e);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            z-index: 5;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: sample-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes sample-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+        }
+
+        .prop-card.offline-card {
+            opacity: 0.95;
+            filter: saturate(0.9);
+        }
+
+        .smart-loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 180px;
+            border-radius: 18px;
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .loader-circle {
+            width: 200px;
+            height: 200px;
+            border: 12px solid #f3f3f3;
+            border-top: 12px solid #FF9933;
+            border-bottom: 12px solid #138808;
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .loader-text-inner {
+            position: absolute;
+            width: 160px;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #1a2a3a;
+            line-height: 1.3;
+            animation: pulse-text 1.5s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes pulse-text {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes popIn {
+            from {
+                transform: translate(-50%, -20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes popOut {
+            from {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translate(-50%, -20px);
+                opacity: 0;
+            }
+        }
+
+        .page-transition-right {
+            animation: slideInRight 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .page-transition-left {
+            animation: slideInLeft 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0.5;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0.5;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        #app {
+            overflow-x: hidden;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Header (App Bar) -->
+    <header id="main-header" class="app-header">
+        <div class="header-top">
+            <div class="logo">
+                <img src="logo.png" alt="BhumiDekho" class="logo-img">
+                <span class="logo-text" id="app-logo-text">Bhumi<span style="color: #FF9933;">Dekho</span></span>
+            </div>
+            <div class="profile-action" id="profile-action" onclick="navigate('login')">
+                <span id="user-name-h"
+                    style="font-size: 0.85rem; font-weight: 700; color: #fff; margin-right: 8px; display: none;"></span>
+                <div class="profile-circle">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+    </header>
+
+    <main id="app">
+        <!-- Skeleton Loading State (Visible immediately) -->
+        <div class="hero-slider skeleton" style="height: 200px; margin-bottom: 20px;"></div>
+        <div style="display:flex; gap:10px; overflow-x:auto; padding:0 20px 10px; margin-bottom:10px;">
+            <div class="skeleton" style="width:100px; height:35px; border-radius:30px; flex-shrink:0;"></div>
+            <div class="skeleton" style="width:100px; height:35px; border-radius:30px; flex-shrink:0;"></div>
+            <div class="skeleton" style="width:100px; height:35px; border-radius:30px; flex-shrink:0;"></div>
+        </div>
+        <div class="loading-scroll-wrapper">
+            <div class="property-grid loading-processing">
+                <!-- Filled Dummy Cards for Initial Load -->
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=1"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 45,00,000</div>
+                        <div class="prop-title">Premium Property</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> New Delhi</div>
+                    </div>
+                </div>
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=2"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 65,00,000</div>
+                        <div class="prop-title">Luxury Villa</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> Mumbai</div>
+                    </div>
+                </div>
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=3"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 32,50,000</div>
+                        <div class="prop-title">Modern Apartment</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> Bangalore</div>
+                    </div>
+                </div>
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=4"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 89,00,000</div>
+                        <div class="prop-title">Royal Mansion</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> Jaipur</div>
+                    </div>
+                </div>
+                <!-- Loop repeats -->
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=11"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 45,00,000</div>
+                        <div class="prop-title">Premium Property</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> New Delhi</div>
+                    </div>
+                </div>
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=12"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 65,00,000</div>
+                        <div class="prop-title">Luxury Villa</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> Mumbai</div>
+                    </div>
+                </div>
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=13"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 32,50,000</div>
+                        <div class="prop-title">Modern Apartment</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> Bangalore</div>
+                    </div>
+                </div>
+                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
+                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=14"
+                            style="width:100%; height:160px; object-fit:cover;">
+                        <div class="prop-badge">Premium</div>
+                    </div>
+                    <div class="prop-body">
+                        <div class="prop-price">Rs. 89,00,000</div>
+                        <div class="prop-title">Royal Mansion</div>
+                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
+                                class="fas fa-map-marker-alt"></i> Jaipur</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="smart-loader" class="smart-loader-overlay">
+                <div
+                    style="position: relative; width: 210px; height: 210px; display: flex; align-items: center; justify-content: center;">
+                    <div class="loader-circle"></div>
+                    <div class="loader-text-inner">Filtering Properties...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Footer) -->
+    <footer class="nav-bottom">
+        <a href="#" class="nav-item active" data-page="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="nav-item" data-page="likes">
+            <i class="fas fa-heart"></i>
+            <span>Like</span>
+        </a>
+        <a href="#" class="nav-item" data-page="other">
+            <i class="fas fa-ellipsis-h"></i>
+            <span>OTHER</span>
+        </a>
+        <a href="#" class="nav-item" data-page="contact">
+            <i class="fas fa-info-circle"></i>
+            <span>About Us</span>
+        </a>
+        <a href="#" class="nav-item" data-page="login">
+            <div id="footer-user-icon" style="display:inline-flex; align-items:center; justify-content:center;"><i
+                    class="fas fa-user"></i></div>
+            <span id="login-text">LOGIN</span>
+        </a>
+    </footer>
+
+    <!-- Overlay / Side Panels -->
+    <div id="side-panel" class="side-panel"></div>
+    <div id="modal-container" class="modal-container"></div>
+
+    <!-- Global Loader Overlay -->
+    <div id="global-loader" class="global-loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+            <p id="loader-text">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK enabled -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Firebase Configuration enabled -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSBrVmENKDiE52iDEw9znCaxp4p8Cmamo",
+            authDomain: "bhumidekho.firebaseapp.com",
+            databaseURL: "https://bhumidekho-default-rtdb.firebaseio.com",
+            projectId: "bhumidekho",
+            storageBucket: "bhumidekho.firebasestorage.app",
+            messagingSenderId: "258412071321",
+            appId: "1:258412071321:web:1ced03961683a80c3eeb08"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js');
+            });
+        }
+    </script>
+</body>
+
+</html>

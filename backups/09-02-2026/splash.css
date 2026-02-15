@@ -1,0 +1,115 @@
+/* Splash Screen Styles */
+#intro-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    z-index: 99999;
+    /* Highest priority */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.6s ease-out, visibility 0.6s;
+}
+
+.splash-content {
+    text-align: center;
+    animation: splash-enter 0.8s ease-out forwards;
+}
+
+.splash-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    margin-bottom: 15px;
+    animation: splash-pulse 2s infinite ease-in-out;
+}
+
+.splash-title {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #333;
+    letter-spacing: -1px;
+    margin: 0;
+    opacity: 0;
+    animation: fade-up 0.8s ease-out 0.3s forwards;
+}
+
+.splash-highlight {
+    background: linear-gradient(90deg, #FF9933 30%, #138808 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.splash-bar {
+    width: 0%;
+    height: 4px;
+    background: linear-gradient(90deg, #FF9933, #ffffff, #138808);
+    margin: 20px auto 0;
+    border-radius: 4px;
+    animation: bar-load 2s ease-in-out forwards;
+}
+
+@keyframes splash-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes splash-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes bar-load {
+    0% {
+        width: 0%;
+    }
+
+    60% {
+        width: 70%;
+    }
+
+    100% {
+        width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .splash-logo {
+        width: 100px;
+        height: 100px;
+    }
+
+    .splash-title {
+        font-size: 2.2rem;
+    }
+}
