@@ -747,8 +747,13 @@ function loadGlobalData() {
             const parsed = JSON.parse(savedState);
             State.user = parsed.user;
             // Load agents with fallback to default
-            State.agents = (parsed.agents && parsed.agents.length > 0) ? parsed.agents : [
-                { id: 101, name: "John Agent", email: "john.agent@bhumidekho.com", password: "admin123", phone: "9876543210", status: "approved", wallet: 5000 }
+            State.agents = (parsed.agents && parsed.agents.length > 0) ? parsed.agents.map(a => ({
+                ...a,
+                currentPlan: a.currentPlan || 'Free', // Free, Silver, Gold
+                planExpiry: a.planExpiry || null,
+                listingsUsed: a.listingsUsed || 0
+            })) : [
+                { id: 101, name: "John Agent", email: "john.agent@bhumidekho.com", password: "admin123", phone: "9876543210", status: "approved", wallet: 5000, currentPlan: 'Free', planExpiry: null, listingsUsed: 0 }
             ];
 
             // Load customers with fallback to default
@@ -848,7 +853,39 @@ function loadGlobalData() {
         if (!State.properties) State.properties = [];
     }
     // --- OPTIMIZATION END ---
+    checkMembershipExpiry();
 }
+
+const checkMembershipExpiry = () => {
+    if (!State.agents) return;
+    let updated = false;
+    const now = Date.now();
+
+    State.agents.forEach(agent => {
+        if (agent.planExpiry && now > agent.planExpiry) {
+            // Plan Expired
+            if (agent.currentPlan !== 'Expired') {
+                agent.currentPlan = 'Expired'; // Mark plan as expired
+                updated = true;
+
+                // Hide their properties
+                State.properties.forEach(p => {
+                    if (p.agentId === agent.id && p.status === 'approved') {
+                        p.status = 'hidden';
+                        p.disableReason = 'Plan Expired';
+                    }
+                });
+
+                // Alert if current user
+                if (State.user && State.user.id === agent.id) {
+                    setTimeout(() => alert("Your Premium Membership has expired! Your properties are now hidden. Please recharge."), 1000);
+                }
+            }
+        }
+    });
+
+    if (updated) saveGlobalData();
+};
 
 const saveGlobalData = async () => {
     // Save to localStorage (instant)
@@ -1160,6 +1197,11 @@ function renderSellRent(container) {
                                 </div>
                             </button>
                         `).join('')}
+                    </div>
+
+                    <!-- Membership UI Injection -->
+                    <div style="width:100%; max-width:600px; margin-top:30px;">
+                         ${window.getMembershipUI ? window.getMembershipUI(State.agents.find(a => a.id === State.user.id)) : ''}
                     </div>
                     
                     <p style="margin-top:20px; color:#666; font-size:0.9rem; font-style:italic;">
@@ -1591,10 +1633,10 @@ function renderPropertyCard(p, isLikeView = false) {
             </div>
             <div class="prop-body">
                 <div class="prop-price">
-                    Rs. ${p.priceSqft} / sq. ft.
+                    Rs. ${p.priceSqft || p.price} / ${p.category === 'Rented Room' ? 'Month' : (p.priceUnit || 'Sq.ft')}
                 </div>
                 <div class="prop-sub">
-                    Price: Rs. ${p.price} | Area: ${p.area}
+                    ${p.category === 'Rented Room' ? 'Rent' : 'Price'}: Rs. ${p.price} | Area: ${p.area} ${p.areaUnit || ''}
                 </div>
                 <h4 class="prop-title">${p.title}</h4>
                 <div class="prop-location">
@@ -1715,6 +1757,43 @@ function renderHome(container) {
                 ${banners.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}" onclick="goToSlide(${i})"></div>`).join('')}
             </div>
         </div>
+
+        <!-- SPONSORED AD BANNER -->
+        <div style="padding: 15px 15px 5px 15px;">
+            <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); position: relative; cursor: pointer; border: 1px solid #eee;" onclick="window.openMessenger ? window.openMessenger() : alert('Contact Admin for Advertising')">
+                <span style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; font-weight: 700;">SPONSORED</span>
+                <img src="https://via.placeholder.com/600x150/FFF3E0/FF9933?text=ADVERTISE+HERE+%7C+GROW+YOUR+BUSINESS" alt="Advertisement" style="width: 100%; height: auto; display: block;">
+            </div>
+        </div>
+
+        <!-- FEATURED PROPERTIES (Horizontal Scroll) -->
+        ${(() => {
+            const featured = props.filter(p => p.featured);
+            if (featured.length === 0) return '';
+            return `
+                <div style="padding: 15px 0 5px 20px;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 1.1rem; color: #1a2a3a; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-fire" style="color: #FF5722;"></i> Featured Properties
+                    </h3>
+                    <div style="display: flex; gap: 15px; overflow-x: auto; padding-right: 20px; padding-bottom: 10px; scrollbar-width: none; -ms-overflow-style: none;">
+                        <style>.featured-scroll::-webkit-scrollbar { display: none; }</style>
+                        ${featured.map(p => `
+                            <div style="min-width: 200px; width: 200px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.08); scroll-snap-align: start;" onclick="navigate('details', ${p.id})">
+                                <div style="height: 120px; position: relative;">
+                                    <img src="${p.image}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <span style="position: absolute; top: 8px; left: 8px; background: #FF9933; color: white; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;">FEATURED</span>
+                                </div>
+                                <div style="padding: 10px;">
+                                    <h4 style="margin: 0 0 5px 0; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color:#333;">${p.title}</h4>
+                                    <div style="color: #138808; font-weight: 700; font-size: 0.95rem;">Rs. ${p.price}</div>
+                                    <div style="font-size: 0.75rem; color: #666;"><i class="fas fa-map-marker-alt"></i> ${p.city}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+             `;
+        })()}
 
         <!-- Categories Scroll (Moved above search) -->
         <div id="cat-scroll" style="padding: 0 0 5px 20px; margin-top: 5px; position: relative; z-index: 10; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
@@ -2260,9 +2339,11 @@ function renderAdmin(container) {
                     <a href="#" class="side-link ${tab === 'customers' ? 'active' : ''}" onclick="setAdminTab('customers'); toggleSidebar()"><i class="fas fa-user-friends"></i> Customers</a>
                     <a href="#" class="side-link ${tab === 'messages' ? 'active' : ''}" onclick="setAdminTab('messages'); toggleSidebar()"><i class="fas fa-comments"></i> Messages</a>
                     <a href="#" class="side-link ${tab === 'withdrawals' ? 'active' : ''}" onclick="setAdminTab('withdrawals'); toggleSidebar()"><i class="fas fa-money-bill-wave"></i> Withdrawals</a>
+                    <a href="#" class="side-link ${tab === 'financialHistory' ? 'active' : ''}" onclick="setAdminTab('financialHistory'); toggleSidebar()"><i class="fas fa-history"></i> Financial History</a>
                     <a href="#" class="side-link ${tab === 'adminWallet' ? 'active' : ''}" onclick="setAdminTab('adminWallet'); toggleSidebar()"><i class="fas fa-wallet"></i> My Wallet</a>
                     <a href="#" class="side-link ${tab === 'exploreMgr' ? 'active' : ''}" onclick="setAdminTab('exploreMgr'); toggleSidebar()"><i class="fas fa-th-large"></i> Explore Pages</a>
                     <a href="#" class="side-link ${tab === 'sellRentMgr' ? 'active' : ''}" onclick="setAdminTab('sellRentMgr'); toggleSidebar()"><i class="fas fa-edit"></i> Sell/Rent Mgr</a>
+                    <a href="#" class="side-link ${tab === 'walletRequests' ? 'active' : ''}" onclick="setAdminTab('walletRequests'); toggleSidebar()"><i class="fas fa-hand-holding-usd"></i> Wallet Requests ${State.walletRequests && State.walletRequests.some(r => r.status === 'pending') ? '<span style="background:red; width:8px; height:8px; border-radius:50%; display:inline-block; margin-left:5px;"></span>' : ''}</a>
                     <a href="#" class="side-link ${tab === 'settings' ? 'active' : ''}" onclick="setAdminTab('settings'); toggleSidebar()"><i class="fas fa-cogs"></i> Settings</a>
                     <a href="#" class="side-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </nav>
@@ -2373,6 +2454,7 @@ function renderAdmin(container) {
                                     <th style="padding:15px; text-align:left;">Contact Info</th>
                                     <th style="padding:15px; text-align:left;">KYC Info</th>
                                     <th style="padding:15px; text-align:left;">Status</th>
+                                    <th style="padding:15px; text-align:left;">Plan</th>
                                     <th style="padding:15px; text-align:right;">Action</th>
                                 </tr>
                             </thead>
@@ -2405,6 +2487,11 @@ function renderAdmin(container) {
                                                     ${a.status}
                                                 </span>
                                             </td>
+                                            <td style="padding:15px;">
+                                                <div style="font-weight:700; color:#1a2a3a;">${a.currentPlan || 'Free'}</div>
+                                                ${a.planExpiry ? `<div style="font-size:0.75rem; color:${Date.now() > a.planExpiry ? 'red' : '#666'}">Exp: ${new Date(a.planExpiry).toLocaleDateString()}</div>` : ''}
+                                                <div style="font-size:0.7rem; color:#999;">Used: ${a.listingsUsed || 0}</div>
+                                            </td>
                                              <td style="padding:15px; text-align:right;">
                                                 <div style="display:flex; justify-content:flex-end; gap:5px;">
                                                  <button style="background:#007bff; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer;" onclick="openMessengerForUser('${a.name}', '${a.id}')" title="Message Agent"><i class="fab fa-facebook-messenger"></i></button>
@@ -2413,10 +2500,7 @@ function renderAdmin(container) {
                                                 ${a.status === 'approved' ? `<button style="background:#1a2a3a; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="blockAgent(${a.id})">Block</button>` : ''}
                                                  ${a.status === 'blocked' ? `<button style="background:#FF9933; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="approveAgent(${a.id})">Unblock</button>` : ''}
                                                  <button style="background:#138808; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="manageWallet(${a.id})"><i class="fas fa-wallet"></i></button>
-                                                 <button style="background:${(a.membershipStatus === 'active') ? '#e8f5e9' : '#fafafa'}; color:${(a.membershipStatus === 'active') ? '#2e7d32' : '#999'}; border:1px solid #ddd; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px; font-size:0.75rem;" onclick="toggleMembership(${a.id})">
-                                                    <i class="fas fa-${(a.membershipStatus === 'active') ? 'check-circle' : 'circle'}"></i> 
-                                                    ${(a.membershipStatus === 'active') ? 'Active' : 'Membership'}
-                                                 </button>
+                                                 <button style="background:#673AB7; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="manageAgentPlan(${a.id})" title="Manage Plan"><i class="fas fa-crown"></i></button>
                                                  <button style="background:#eee; color:#1a2a3a; border:1px solid #ddd; padding:6px 12px; border-radius:6px; font-weight:700; cursor:pointer; margin-right:5px;" onclick="editAgent(${a.id})"><i class="fas fa-edit"></i></button>
                                                  <button style="background:none; border:1px solid #D32F2F; color:#D32F2F; padding:5px 10px; border-radius:6px; font-weight:600; cursor:pointer;" onclick="rejectAgent(${a.id})"><i class="fas fa-trash"></i></button>
                                                 </div>
@@ -2754,6 +2838,88 @@ function renderAdmin(container) {
                 ` : ''}
                 ${tab === 'messages' ? (window.renderMessagesTab ? renderMessagesTab() : '<div style="padding:20px;">Messages module loading...</div>') : ''}
 
+                ${tab === 'financialHistory' ? `
+                    <div style="max-width:900px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <h2 style="color:#1a2a3a; font-size:1.5rem; font-weight:700;"><i class="fas fa-history"></i> All Financial Transactions</h2>
+                            <div style="display:flex; align-items:center; gap:15px;">
+                                <div style="background:white; border-radius:30px; padding:5px 15px; box-shadow:0 2px 10px rgba(0,0,0,0.05); display:flex; align-items:center;">
+                                    <i class="fas fa-search" style="color:#999; margin-right:10px;"></i>
+                                    <input type="text" placeholder="Search Name or Mobile..." oninput="updateAdminSearch(this.value)" value="${State.adminSearch || ''}" style="border:none; outline:none; font-size:0.9rem; width:200px;">
+                                </div>
+                                <div style="background:white; padding:10px 20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                                    <span style="color:#666; font-size:0.9rem;">Total Admin Balance</span>
+                                    <div style="font-size:1.2rem; font-weight:800; color:#138808;">Rs. ${(State.adminWallet || 0).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background:white; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); overflow:hidden;">
+                            <table style="width:100%; border-collapse:collapse;">
+                                <thead style="background:#f9f9f9; border-bottom:2px solid #eee;">
+                                    <tr>
+                                        <th style="padding:15px; text-align:left; color:#666;">Date</th>
+                                        <th style="padding:15px; text-align:left; color:#666;">Transaction ID</th>
+                                        <th style="padding:15px; text-align:left; color:#666;">Agent/User</th>
+                                        <th style="padding:15px; text-align:left; color:#666;">Type</th>
+                                        <th style="padding:15px; text-align:left; color:#666;">Amount</th>
+                                        <th style="padding:15px; text-align:left; color:#666;">Remark</th>
+                                        <th style="padding:15px; text-align:left; color:#666;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(State.walletTransactions || []).length === 0 ?
+                '<tr><td colspan="7" style="padding:30px; text-align:center; color:#999;">No transaction history found.</td></tr>' :
+                (State.walletTransactions || [])
+                    .sort((a, b) => b.id - a.id)
+                    .filter(t => {
+                        if (!State.adminSearch) return true;
+                        const s = State.adminSearch.toLowerCase();
+                        const agent = State.agents.find(a => a.id === t.agentId);
+                        const customer = State.customers && t.customerId ? State.customers.find(c => c.id === t.customerId) : null;
+
+                        const name = (agent ? agent.name : (customer ? customer.name : (t.userName || ''))).toLowerCase();
+                        const phone = (agent ? agent.phone : (customer ? customer.phone : (t.userPhone || ''))).toLowerCase();
+                        return name.includes(s) || phone.includes(s) || t.id.toString().includes(s);
+                    })
+                    .map(t => {
+                        const agent = State.agents.find(a => a.id === t.agentId);
+                        const customer = State.customers && t.customerId ? State.customers.find(c => c.id === t.customerId) : null;
+
+                        const name = agent ? agent.name : (customer ? customer.name : (t.userName || 'Unknown User'));
+                        const phone = agent ? agent.phone : (customer ? customer.phone : (t.userPhone || 'N/A'));
+
+                        return `
+                                            <tr style="border-bottom:1px solid #eee;">
+                                                <td style="padding:15px; color:#555; font-size:0.85rem;">${new Date(t.id).toLocaleDateString()}</td>
+                                                <td style="padding:15px; color:#999; font-size:0.8rem;">#${t.id.toString().slice(-6)}</td>
+                                                <td style="padding:15px; font-weight:600; color:#1a2a3a;">
+                                                    ${name}
+                                                    <div style="font-size:0.75rem; color:#666;"><i class="fas fa-phone-alt" style="font-size:0.7rem;"></i> ${phone}</div>
+                                                    <div style="font-size:0.75rem; color:#888;">ID: ${t.agentId || 'N/A'}</div>
+                                                </td>
+                                                <td style="padding:15px;">
+                                                    <span style="padding:4px 10px; border-radius:15px; font-size:0.75rem; font-weight:700; background:${t.type === 'credit' ? '#e8f5e9' : '#ffebee'}; color:${t.type === 'credit' ? '#2e7d32' : '#c62828'};">
+                                                        ${t.type === 'credit' ? 'CREDIT' : 'DEBIT'}
+                                                    </span>
+                                                </td>
+                                                <td style="padding:15px; font-weight:700; color:${t.type === 'credit' ? '#2e7d32' : '#c62828'};">
+                                                    ${t.type === 'credit' ? '+' : '-'} Rs. ${t.amount}
+                                                </td>
+                                                <td style="padding:15px; color:#555; font-size:0.9rem;">${t.remark}</td>
+                                                <td style="padding:15px;">
+                                                    <span style="font-size:0.8rem; color:${t.status === 'success' ? '#2e7d32' : (t.status === 'pending' ? '#ef6c00' : '#c62828')}; font-weight:600;">
+                                                        ${t.status ? t.status.toUpperCase() : 'SUCCESS'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `}).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ` : ''}
+
                 ${tab === 'settings' ? `
                     <div style="max-width:800px;">
                          <h2 style="margin-bottom:20px;">Contact & Founder Settings</h2>
@@ -2937,6 +3103,57 @@ function renderAdmin(container) {
                          
                     </div>
                 ` : ''}
+
+                ${tab === 'walletRequests' ? `
+                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 style="color:#1a2a3a; font-size:1.5rem; font-weight:700;">Wallet Requests</h2>
+                    </div>
+                    
+                    <div style="background:white; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); overflow:hidden;">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead style="background:#f9f9f9; border-bottom:2px solid #eee;">
+                                <tr>
+                                    <th style="padding:15px; text-align:left; color:#666;">ID</th>
+                                    <th style="padding:15px; text-align:left; color:#666;">Agent</th>
+                                    <th style="padding:15px; text-align:left; color:#666;">Amount</th>
+                                    <th style="padding:15px; text-align:left; color:#666;">Proof</th>
+                                    <th style="padding:15px; text-align:left; color:#666;">Status</th>
+                                    <th style="padding:15px; text-align:left; color:#666;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(State.walletRequests || []).length === 0 ?
+                '<tr><td colspan="6" style="padding:30px; text-align:center; color:#999;">No recharge requests found.</td></tr>' :
+                (State.walletRequests || []).sort((a, b) => b.id - a.id).map(r => `
+                                    <tr style="border-bottom:1px solid #eee;">
+                                        <td style="padding:15px; color:#999; font-size:0.85rem;">#${r.id.toString().slice(-6)}</td>
+                                        <td style="padding:15px;">
+                                            <div style="font-weight:700; color:#1a2a3a;">${r.agentName}</div>
+                                            <div style="font-size:0.8rem; color:#666;">ID: ${r.agentId}</div>
+                                        </td>
+                                        <td style="padding:15px; font-weight:800; color:#138808;">Rs. ${r.amount}</td>
+                                        <td style="padding:15px;">
+                                            <a href="#" onclick="openImageModal('${r.proof}')" style="color:#1976D2; text-decoration:underline; font-size:0.9rem;">View Proof</a>
+                                        </td>
+                                        <td style="padding:15px;">
+                                            <span style="padding:5px 10px; border-radius:20px; font-size:0.8rem; font-weight:700; 
+                                                background:${r.status === 'pending' ? '#fff3e0' : (r.status === 'approved' ? '#e8f5e9' : '#ffebee')}; 
+                                                color:${r.status === 'pending' ? '#ef6c00' : (r.status === 'approved' ? '#2e7d32' : '#c62828')};">
+                                                ${r.status.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td style="padding:15px;">
+                                            ${r.status === 'pending' ? `
+                                                <button onclick="approveWalletRequest(${r.id})" style="background:#2e7d32; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; margin-right:5px; font-size:0.8rem;">Approve</button>
+                                                <button onclick="rejectWalletRequest(${r.id})" style="background:#c62828; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:0.8rem;">Reject</button>
+                                            ` : '<span style="color:#999; font-size:0.8rem;">No Action</span>'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : ''}
             </main>
         </div>
     `;
@@ -3104,6 +3321,8 @@ function renderAgent(container) {
                             <i class="fas fa-plus-circle"></i> Add Property
                         </button>
                     </div>
+
+                    ${window.getMembershipUI ? window.getMembershipUI(agent) : ''}
                     <div class="property-grid">
                         ${agentProps.length === 0 ? `
                             <div style="grid-column:1/-1; text-align:center; padding:50px; background:white; border-radius:15px;">
@@ -3132,6 +3351,7 @@ function renderAgent(container) {
                                         <button class="prop-btn" style="background:#1a2a3a; font-size:0.75rem; flex:1;" onclick="editProperty(${p.id})">Edit Details</button>
                                         ${p.status !== 'sold' ? `<button class="prop-btn" style="background:#00796b; font-size:0.75rem; flex:1;" onclick="markAsSold(${p.id})">Mark Sold</button>` : ''}
                                     </div>
+
                                 </div>
                             </div>
                         `).join('')}
@@ -3144,8 +3364,16 @@ function renderAgent(container) {
                             <i class="fas fa-wallet" style="font-size:2.5rem; margin-bottom:15px; opacity:0.8;"></i>
                             <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px;">Available Balance</div>
                             <div style="font-size:2.5rem; font-weight:900; margin:10px 0;">Rs. ${agent.wallet || 0}</div>
-                            <button class="prop-btn" style="background:white; color:#138808; width:auto; padding:12px 30px; margin-top:10px; border-radius:50px;" 
-                                onclick="requestWithdrawal(${agent.id})">Request Withdrawal</button>
+                            <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
+                                <button class="prop-btn" style="background:white; color:#FF5722; width:auto; padding:12px 25px; border-radius:50px; border:2px solid white;" 
+                                    onclick="openAddMoneyModal()">
+                                    <i class="fas fa-plus"></i> Add Money
+                                </button>
+                                <button class="prop-btn" style="background:rgba(255,255,255,0.2); color:white; width:auto; padding:12px 25px; border-radius:50px;" 
+                                    onclick="requestWithdrawal(${agent.id})">
+                                    <i class="fas fa-arrow-down"></i> Withdraw
+                                </button>
+                            </div>
                         </div>
                         
                         <div style="margin-top:30px; background:white; border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
@@ -3228,6 +3456,36 @@ function renderDetails(container) {
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${p.labels?.category || 'Type'}</span>
                         <strong style="color:#1a2a3a; font-size:1.2rem;">${p.category}</strong>
                     </div>
+                    ${p.bhk ? `
+                    <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                        <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">Bedrooms</span>
+                        <strong style="color:#1a2a3a; font-size:1.2rem;">${p.bhk} BHK</strong>
+                    </div>` : ''}
+                    ${p.bathrooms ? `
+                    <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                        <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">Bathrooms</span>
+                        <strong style="color:#1a2a3a; font-size:1.2rem;">${p.bathrooms}</strong>
+                    </div>` : ''}
+                    ${p.furnishing ? `
+                    <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                        <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">Furnishing</span>
+                        <strong style="color:#1a2a3a; font-size:1.2rem;">${p.furnishing}</strong>
+                    </div>` : ''}
+                    ${p.floor ? `
+                    <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                        <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">Floor</span>
+                        <strong style="color:#1a2a3a; font-size:1.2rem;">${p.floor}</strong>
+                    </div>` : ''}
+                    ${p.facing ? `
+                    <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                        <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">Facing</span>
+                        <strong style="color:#1a2a3a; font-size:1.2rem;">${p.facing}</strong>
+                    </div>` : ''}
+                    ${p.roadWidth ? `
+                    <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                        <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">Road Width</span>
+                        <strong style="color:#1a2a3a; font-size:1.2rem;">${p.roadWidth}</strong>
+                    </div>` : ''}
                     ${(p.extraDetails || []).map(e => `
                     <div style="background:#ffffff; padding:15px; border-radius:15px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
                         <span style="color:#666; font-size:1rem; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">${e.label}</span>
@@ -3408,27 +3666,35 @@ window.editingPropId = null;
 
 window.showPropertyModal = (propId = null) => {
     window.isRealTaskRunning = false;
-    window.tempPropertyImages = [];
-    window.propertyFormStep = 1;
+    window.tempPropertyImages = []; // Reset images
+    window.tempFormData = {}; // Reset form data
     window.editingPropId = propId;
 
-    // Clear previous form data
-    window.tempFormData = {};
-
-    // If editing, populate form data
     if (propId) {
+        window.propertyFormStep = 1; // Start at Step 1 for Edit
         const prop = State.properties.find(p => p.id == propId);
         if (prop) {
             // Map property fields to form fields
             window.tempFormData['p-title'] = prop.title;
             window.tempFormData['p-desc'] = prop.description;
             window.tempFormData['p-price'] = prop.price;
-            window.tempFormData['p-area'] = prop.area;
-            window.tempFormData['p-state'] = prop.state;
-            window.tempFormData['p-district'] = prop.district;
             window.tempFormData['p-city'] = prop.city;
-            window.tempFormData['p-pincode'] = prop.pincode; // Added missing pincode
-            window.tempFormData['p-cat'] = prop.category || prop.type; // Check category
+            window.tempFormData['p-pincode'] = prop.pincode;
+            window.tempFormData['p-cat'] = prop.category || prop.type;
+            window.tempFormData['p-area'] = prop.area;
+            window.tempFormData['p-area'] = prop.area;
+            window.tempFormData['p-area-unit'] = prop.areaUnit || 'Sq.ft'; // NEW FIELD area unit mapping
+            window.tempFormData['p-sqft'] = prop.priceSqft;
+            // Pre-fill new details
+            window.tempFormData['p-bhk'] = prop.bhk;
+            window.tempFormData['p-bath'] = prop.bathrooms;
+            window.tempFormData['p-furnish'] = prop.furnishing;
+            window.tempFormData['p-floor'] = prop.floor;
+            window.tempFormData['p-facing'] = prop.facing;
+            window.tempFormData['p-road'] = prop.roadWidth;
+            window.tempFormData['p-sqft'] = prop.priceSqft;
+            window.tempFormData['p-sqft'] = prop.priceSqft;
+            window.tempFormData['p-unit-type'] = prop.priceUnit || 'Sq.ft';
             window.tempFormData['p-mobile'] = prop.mobile || prop.contact_mobile; // Check mobile
             window.tempFormData['p-whatsapp'] = prop.whatsapp || prop.contact_whatsapp;
             window.tempFormData['p-video'] = prop.video || prop.youtube_video; // Check video
@@ -3449,6 +3715,37 @@ window.showPropertyModal = (propId = null) => {
                 } catch (e) { console.error('Error parsing extra details', e); }
             }
         }
+    } else {
+        // ADD NEW PROPERTY - CHECK LIMITS (Premium Logic)
+        if (State.user && State.user.role === 'agent') {
+            const agent = State.agents.find(a => a.id === State.user.id);
+            if (agent) {
+                // 1. Check Expiry
+                if (agent.planExpiry && Date.now() > agent.planExpiry) {
+                    alert("Your Premium Membership has expired! Please renew your plan to add properties.");
+                    return;
+                }
+
+                // 2. Check Listing Limits
+                let limit = 0; // Free Plan default (Strict: 0 listings as per request)
+                if (agent.currentPlan === 'Silver') limit = 3;
+                else if (agent.currentPlan === 'Gold') limit = 10;
+                else if (agent.currentPlan === 'Platinum') limit = 9999;
+
+                // Allow 1 listing for completely new agents (optional demo friendliness) or stick to strict 0?
+                // Request says: "premimum member bane tabhi add kar paye" -> Strict 0 for Free.
+
+                if (agent.listingsUsed >= limit) {
+                    if (limit === 0) {
+                        alert("Premium Membership Required!\nYou need to be a Premium Member to add properties.\n\nSilver Plan (Rs.499): 3 Listings/Month");
+                    } else {
+                        alert(`Limit Reached! (${agent.listingsUsed}/${limit})\nYou have used all listings in your ${agent.currentPlan} Plan.\nPlease upgrade to add more.`);
+                    }
+                    return;
+                }
+            }
+        }
+        window.propertyFormStep = 0; // Start at Step 0 (Category Selection) for Add
     }
 
     const modal = document.getElementById('modal-container');
@@ -3468,7 +3765,7 @@ window.showPropertyModal = (propId = null) => {
     modal.style.overflow = 'auto';
     modal.style.padding = '20px';
 
-    renderPropertyForm(true); // Initial Render (pass true to avoid capturing old DOM data)
+    renderPropertyForm(true); // Initial Render
 }
 
 // Global handler for state change in property form
@@ -3523,8 +3820,42 @@ window.renderPropertyForm = (initial = false) => {
             </div>
         `;
 
+    // Step 0: Category Selection
+    if (step === 0) {
+        const cats = (State.settings.propertyTypes || ['Plot', 'Rented Room', 'Agricultural Land', 'Residential', 'Commercial', 'Villa', 'Farm House']).filter(c => c !== 'All');
+        const icons = {
+            'Plot': 'fa-map-marked-alt',
+            'Rented Room': 'fa-bed',
+            'Agricultural Land': 'fa-seedling',
+            'Residential': 'fa-home',
+            'Commercial': 'fa-building',
+            'Villa': 'fa-hotel',
+            'Farm House': 'fa-tractor'
+        };
+
+        contentHtml = `
+            <div style="text-align:center; padding:20px 0;">
+                <h3 style="color:#1a2a3a; margin-bottom:10px;">Select Property Type</h3>
+                <p style="color:#666; font-size:0.9rem; margin-bottom:30px;">Choose a category to proceed with relevant details.</p>
+                
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:15px;">
+                    ${cats.map(c => `
+                        <div onclick="window.tempFormData['p-cat']='${c}'; window.propertyFormStep = 1; renderPropertyForm();" 
+                             style="background:white; border:1px solid #eee; border-radius:15px; padding:20px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:0 5px 15px rgba(0,0,0,0.05);"
+                             onmouseover="this.style.transform='translateY(-5px)'; this.style.borderColor='#138808'; this.style.boxShadow='0 10px 25px rgba(19,136,8,0.15)';"
+                             onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#eee'; this.style.boxShadow='0 5px 15px rgba(0,0,0,0.05)';">
+                            <div style="width:50px; height:50px; background:#e8f5e9; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
+                                <i class="fas ${icons[c] || 'fa-tag'}" style="color:#138808; font-size:1.5rem;"></i>
+                            </div>
+                            <div style="font-weight:700; color:#333; font-size:0.95rem;">${c}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
     // Step 1: Title & Address (Location)
-    if (step === 1) {
+    else if (step === 1) {
         contentHtml = `
                 ${stepsIndicator}
                 <div class="form-group">
@@ -3565,6 +3896,85 @@ window.renderPropertyForm = (initial = false) => {
     }
     // Step 2: Property Details (Category, Area, Desc)
     else if (step === 2) {
+        const cat = window.tempFormData['p-cat'] || 'Plot';
+        const val = (id) => window.tempFormData[id] || '';
+
+        let extraFields = '';
+
+        if (['Rented Room', 'Residential', 'Villa', 'Farm House', 'Flat'].includes(cat)) {
+            extraFields = `
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label>Bedrooms / BHK</label>
+                        <select id="p-bhk" class="login-input" onchange="window.tempFormData['p-bhk']=this.value" style="padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; background:white;">
+                            <option value="">Select</option>
+                            <option value="1 RK" ${val('p-bhk') == '1 RK' ? 'selected' : ''}>1 RK</option>
+                            <option value="1 BHK" ${val('p-bhk') == '1 BHK' ? 'selected' : ''}>1 BHK</option>
+                            <option value="2 BHK" ${val('p-bhk') == '2 BHK' ? 'selected' : ''}>2 BHK</option>
+                            <option value="3 BHK" ${val('p-bhk') == '3 BHK' ? 'selected' : ''}>3 BHK</option>
+                            <option value="4+ BHK" ${val('p-bhk') == '4+ BHK' ? 'selected' : ''}>4+ BHK</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bathrooms</label>
+                        <input type="number" id="p-bath" value="${val('p-bath')}" placeholder="e.g. 2">
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label>Furnishing</label>
+                        <select id="p-furnish" class="login-input" onchange="window.tempFormData['p-furnish']=this.value" style="padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; background:white;">
+                            <option value="Unfurnished" ${val('p-furnish') == 'Unfurnished' ? 'selected' : ''}>Unfurnished</option>
+                            <option value="Semi-Furnished" ${val('p-furnish') == 'Semi-Furnished' ? 'selected' : ''}>Semi-Furnished</option>
+                            <option value="Fully-Furnished" ${val('p-furnish') == 'Fully-Furnished' ? 'selected' : ''}>Fully-Furnished</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label>Floor No.</label>
+                        <input id="p-floor" value="${val('p-floor')}" placeholder="e.g. 2nd Floor">
+                    </div>
+                </div>
+            `;
+        } else if (['Plot', 'Agricultural Land'].includes(cat)) {
+            extraFields = `
+                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label>Facing Direction</label>
+                        <select id="p-facing" class="login-input" onchange="window.tempFormData['p-facing']=this.value" style="padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; background:white;">
+                            <option value="">Select</option>
+                            <option value="East" ${val('p-facing') == 'East' ? 'selected' : ''}>East</option>
+                             <option value="West" ${val('p-facing') == 'West' ? 'selected' : ''}>West</option>
+                              <option value="North" ${val('p-facing') == 'North' ? 'selected' : ''}>North</option>
+                               <option value="South" ${val('p-facing') == 'South' ? 'selected' : ''}>South</option>
+                                <option value="North-East" ${val('p-facing') == 'North-East' ? 'selected' : ''}>North-East</option>
+                                 <option value="South-East" ${val('p-facing') == 'South-East' ? 'selected' : ''}>South-East</option>
+                        </select>
+                    </div>
+                     <div class="form-group">
+                        <label>Front Road Width</label>
+                        <input id="p-road" value="${val('p-road')}" placeholder="e.g. 20 ft">
+                    </div>
+                </div>
+             `;
+        } else if (cat === 'Commercial') {
+            extraFields = `
+                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div class="form-group">
+                        <label>Floor No.</label>
+                        <input id="p-floor" value="${val('p-floor')}" placeholder="e.g. Ground Floor">
+                    </div>
+                    <div class="form-group">
+                        <label>Furnishing</label>
+                         <select id="p-furnish" class="login-input" onchange="window.tempFormData['p-furnish']=this.value" style="padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; background:white;">
+                            <option value="Shell" ${val('p-furnish') == 'Shell' ? 'selected' : ''}>Bare Shell</option>
+                            <option value="Warm-Shell" ${val('p-furnish') == 'Warm-Shell' ? 'selected' : ''}>Warm Shell</option>
+                            <option value="Furnished" ${val('p-furnish') == 'Furnished' ? 'selected' : ''}>Furnished</option>
+                        </select>
+                    </div>
+                </div>
+             `;
+        }
+
         contentHtml = `
                 ${stepsIndicator}
                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -3577,11 +3987,23 @@ window.renderPropertyForm = (initial = false) => {
                         </select>
                     </div>
                      <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-area" value="Size (Sq.ft)" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <input id="p-area" value="${window.tempFormData['p-area'] || ''}" required placeholder="e.g. 1200 Sq.ft">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-area" value="Property Size / Area" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <div style="display:flex; gap:5px;">
+                            <input id="p-area" value="${window.tempFormData['p-area'] || ''}" required placeholder="Size" style="flex:1;">
+                            <select id="p-area-unit" style="width:100px; padding:10px; border:1px solid #ddd; border-radius:10px; background:white;" onchange="window.tempFormData['p-area-unit']=this.value">
+                                <option value="Sq.ft" ${window.tempFormData['p-area-unit'] === 'Sq.ft' ? 'selected' : ''}>Sq.ft</option>
+                                <option value="Katha" ${window.tempFormData['p-area-unit'] === 'Katha' ? 'selected' : ''}>Katha</option>
+                                <option value="Bigha" ${window.tempFormData['p-area-unit'] === 'Bigha' ? 'selected' : ''}>Bigha</option>
+                                <option value="Acre" ${window.tempFormData['p-area-unit'] === 'Acre' ? 'selected' : ''}>Acre</option>
+                                <option value="Decimal" ${window.tempFormData['p-area-unit'] === 'Decimal' ? 'selected' : ''}>Decimal</option>
+                                <option value="Gaj" ${window.tempFormData['p-area-unit'] === 'Gaj' ? 'selected' : ''}>Gaj</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
+                ${extraFields}
+
                 <div class="form-group">
                     <div class="label-edit-wrap"><input class="editable-label" id="l-desc" value="Description" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
                     <textarea id="p-desc" rows="5" placeholder="Detailed description of the property...">${window.tempFormData['p-desc'] || ''}</textarea>
@@ -3598,9 +4020,23 @@ window.renderPropertyForm = (initial = false) => {
                         <input id="p-price" value="${window.tempFormData['p-price'] || ''}" required placeholder="e.g. 50 Lakh">
                     </div>
                      <div class="form-group">
-                        <div class="label-edit-wrap"><input class="editable-label" id="l-mobile" value="Mobile Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
-                        <input id="p-mobile" type="tel" value="${window.tempFormData['p-mobile'] || ''}" required placeholder="10 Digit Mobile">
+                        <div class="label-edit-wrap"><input class="editable-label" id="l-sqft" value="Price per Unit" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                        <div style="display:flex; gap:5px;">
+                            <input id="p-sqft" value="${window.tempFormData['p-sqft'] || ''}" placeholder="Rate" style="flex:1;">
+                            <select id="p-unit-type" style="width:100px; padding:10px; border:1px solid #ddd; border-radius:10px; background:white;" onchange="window.tempFormData['p-unit-type']=this.value">
+                                <option value="Sq.ft" ${window.tempFormData['p-unit-type'] === 'Sq.ft' ? 'selected' : ''}>Sq.ft</option>
+                                <option value="Katha" ${window.tempFormData['p-unit-type'] === 'Katha' ? 'selected' : ''}>Katha</option>
+                                <option value="Bigha" ${window.tempFormData['p-unit-type'] === 'Bigha' ? 'selected' : ''}>Bigha</option>
+                                <option value="Acre" ${window.tempFormData['p-unit-type'] === 'Acre' ? 'selected' : ''}>Acre</option>
+                                <option value="Decimal" ${window.tempFormData['p-unit-type'] === 'Decimal' ? 'selected' : ''}>Decimal</option>
+                                <option value="Gaj" ${window.tempFormData['p-unit-type'] === 'Gaj' ? 'selected' : ''}>Gaj</option>
+                            </select>
+                        </div>
                     </div>
+                </div>
+                 <div class="form-group">
+                    <div class="label-edit-wrap"><input class="editable-label" id="l-mobile" value="Mobile Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
+                    <input id="p-mobile" type="tel" value="${window.tempFormData['p-mobile'] || ''}" required placeholder="10 Digit Mobile">
                 </div>
                  <div class="form-group">
                     <div class="label-edit-wrap"><input class="editable-label" id="l-whatsapp" value="WhatsApp Number" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
@@ -3681,7 +4117,7 @@ window.renderPropertyForm = (initial = false) => {
                     ${contentHtml}
 
                     <div style="display:flex; gap:10px; margin-top:25px;">
-                        ${step > 1 ? `<button type="button" class="login-btn" style="background:#ddd; color:#333; flex:1;" onclick="prevPropStep()"><i class="fas fa-arrow-left"></i> Previous</button>` : ''}
+                        ${step > 0 ? `<button type="button" class="login-btn" style="background:#ddd; color:#333; flex:1;" onclick="prevPropStep()"><i class="fas fa-arrow-left"></i> Previous</button>` : ''}
                         
                          ${step < 4 ?
             `<button type="button" class="login-btn" style="flex:1;" onclick="nextPropStep()">Next <i class="fas fa-arrow-right"></i></button>` :
@@ -4039,13 +4475,23 @@ window.processPropertySubmit = async function () {
             category: getRaw('p-cat'),
             price: getVal('p-price'),
             area: getVal('p-area'),
-            priceSqft: getVal('p-sqft'), // Note: this field might be empty if input not present
+            areaUnit: getVal('p-area-unit') || 'Sq.ft', // NEW FIELD to store area unit
+            priceSqft: getVal('p-sqft'),
+            priceUnit: getVal('p-unit-type') || 'Sq.ft', // NEW FIELD to store unit type
             mobile: getVal('p-mobile'),
             whatsapp: getVal('p-whatsapp'),
             description: getVal('p-desc'),
             image: allImages[0],
             images: allImages,
             video: getVal('p-video'),
+            map: getVal('p-map'),
+            // Save new fields
+            bhk: getVal('p-bhk'),
+            bathrooms: getVal('p-bath'),
+            furnishing: getVal('p-furnish'),
+            floor: getVal('p-floor'),
+            facing: getVal('p-facing'),
+            roadWidth: getVal('p-road'),
             map: getVal('p-map'),
             // Preserve status if editing, else default
             // If Admin: preserve existing status or approve. Else (Agent/Customer): always set to pending for approval
@@ -4070,7 +4516,7 @@ window.processPropertySubmit = async function () {
                 pincode: getVal('l-pincode') || 'Area Pincode',
                 category: getVal('l-cat') || 'Category',
                 price: getVal('l-price') || 'Total Price',
-                area: getVal('l-area') || 'Size (Sq.ft)',
+                area: getVal('l-area') || 'Size / Area',
                 sqft: getVal('l-sqft') || 'Price per Sq.ft',
                 mobile: getVal('l-mobile') || 'Mobile Number',
                 whatsapp: getVal('l-whatsapp') || 'WhatsApp Number',
@@ -4082,6 +4528,24 @@ window.processPropertySubmit = async function () {
                 value: div.querySelector('.extra-field-value').value.trim()
             }))
         };
+
+        // Sanitize data based on category (remove fields that don't belong)
+        const cat = propData.category;
+        if (['Plot', 'Agricultural Land'].includes(cat)) {
+            propData.bhk = null;
+            propData.bathrooms = null;
+            propData.furnishing = null;
+            propData.floor = null;
+        } else if (['Commercial'].includes(cat)) {
+            propData.bhk = null;
+            propData.bathrooms = null;
+            propData.facing = null;
+            propData.roadWidth = null;
+        } else {
+            // Residential, Villa, Rented Room, etc.
+            propData.facing = null;
+            propData.roadWidth = null;
+        }
 
         // Add new city to admin list if it's new
         if (propData.city && !State.settings.cities?.includes(propData.city)) {
@@ -4096,6 +4560,15 @@ window.processPropertySubmit = async function () {
             // Create new property
             if (!State.properties) State.properties = [];
             State.properties.push(propData);
+
+            // Increment Usage Count for Agent
+            if (State.user.role === 'agent') {
+                const agent = State.agents.find(a => a.id === State.user.id);
+                if (agent) {
+                    if (!agent.listingsUsed) agent.listingsUsed = 0;
+                    agent.listingsUsed++;
+                }
+            }
         }
 
         await saveGlobalData();
@@ -4933,6 +5406,10 @@ async function adjustWallet(id, type) {
                 <div><strong>Amount:</strong> <span style="font-size:1.2rem; color:#FF9933; font-weight:800;">Rs. ${amount.toLocaleString()}</span></div>
             </div>
             <div class="form-group">
+                <label>Remark (Optional)</label>
+                <input type="text" id="wallet-remark" class="login-input" placeholder="e.g. Bonus, Penalty, Correction...">
+            </div>
+            <div class="form-group">
                 <label>Enter Admin Password</label>
                 <input type="password" id="agent-auth-pwd" class="login-input" placeholder="Password">
             </div>
@@ -4946,6 +5423,9 @@ async function adjustWallet(id, type) {
 
 window.executeAgentWalletUpdate = async (id, type, amount) => {
     const pwd = document.getElementById('agent-auth-pwd').value;
+    const remarkVal = document.getElementById('wallet-remark').value;
+    const remark = remarkVal ? remarkVal : (type === 'add' ? 'Added by Admin' : 'Reduced by Admin');
+
     if (pwd !== '252325') return alert("Incorrect Password!");
 
     const a = State.agents.find(x => x.id === id);
@@ -4965,7 +5445,7 @@ window.executeAgentWalletUpdate = async (id, type, amount) => {
         State.adminWallet -= amount;
 
         // Add to agent wallet
-        a.wallet += amount;
+        a.wallet = (a.wallet || 0) + amount; // Ensure wallet is initialized
 
         // Record agent credit transaction
         if (!State.walletTransactions) State.walletTransactions = [];
@@ -4975,7 +5455,8 @@ window.executeAgentWalletUpdate = async (id, type, amount) => {
             amount: amount,
             type: 'credit',
             date: new Date().toLocaleString(),
-            remark: 'Added by Admin'
+            remark: remark,
+            status: 'success'
         });
 
         // Record admin debit transaction
@@ -4984,10 +5465,11 @@ window.executeAgentWalletUpdate = async (id, type, amount) => {
             amount: amount,
             type: 'admin_debit',
             date: new Date().toLocaleString(),
-            remark: `Transferred to ${a.name}`
+            remark: `Transferred to ${a.name}: ${remark}`,
+            status: 'success'
         });
     } else {
-        if (a.wallet < amount) {
+        if ((a.wallet || 0) < amount) {
             hideGlobalLoader(null);
             setTimeout(() => alert("Insufficient agent balance"), 200);
             return;
@@ -5002,7 +5484,8 @@ window.executeAgentWalletUpdate = async (id, type, amount) => {
             amount: amount,
             type: 'debit',
             date: new Date().toLocaleString(),
-            remark: 'Reduced by Admin'
+            remark: remark,
+            status: 'success'
         });
 
         // Record admin credit transaction
@@ -5011,7 +5494,8 @@ window.executeAgentWalletUpdate = async (id, type, amount) => {
             amount: amount,
             type: 'admin_credit',
             date: new Date().toLocaleString(),
-            remark: `Recovered from ${a.name}`
+            remark: `Recovered from ${a.name}: ${remark}`,
+            status: 'success'
         });
     }
     await saveGlobalData();
@@ -5067,7 +5551,7 @@ async function requestWithdrawal(id) {
     setTimeout(() => alert("Withdrawal request sent! Amount deducted from wallet and held for approval."), 200);
 }
 
-function processWithdrawal(reqId, status) {
+function processWithdrawal_Old(reqId, status) {
     const r = State.withdrawalRequests.find(x => x.id === reqId);
     if (!r) return;
     const remark = prompt(`Enter remark for ${status === 'approved' ? 'Approval' : 'Rejection'}:`);
@@ -5166,7 +5650,7 @@ window.addAdminBalance = addAdminBalance;
 window.manageWallet = manageWallet;
 window.adjustWallet = adjustWallet;
 window.requestWithdrawal = requestWithdrawal;
-window.processWithdrawal = processWithdrawal;
+// window.processWithdrawal = processWithdrawal;
 window.setAdminTab = setAdminTab;
 window.setAgentTab = setAgentTab;
 window.updateAdminSearch = updateAdminSearch;
@@ -6066,6 +6550,19 @@ window.handleSellRentCardClick = function (index) {
     } else {
         alert(`You clicked ${card.title}. No functionality (script) defined.`);
     }
+};
+
+window.openImageModal = (src) => {
+    const modal = document.getElementById('modal-container');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div style="position:relative; max-width:90%; max-height:90%; animation: zoomIn 0.2s ease-out;">
+             <button onclick="closeModal()" style="position:absolute; right:-15px; top:-15px; background:white; border:none; width:30px; height:30px; border-radius:50%; font-size:1.2rem; cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,0.3); z-index:10;">&times;</button>
+             <img src="${src}" style="max-width:100%; max-height:80vh; border-radius:5px; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+        </div>
+    `;
 };
 
 
@@ -6978,3 +7475,624 @@ window.submitAdminEdit = async (propId) => {
         alert('Request Failed');
     }
 };
+
+// =========================================================================
+// PREMIUM MEMBERSHIP PLAN MANAGEMENT (ADMIN)
+// =========================================================================
+
+window.manageAgentPlan = (agentId) => {
+    const agent = State.agents.find(a => a.id === agentId);
+    if (!agent) return;
+
+    const modal = document.getElementById('modal-container');
+    if (!modal) return;
+
+    // Set proper modal styling (Override any previous inline styles)
+    modal.style.display = 'flex';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    modal.style.zIndex = '9999';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+
+    const currentPlan = agent.currentPlan || 'Free';
+
+    modal.innerHTML = `
+        <div style="background:white; padding:25px; border-radius:15px; width:90%; max-width:400px; box-shadow:0 10px 40px rgba(0,0,0,0.2); position:relative; animation: slideIn 0.3s ease-out;">
+            <button onclick="closeModal()" style="position:absolute; right:15px; top:15px; background:none; border:none; font-size:1.2rem; cursor:pointer; color:#666;">&times;</button>
+            
+            <h3 style="margin-top:0; color:#1a2a3a; text-align:center; border-bottom:1px solid #eee; padding-bottom:15px; display:flex; align-items:center; justify-content:center; gap:10px;">
+                <i class="fas fa-crown" style="color:#FFD700;"></i> Manage Plan
+            </h3>
+            
+            <div style="text-align:center; margin-bottom:20px; background:#f9f9f9; padding:10px; border-radius:10px;">
+                <div style="font-size:1.1rem; font-weight:700;">${agent.name}</div>
+                <div style="font-size:0.9rem; color:#666; margin-top:5px;">Current: <span style="color:#138808; font-weight:700; text-transform:uppercase;">${currentPlan}</span></div>
+                 ${agent.planExpiry ? `<div style="font-size:0.8rem; color:${Date.now() > agent.planExpiry ? 'red' : '#888'}">Exp: ${new Date(agent.planExpiry).toLocaleDateString()}</div>` : ''}
+            </div>
+            
+            <div style="margin-bottom:15px;">
+                <label style="display:block; font-weight:600; margin-bottom:5px; color:#333;">Select New Plan:</label>
+                <select id="new-plan-select" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:1rem; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#138808'">
+                    <option value="Free" ${currentPlan === 'Free' ? 'selected' : ''}>Free (0 Listings)</option>
+                    <option value="Silver" ${currentPlan === 'Silver' ? 'selected' : ''}>Silver (3 Listings)</option>
+                    <option value="Gold" ${currentPlan === 'Gold' ? 'selected' : ''}>Gold (10 Listings)</option>
+                    <option value="Platinum" ${currentPlan === 'Platinum' ? 'selected' : ''}>Platinum (Unlimited)</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom:25px;">
+                <label style="display:block; font-weight:600; margin-bottom:5px; color:#333;">Validity (Days):</label>
+                <input type="number" id="plan-days" value="30" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:1rem; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#138808'">
+            </div>
+
+            <button onclick="saveAgentPlan(${agentId})" style="width:100%; padding:12px; background:linear-gradient(135deg, #FFD700, #FDB931); color:#333; font-weight:700; border:none; border-radius:8px; cursor:pointer; margin-bottom:10px; font-size:1rem; box-shadow:0 4px 10px rgba(255, 215, 0, 0.3); transition:transform 0.1s;" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">
+                UPDATE PLAN
+            </button>
+        </div>
+    `;
+};
+
+window.saveAgentPlan = async (agentId) => {
+    const agent = State.agents.find(a => a.id === agentId);
+    const planSelect = document.getElementById('new-plan-select');
+    const daysInput = document.getElementById('plan-days');
+
+    if (!agent || !planSelect || !daysInput) return;
+
+    const plan = planSelect.value;
+    const days = parseInt(daysInput.value) || 30;
+
+    // Update Agent Data
+    agent.currentPlan = plan;
+    if (plan !== 'Free') {
+        agent.planExpiry = Date.now() + (days * 24 * 60 * 60 * 1000);
+        // Reset usage on plan upgrade/renewal
+        agent.listingsUsed = 0;
+
+        // Ensure status is active/approved
+        if (agent.status !== 'blocked') agent.status = 'approved';
+
+        // Un-hide properties if they were hidden due to expiry
+        if (State.properties) {
+            State.properties.forEach(p => {
+                if (p.agentId === agent.id && p.status === 'hidden' && p.disableReason === 'Plan Expired') {
+                    p.status = 'approved';
+                    delete p.disableReason;
+                }
+            });
+        }
+    } else {
+        agent.planExpiry = null;
+    }
+
+    await saveGlobalData();
+    closeModal();
+    render(); // Re-render admin view
+
+    alert(`Success! Plan updated to ${plan} for ${agent.name}.`);
+};
+
+// =========================================================================
+// AGENT SELF-MEMBERSHIP PURCHASE
+// =========================================================================
+
+window.buyMembership = async (planName, price, limit) => {
+    const agent = State.agents.find(a => a.id === State.user.id);
+    if (!agent) return;
+
+    if (agent.currentPlan === planName && agent.planExpiry > Date.now()) {
+        alert("You already have this active plan!");
+        return;
+    }
+
+    if ((agent.wallet || 0) < price) {
+        alert(`Insufficient Balance!\nYou need Rs. ${price} but have only Rs. ${agent.wallet || 0}.\nPlease recharge your wallet.`);
+        setAgentTab('wallet'); // Redirect to wallet
+        return;
+    }
+
+    if (confirm(`Confirm Purchase?\nPlan: ${planName}\nPrice: Rs. ${price}\nValidity: 30 Days`)) {
+        // Deduct Balance
+        agent.wallet -= price;
+
+        // Update Plan
+        agent.currentPlan = planName;
+        agent.planExpiry = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 Days
+        agent.listingsUsed = 0; // Reset usage for new plan
+
+        // Ensure Approved Status if blocked due to expiry
+        if (agent.status === 'blocked' || agent.currentPlan === 'Expired') {
+            agent.status = 'approved';
+        }
+
+        // Unhide properties if they were hidden
+        if (State.properties) {
+            State.properties.forEach(p => {
+                if (p.agentId === agent.id && p.status === 'hidden' && p.disableReason === 'Plan Expired') {
+                    p.status = 'approved';
+                    delete p.disableReason;
+                }
+            });
+        }
+
+        // Record Transaction
+        if (!State.walletTransactions) State.walletTransactions = [];
+        State.walletTransactions.push({
+            id: Date.now(),
+            agentId: agent.id,
+            amount: price,
+            type: 'debit',
+            remark: `Purchased ${planName} Plan`,
+            date: new Date().toLocaleString(),
+            status: 'success'
+        });
+
+        await saveGlobalData();
+        render(); // Re-render to show new status
+
+        // Success Message
+        alert(`Congratulations! You are now a ${planName} Member.\nEnjoy adding properties!`);
+    }
+};
+
+window.getMembershipUI = (agent) => {
+    const isExpired = agent.planExpiry && Date.now() > agent.planExpiry;
+    const daysLeft = agent.planExpiry ? Math.ceil((agent.planExpiry - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+
+    // Usage Stats
+    let limit = 0;
+    if (agent.currentPlan === 'Silver') limit = 3;
+    else if (agent.currentPlan === 'Gold') limit = 10;
+    else if (agent.currentPlan === 'Platinum') limit = 9999;
+
+    const usagePercent = limit > 0 ? Math.min(100, Math.round((agent.listingsUsed / limit) * 100)) : 100;
+
+    return `
+        <div style="background:white; border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05); margin-bottom:25px; border:1px solid #138808;">
+            <h3 style="margin:0 0 15px 0; color:#1a2a3a; display:flex; align-items:center; gap:10px;">
+                <i class="fas fa-crown" style="color:#FFD700;"></i> Membership Status
+                ${(isExpired || agent.currentPlan === 'Expired') ? '<span style="background:#D32F2F; color:white; font-size:0.7rem; padding:3px 8px; border-radius:10px;">EXPIRED</span>' : ''}
+            </h3>
+            
+            <div style="margin-bottom:20px; background:linear-gradient(135deg, #e8f5e9, #c8e6c9); padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; border:1px solid #138808;">
+                <div>
+                    <div style="font-size:0.85rem; color:#138808; font-weight:700; text-transform:uppercase;">Wallet Balance</div>
+                    <div style="font-size:1.6rem; font-weight:900; color:#1a2a3a;">Rs. ${agent.wallet || 0}</div>
+                </div>
+                <button onclick="setAgentTab('wallet'); navigate('agent');" style="background:#138808; color:white; border:none; padding:10px 20px; border-radius:50px; font-weight:700; cursor:pointer; box-shadow:0 4px 10px rgba(19, 136, 8, 0.3);">
+                    <i class="fas fa-plus-circle"></i> Recharge
+                </button>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
+                <!-- Current Status -->
+                <div style="background:#f9f9f9; padding:15px; border-radius:12px;">
+                    <div style="font-size:0.9rem; color:#666;">Current Plan</div>
+                    <div style="font-size:1.4rem; font-weight:800; color:#138808;">${agent.currentPlan || 'Free Plan'}</div>
+                    ${agent.planExpiry && !isExpired ? `<div style="font-size:0.8rem; color:#444; margin-top:5px;">Expires in <strong>${daysLeft} days</strong> (${new Date(agent.planExpiry).toLocaleDateString()})</div>` : ''}
+                    
+                    ${agent.currentPlan !== 'Free' ? `
+                        <div style="margin-top:15px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
+                                <span>Listings Used</span>
+                                <span>${agent.listingsUsed} / ${limit === 9999 ? '∞' : limit}</span>
+                            </div>
+                            <div style="background:#ddd; height:8px; border-radius:5px; overflow:hidden;">
+                                <div style="background:linear-gradient(90deg, #138808, #8BC34A); width:${usagePercent}%; height:100%;"></div>
+                            </div>
+                        </div>
+                    ` : '<div style="margin-top:10px; color:#D32F2F; font-size:0.85rem;"><i class="fas fa-exclamation-circle"></i> Upgrade to add properties</div>'}
+                </div>
+
+                <!-- Upgrade Options -->
+                <div>
+                     <div style="font-size:0.9rem; color:#666; margin-bottom:10px; font-weight:700;">Upgrade / Renew Plan</div>
+                     <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
+                        <!-- Silver -->
+                        <div style="min-width:140px; background:linear-gradient(135deg, #E0E0E0, #F5F5F5); padding:10px; border-radius:10px; border:1px solid #ccc; text-align:center;">
+                            <div style="font-weight:800; color:#555;">SILVER</div>
+                            <div style="font-size:1.1rem; font-weight:900; margin:5px 0;">Rs. 499</div>
+                            <div style="font-size:0.75rem; color:#666; margin-bottom:8px;">3 Listings / Mo</div>
+                            <button onclick="buyMembership('Silver', 499, 3)" style="width:100%; background:#333; color:white; border:none; padding:5px; border-radius:5px; font-size:0.8rem; cursor:pointer;">Buy Now</button>
+                        </div>
+                        <!-- Gold -->
+                        <div style="min-width:140px; background:linear-gradient(135deg, #FFD700, #FDB931); padding:10px; border-radius:10px; border:1px solid #e1b12c; text-align:center;">
+                            <div style="font-weight:800; color:#856404;">GOLD</div>
+                            <div style="font-size:1.1rem; font-weight:900; margin:5px 0; color:#5f4806;">Rs. 1499</div>
+                            <div style="font-size:0.75rem; color:#6c5719; margin-bottom:8px;">10 Listings / Mo</div>
+                            <button onclick="buyMembership('Gold', 1499, 10)" style="width:100%; background:#856404; color:white; border:none; padding:5px; border-radius:5px; font-size:0.8rem; cursor:pointer;">Buy Now</button>
+                        </div>
+                        <!-- Platinum -->
+                        <div style="min-width:140px; background:linear-gradient(135deg, #2c3e50, #4ca1af); padding:10px; border-radius:10px; border:1px solid #2980b9; text-align:center; color:white;">
+                            <div style="font-weight:800;">PLATINUM</div>
+                            <div style="font-size:1.1rem; font-weight:900; margin:5px 0;">Rs. 2999</div>
+                            <div style="font-size:0.75rem; color:#eee; margin-bottom:8px;">Unlimited / Mo</div>
+                            <button onclick="buyMembership('Platinum', 2999, 9999)" style="width:100%; background:white; color:#2c3e50; border:none; padding:5px; border-radius:5px; font-size:0.8rem; cursor:pointer;">Buy Now</button>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// =========================================================================
+// MANUAL PAYMENT REQUEST (QR CODE)
+// =========================================================================
+
+window.openAddMoneyModal = () => {
+    const modal = document.getElementById('modal-container');
+    if (!modal) return;
+
+    // QR Code Image (Placeholder - Replace with actual QR if available)
+    const qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=bhumidekho@upi&pn=BhumiDekho&mc=0000&tid=0000&tr=0000&tn=WalletRecharge&am=0&cu=INR";
+
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div style="background:white; padding:25px; border-radius:15px; width:90%; max-width:400px; box-shadow:0 10px 40px rgba(0,0,0,0.2); position:relative; animation: slideIn 0.3s ease-out; text-align:center;">
+            <button onclick="closeModal()" style="position:absolute; right:15px; top:15px; background:none; border:none; font-size:1.2rem; cursor:pointer; color:#666;">&times;</button>
+            
+            <h3 style="margin-top:0; color:#1a2a3a; margin-bottom:10px;">Add Money to Wallet</h3>
+            <p style="font-size:0.9rem; color:#666; margin-bottom:20px;">Scan QR to Pay & Upload Screenshot</p>
+            
+            <div style="background:#f5f5f5; padding:15px; border-radius:10px; display:inline-block; margin-bottom:20px; border:1px dashed #ccc;">
+                <img src="${qrCodeUrl}" alt="Payment QR" style="width:180px; height:180px; display:block;">
+                <div style="margin-top:5px; font-weight:700; color:#333;">BHUMI DEKHO UPI</div>
+            </div>
+
+            <div style="margin-bottom:15px; text-align:left;">
+                <label style="font-size:0.85rem; font-weight:700; color:#333; display:block; margin-bottom:5px;">Check Amount Paid (Rs.)</label>
+                <input type="number" id="pay-amount" placeholder="e.g. 500" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+            </div>
+
+            <div style="margin-bottom:20px; text-align:left;">
+                 <label style="font-size:0.85rem; font-weight:700; color:#333; display:block; margin-bottom:5px;">Upload Screenshot (Proof)</label>
+                 <input type="file" id="pay-proof" accept="image/*" style="width:100%; padding:10px; background:#f9f9f9; border-radius:8px; border:1px solid #ddd;">
+            </div>
+
+            <button onclick="submitPaymentRequest()" style="width:100%; padding:12px; background:#138808; color:white; font-weight:700; border:none; border-radius:8px; cursor:pointer; font-size:1rem; box-shadow:0 4px 10px rgba(19, 136, 8, 0.3);">
+                SUBMIT REQUEST
+            </button>
+            <div style="margin-top:15px; font-size:0.75rem; color:#888; line-height:1.4;">
+                <i class="fas fa-info-circle"></i> Once submitted, Admin will verify and credit the amount to your wallet within 10-15 minutes.
+            </div>
+        </div>
+    `;
+};
+
+window.submitPaymentRequest = async () => {
+    const amount = document.getElementById('pay-amount').value;
+    const proofInput = document.getElementById('pay-proof');
+
+    if (!amount || amount <= 0) {
+        alert("Please enter valid amount.");
+        return;
+    }
+    if (proofInput.files.length === 0) {
+        alert("Please upload payment screenshot.");
+        return;
+    }
+
+    const file = proofInput.files[0];
+    showGlobalLoader("Uploading Proof...");
+
+    try {
+        const proofUrl = await toBase64(file); // Reuse existing helper
+
+        // Save Request
+        if (!State.walletRequests) State.walletRequests = [];
+
+        State.walletRequests.push({
+            id: Date.now(),
+            agentId: State.user.id,
+            agentName: State.user.name,
+            amount: parseInt(amount),
+            proof: proofUrl,
+            status: 'pending',
+            date: new Date().toLocaleString()
+        });
+
+        // Also add to local transactions as pending
+        if (!State.walletTransactions) State.walletTransactions = [];
+        State.walletTransactions.push({
+            id: Date.now(),
+            agentId: State.user.id,
+            amount: parseInt(amount),
+            type: 'credit', // It's a credit request
+            remark: 'Manual Recharge (Pending)',
+            date: new Date().toLocaleString(),
+            status: 'pending'
+        });
+
+        await saveGlobalData();
+        hideGlobalLoader();
+        closeModal();
+        alert("Start Request Submitted! Wallet will be updated after verification.");
+        render(); // Refresh UI to show pending transaction
+
+    } catch (e) {
+        console.error(e);
+        hideGlobalLoader();
+        alert("Error uploading proof. Try again.");
+    }
+};
+
+// =========================================================================
+// WALLET REQUEST MANAGEMENT (ADMIN)
+// =========================================================================
+
+window.approveWalletRequest_Old = async (id) => {
+    if (!confirm("Are you sure you want to approve this request?")) return;
+
+    const req = State.walletRequests.find(r => r.id === id);
+    if (!req) return;
+
+    showGlobalLoader("Approving...");
+
+    // Update Request Status
+    req.status = 'approved';
+
+    // Update Agent Wallet
+    const agent = State.agents.find(a => a.id === req.agentId);
+    if (agent) {
+        agent.wallet = (agent.wallet || 0) + req.amount;
+    }
+
+    // Update Admin Wallet (Add Balance - Money Received)
+    if (typeof State.adminWallet !== 'undefined') {
+        State.adminWallet = (State.adminWallet || 0) + req.amount;
+    }
+
+    // Update Transaction History
+    if (!State.walletTransactions) State.walletTransactions = [];
+    // Find the pending transaction if exists
+    // Note: We use the timestamp ID from the request as the ID for the transaction too
+    const txn = State.walletTransactions.find(t => t.id === req.id);
+    if (txn) {
+        txn.status = 'success';
+        txn.remark = 'Manual Recharge (Approved)';
+    } else {
+        // Fallback if not found
+        State.walletTransactions.push({
+            id: Date.now(),
+            agentId: req.agentId,
+            amount: req.amount,
+            type: 'credit',
+            remark: 'Manual Recharge (Approved)',
+            date: new Date().toLocaleString(),
+            status: 'success'
+        });
+    }
+
+    await saveGlobalData();
+    hideGlobalLoader();
+    alert("Request Approved! Wallet updated.");
+    render();
+};
+
+window.rejectWalletRequest_Old = async (id) => {
+    if (!confirm("Reject this request?")) return;
+
+    const req = State.walletRequests.find(r => r.id === id);
+    if (!req) return;
+
+    showGlobalLoader("Rejecting...");
+
+    req.status = 'rejected';
+
+    // Update Transaction History
+    const txn = State.walletTransactions.find(t => t.id === req.id);
+    if (txn) {
+        txn.status = 'failed';
+        txn.remark = 'Manual Recharge (Rejected)';
+    }
+
+    await saveGlobalData();
+    hideGlobalLoader();
+    render();
+};
+
+// =========================================================================
+// NEW WALLET FUNCTIONS (WITH REMARKS & MODALS)
+// =========================================================================
+
+// --- Withdrawal Processing (Customers & Agents) ---
+window.processWithdrawal = function (reqId, action) {
+    const r = (State.withdrawalRequests || []).find(x => x.id === reqId);
+    if (!r) return;
+
+    const modal = document.getElementById('modal-container');
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:350px;">
+            <h3 style="margin-bottom:20px; color:${action === 'approved' ? '#138808' : '#D32F2F'};">
+                ${action === 'approved' ? 'Approve' : 'Reject'} Withdrawal
+            </h3>
+            <div style="background:#f5f5f5; padding:15px; border-radius:10px; margin-bottom:15px;">
+                <p><strong>User:</strong> ${r.agentName || r.customerName || 'Unknown'}</p>
+                <p><strong>Amount:</strong> Rs. ${r.amount}</p>
+            </div>
+            <div class="form-group">
+                <label>Remark (Required)</label>
+                <textarea id="withdraw-remark" class="login-input" style="height:80px;" placeholder="Transaction ID / Rejection Reason..."></textarea>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="login-btn" onclick="confirmProcessWithdrawal(${reqId}, '${action}')" style="background:${action === 'approved' ? '#138808' : '#D32F2F'}; flex:1;">${action === 'approved' ? 'Approve' : 'Reject'}</button>
+                <button class="prop-btn" onclick="closeModal()" style="background:none; color:#666; flex:1;">Cancel</button>
+            </div>
+        </div>
+    `;
+};
+
+window.confirmProcessWithdrawal = async (reqId, status) => {
+    const r = State.withdrawalRequests.find(x => x.id === reqId);
+    const remark = document.getElementById('withdraw-remark').value;
+
+    if (!remark) return alert("Please enter a remark.");
+    if (!r) return;
+
+    showGlobalLoader("Processing...");
+
+    // Identify User (Agent or Customer)
+    let user;
+    if (r.agentId) user = State.agents.find(x => x.id === r.agentId);
+    else if (r.customerId) user = State.customers.find(x => x.id === r.customerId);
+
+    let transaction = State.walletTransactions ? State.walletTransactions.find(t => t.id === r.id) : null;
+
+    if (status === 'approved') {
+        if (transaction) {
+            transaction.status = 'approved';
+            transaction.remark = remark;
+            transaction.date = new Date().toLocaleString(); // Update date to show as recent processing
+        } else {
+            // Create if missing (Log for History)
+            if (!State.walletTransactions) State.walletTransactions = [];
+            State.walletTransactions.push({
+                id: r.id,
+                agentId: r.agentId,
+                customerId: r.customerId,
+                amount: r.amount,
+                type: r.customerId ? 'customer_withdrawal' : 'withdrawal',
+                status: 'approved',
+                date: new Date().toLocaleString(),
+                remark: remark
+            });
+        }
+    } else if (status === 'rejected') {
+        // Refund back to wallet
+        if (user) {
+            user.wallet = (user.wallet || 0) + r.amount;
+        }
+
+        if (transaction) {
+            transaction.status = 'rejected';
+            transaction.remark = 'Rejected: ' + remark;
+            transaction.date = new Date().toLocaleString();
+        } else {
+            if (!State.walletTransactions) State.walletTransactions = [];
+            State.walletTransactions.push({
+                id: Date.now(), // New ID for refund record
+                agentId: r.agentId,
+                customerId: r.customerId,
+                amount: r.amount,
+                type: 'credit', // Refund is credit
+                status: 'success',
+                date: new Date().toLocaleString(),
+                remark: 'Withdrawal Refund: ' + remark
+            });
+        }
+    }
+
+    r.status = status;
+    r.remark = remark;
+
+    try {
+        await saveGlobalData();
+        hideGlobalLoader();
+        closeModal();
+        alert(`Withdrawal request ${status}!`);
+        render();
+    } catch (err) {
+        console.error(err);
+        hideGlobalLoader();
+        alert("Error processing withdrawal.");
+    }
+};
+
+// --- Wallet Request Processing (Recharge Approval/Rejection) ---
+window.approveWalletRequest = function (id) {
+    openWalletRequestModal(id, 'approve');
+};
+
+window.rejectWalletRequest = function (id) {
+    openWalletRequestModal(id, 'reject');
+};
+
+window.openWalletRequestModal = function (id, action) {
+    const req = State.walletRequests.find(r => r.id === id);
+    if (!req) return;
+
+    const modal = document.getElementById('modal-container');
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:350px;">
+            <h3 style="margin-bottom:20px; color:${action === 'approve' ? '#138808' : '#D32F2F'};">
+                ${action === 'approve' ? 'Approve' : 'Reject'} Recharge Request
+            </h3>
+            <div style="background:#f5f5f5; padding:15px; border-radius:10px; margin-bottom:15px;">
+                <p><strong>Agent:</strong> ${req.agentName || 'Unknown'}</p>
+                <p><strong>Amount:</strong> Rs. ${req.amount}</p>
+                <p><strong>Date:</strong> ${req.date}</p>
+            </div>
+            <div class="form-group">
+                <label>Remark (Optional)</label>
+                <textarea id="wal-req-remark" class="login-input" style="height:80px;" placeholder="${action === 'approve' ? 'e.g. Received via UPI' : 'e.g. Payment not received'}">${action === 'approve' ? 'Manual Recharge (Approved)' : 'Manual Recharge (Rejected)'}</textarea>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="login-btn" onclick="confirmWalletRequestProcess(${id}, '${action}')" style="background:${action === 'approve' ? '#138808' : '#D32F2F'}; flex:1;">${action === 'approve' ? 'Approve' : 'Reject'}</button>
+                <button class="prop-btn" onclick="closeModal()" style="background:none; color:#666; flex:1;">Cancel</button>
+            </div>
+        </div>
+    `;
+};
+
+window.confirmWalletRequestProcess = async function (id, action) {
+    const req = State.walletRequests.find(r => r.id === id);
+    const remark = document.getElementById('wal-req-remark').value;
+    if (!req) return;
+
+    showGlobalLoader(action === 'approve' ? "Approving..." : "Rejecting...");
+
+    req.status = action === 'approve' ? 'approved' : 'rejected';
+
+    if (action === 'approve') {
+        const agent = State.agents.find(a => a.id === req.agentId);
+        if (agent) {
+            agent.wallet = (agent.wallet || 0) + req.amount;
+        }
+        if (typeof State.adminWallet !== 'undefined') {
+            State.adminWallet = (State.adminWallet || 0) + req.amount;
+        }
+    }
+
+    // Update Transaction
+    if (!State.walletTransactions) State.walletTransactions = [];
+    let txn = State.walletTransactions.find(t => t.id === req.id);
+
+    // If not found (legacy data), ensure we create/update one
+    if (txn) {
+        txn.status = action === 'approve' ? 'success' : 'failed';
+        txn.remark = remark;
+        txn.date = new Date().toLocaleString(); // Update to now
+    } else {
+        txn = {
+            id: req.id, // Keep ID same as request ID usually
+            // If ID conflict with timestamp, use req.id is safer for linking
+            agentId: req.agentId,
+            amount: req.amount,
+            type: 'credit',
+            remark: remark,
+            date: new Date().toLocaleString(),
+            status: action === 'approve' ? 'success' : 'failed'
+        };
+        State.walletTransactions.push(txn);
+    }
+
+    await saveGlobalData();
+    hideGlobalLoader();
+    closeModal();
+    alert(`Request ${action}ed!`);
+    render();
+};
+
+// =========================================================================
+// AGENT PROPERTY FEATURING (BOOST)
+// =========================================================================
+
+
