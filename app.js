@@ -2883,7 +2883,10 @@ function renderAdmin(container) {
                                     <div style="height:6px; background:${p.color || '#138808'}; width:100%;"></div>
                                     <div style="padding:20px;">
                                         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-                                            <h4 style="margin:0; font-size:1.3rem; color:#1a2a3a; font-weight:800;">${p.name}</h4>
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <h4 style="margin:0; font-size:1.3rem; color:#1a2a3a; font-weight:800;">${p.name}</h4>
+                                                ${p.isFeatured ? '<i class="fas fa-star" style="color:#FF9800; font-size:0.9rem;" title="Featured Plan"></i>' : ''}
+                                            </div>
                                             <div style="background:${p.color || '#138808'}15; color:${p.color || '#138808'}; padding:5px 12px; border-radius:20px; font-weight:900; font-size:0.9rem;">
                                                 ₹ ${p.price}
                                             </div>
@@ -2906,6 +2909,9 @@ function renderAdmin(container) {
                                         </div>
 
                                         <div style="display:flex; gap:10px;">
+                                             <button onclick="togglePlanFeature(${p.id})" style="flex:0 0 auto; background:${p.isFeatured ? '#FFF3E0' : '#f5f5f5'}; color:${p.isFeatured ? '#FF9800' : '#ccc'}; border:none; padding:10px; border-radius:8px; cursor:pointer; " title="Toggle Feature">
+                                                <i class="fas fa-star"></i>
+                                             </button>
                                              <button onclick="openPlanModal(${p.id})" style="flex:1; background:#e3f2fd; color:#1565C0; border:none; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; transition:0.2s;">
                                                 <i class="fas fa-edit"></i> Edit
                                              </button>
@@ -7960,6 +7966,15 @@ window.deletePlan = async (id) => {
     }
 };
 
+window.togglePlanFeature = async (id) => {
+    const plan = State.premiumPlans.find(p => p.id === id);
+    if (plan) {
+        plan.isFeatured = !plan.isFeatured;
+        await saveGlobalData();
+        render();
+    }
+};
+
 window.getMembershipUI = (agent) => {
     const isExpired = agent.planExpiry && Date.now() > agent.planExpiry;
     const daysLeft = agent.planExpiry ? Math.ceil((agent.planExpiry - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
@@ -8022,15 +8037,18 @@ window.getMembershipUI = (agent) => {
                 <!-- Upgrade Options -->
                 <div>
                      <div style="font-size:0.9rem; color:#666; margin-bottom:10px; font-weight:700;">Upgrade / Renew Plan</div>
-                     <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
-                        ${(State.premiumPlans || []).map(p => `
-                            <div style="min-width:140px; background:white; padding:10px; border-radius:10px; border:1px solid #eee; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.05); position:relative; overflow:hidden;">
-                                <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:${p.color || '#138808'};"></div>
-                                <div style="font-weight:800; color:#333; margin-top:5px; font-size:0.9rem;">${p.name.toUpperCase()}</div>
-                                <div style="font-size:1.1rem; font-weight:900; margin:5px 0; color:${p.color || '#138808'};">Rs. ${p.price}</div>
-                                <div style="font-size:0.75rem; color:#666; margin-bottom:5px;">${p.propertyLimit ? p.propertyLimit + ' Listings' : 'UNLIMITED Listings'}</div>
-                                <div style="font-size:0.7rem; color:#888; margin-bottom:8px;">${p.duration} Days</div>
-                                <button onclick="buyMembership('${p.name}', ${p.price}, ${p.propertyLimit || 9999})" style="width:100%; background:${p.color || '#138808'}; color:white; border:none; padding:6px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:700;">Buy Now</button>
+                     <div style="display:flex; gap:15px; overflow-x:auto; padding:10px 5px; scroll-behavior:smooth;">
+                        ${(State.premiumPlans || []).sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)).map(p => `
+                            <div style="min-width:260px; background:white; padding:20px; border-radius:15px; border:${p.isFeatured ? '2px solid ' + (p.color || '#138808') : '1px solid #eee'}; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.08); position:relative; overflow:hidden; transform:scale(${p.isFeatured ? 1.02 : 1}); transition:transform 0.2s;">
+                                ${p.isFeatured ? '<div style="position:absolute; top:0; right:0; background:#FF9800; color:white; font-size:0.6rem; font-weight:900; padding:3px 10px; border-bottom-left-radius:8px;">POPULAR</div>' : ''}
+                                <div style="position:absolute; top:0; left:0; width:100%; height:6px; background:${p.color || '#138808'};"></div>
+                                <div style="font-weight:900; color:#333; margin-top:5px; font-size:1.1rem; letter-spacing:0.5px;">${p.name.toUpperCase()}</div>
+                                <div style="font-size:1.6rem; font-weight:900; margin:10px 0; color:${p.color || '#138808'};">Rs. ${p.price}</div>
+                                <div style="background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:15px;">
+                                    <div style="font-size:0.9rem; color:#444; font-weight:700; margin-bottom:5px;">${p.propertyLimit ? p.propertyLimit + ' Listings' : 'UNLIMITED Listings'}</div>
+                                    <div style="font-size:0.8rem; color:#666;">Validity: ${p.duration} Days</div>
+                                </div>
+                                <button onclick="buyMembership('${p.name}', ${p.price}, ${p.propertyLimit || 9999})" style="width:100%; background:${p.color || '#138808'}; color:white; border:none; padding:12px; border-radius:8px; font-size:0.95rem; cursor:pointer; font-weight:800; box-shadow:0 4px 10px rgba(0,0,0,0.1);">Buy Plan</button>
                             </div>
                         `).join('')}
                      </div>
