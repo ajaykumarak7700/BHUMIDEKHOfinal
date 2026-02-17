@@ -219,106 +219,110 @@
             <div class="skeleton" style="width:100px; height:35px; border-radius:30px; flex-shrink:0;"></div>
         </div>
         <div class="loading-scroll-wrapper">
-            <div class="property-grid loading-processing">
-                <!-- Filled Dummy Cards for Initial Load -->
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=1"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 45,00,000</div>
-                        <div class="prop-title">Premium Property</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> New Delhi</div>
-                    </div>
-                </div>
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=2"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 65,00,000</div>
-                        <div class="prop-title">Luxury Villa</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> Mumbai</div>
-                    </div>
-                </div>
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=3"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 32,50,000</div>
-                        <div class="prop-title">Modern Apartment</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> Bangalore</div>
-                    </div>
-                </div>
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=4"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 89,00,000</div>
-                        <div class="prop-title">Royal Mansion</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> Jaipur</div>
-                    </div>
-                </div>
-                <!-- Loop repeats -->
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=11"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 45,00,000</div>
-                        <div class="prop-title">Premium Property</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> New Delhi</div>
-                    </div>
-                </div>
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=12"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 65,00,000</div>
-                        <div class="prop-title">Luxury Villa</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> Mumbai</div>
-                    </div>
-                </div>
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=13"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 32,50,000</div>
-                        <div class="prop-title">Modern Apartment</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> Bangalore</div>
-                    </div>
-                </div>
-                <div class="prop-card" style="opacity: 0.8; margin-bottom:15px;">
-                    <div class="prop-img-box"><img src="https://picsum.photos/400/250?v=14"
-                            style="width:100%; height:160px; object-fit:cover;">
-                        <div class="prop-badge">Premium</div>
-                    </div>
-                    <div class="prop-body">
-                        <div class="prop-price">Rs. 89,00,000</div>
-                        <div class="prop-title">Royal Mansion</div>
-                        <div class="prop-location" style="font-size: 0.8rem; color:#666;"><i
-                                class="fas fa-map-marker-alt"></i> Jaipur</div>
-                    </div>
-                </div>
+            <div id="feed-container" class="property-grid">
+                <!-- Properties will be loaded here -->
+                <div class="skeleton" style="width:100%; height:200px; margin-bottom:10px;"></div>
+                <div class="skeleton" style="width:100%; height:200px; margin-bottom:10px;"></div>
             </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', loadFeedHtml);
+
+                async function loadFeedHtml() {
+                    const container = document.getElementById('feed-container');
+                    
+                    try {
+                        const res = await fetch('api/property.php?action=get_feed');
+                        const data = await res.json();
+                        
+                        if(data.status !== 'success') {
+                            container.innerHTML = '<div style="padding:20px; text-align:center;">Failed to load properties.</div>';
+                            return;
+                        }
+
+                        container.innerHTML = ''; // Clear skeleton
+                        const role = data.role || 'guest';
+                        const userId = data.user_id || null;
+                        
+                        // DEBUG
+                        // console.log("User:", role, userId);
+
+                        if(data.data.length === 0) {
+                            container.innerHTML = '<div style="padding:20px; text-align:center;">No properties found.</div>';
+                            return;
+                        }
+
+                        data.data.forEach(p => {
+                            // Featured Badge
+                            const featuredBadge = (p.is_featured == 1) 
+                                ? `<div style="position:absolute; top:12px; left:12px; background:linear-gradient(135deg, #FFD700, #FFA500); color:black; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; z-index:5; box-shadow:0 2px 5px rgba(0,0,0,0.2);"><i class="fas fa-star"></i> FEATURED</div>` 
+                                : '';
+
+                            // Boost Button
+                            let boostBtn = '';
+                            if (role.toLowerCase() === 'agent' && userId && p.user_id == userId && p.is_featured != 1) {
+                                boostBtn = `<button onclick="boostPropertyHtml(event, ${p.id})" style="width:100%; margin-top:10px; background:linear-gradient(45deg, #FF9933, #FF5722); color:white; border:none; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px; box-shadow:0 4px 10px rgba(255,87,34,0.3);"><i class="fas fa-rocket"></i> Boost (₹100)</button>`;
+                            }
+
+                            // Image fallback
+                            const imgUrl = p.image_path ? `uploads/${p.image_path}` : 'https://placehold.co/600x400?text=No+Image';
+
+                            const html = `
+                            <div class="prop-card" style="margin-bottom:20px; cursor:pointer;" onclick="window.location.href='index.php?id=${p.id}'"> <!-- Or open modal -->
+                                <div class="prop-img-box">
+                                    <img src="${imgUrl}" style="width:100%; height:180px; object-fit:cover;">
+                                    ${featuredBadge}
+                                    <div class="prop-badge" style="right:12px; left:auto; background:rgba(0,0,0,0.6);">${p.type}</div>
+                                </div>
+                                <div class="prop-body">
+                                    <div class="prop-price">₹ ${parseInt(p.price).toLocaleString()}</div>
+                                    <div class="prop-title">${p.title}</div>
+                                    <div class="prop-location" style="font-size:0.85rem; color:#666; margin-top:5px;">
+                                        <i class="fas fa-map-marker-alt"></i> ${p.city || p.location}
+                                    </div>
+                                    ${boostBtn}
+                                </div>
+                            </div>
+                            `;
+                            container.insertAdjacentHTML('beforeend', html);
+                        });
+
+                    } catch(e) {
+                        console.error(e);
+                        container.innerHTML = '<div style="padding:20px; text-align:center;">Error loading feed.</div>';
+                    }
+                }
+
+                async function boostPropertyHtml(e, id) {
+                    e.stopPropagation();
+                    if(!confirm("Boost this property for ₹100?")) return;
+                    
+                    const btn = e.target.closest('button');
+                    const oldText = btn.innerHTML;
+                    btn.innerHTML = 'Wait...';
+                    btn.disabled = true;
+
+                    const fd = new FormData();
+                    fd.append('action', 'boost');
+                    fd.append('id', id);
+
+                    try {
+                        const res = await fetch('api/property.php', { method:'POST', body:fd });
+                        const d = await res.json();
+                        alert(d.message);
+                        if(d.status === 'success') {
+                            loadFeedHtml(); // Reload
+                        } else {
+                            btn.innerHTML = oldText;
+                            btn.disabled = false;
+                        }
+                    } catch(e) {
+                        alert("Network Error");
+                        btn.innerHTML = oldText;
+                        btn.disabled = false;
+                    }
+                }
+            </script>
 
             <div id="smart-loader" class="smart-loader-overlay">
                 <div
