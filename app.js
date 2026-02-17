@@ -110,7 +110,8 @@ const State = {
             { title: "LIST YOUR PROPERTY", desc: "Post your property for free", icon: "plus", bg: "#fff9f0", bgImg: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800" },
             { title: "CONTACT AGENTS", desc: "Get professional help", icon: "plus", bg: "#f1f8f3", bgImg: "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&w=800" },
             { title: "RENT A HOME", desc: "Find best rental deals", icon: "key", bg: "#e3f2fd", bgImg: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800" },
-            { title: "MORTGAGE TOOLS", desc: "Calculate your loan", icon: "calculator", bg: "#f3e5f5", bgImg: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800" }
+            { title: "MORTGAGE TOOLS", desc: "Calculate your loan", icon: "calculator", bg: "#f3e5f5", bgImg: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800" },
+            { title: "BOOST PROPERTY", desc: "Get 10x more views (₹100)", icon: "rocket", bg: "#fff3e0", bgImg: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800", action: "openBoostModal()" }
         ]
     },
     sellRentAgentPage: {
@@ -6320,6 +6321,125 @@ window.deleteExploreCard = function (index) {
             render();
         });
     }
+};
+
+
+// --- Boost Modal Logic ---
+window.openBoostModal = function () {
+    if (!State.user || State.user.role !== 'agent') {
+        alert("Only Agents can boost properties.");
+        return;
+    }
+
+    const modal = document.getElementById('modal-container');
+    modal.style.display = 'flex';
+
+    // Filter my properties (Support both myProperties array and full properties list)
+    let myProps = [];
+    if (State.user && State.user.myProperties) {
+        myProps = State.user.myProperties;
+    }
+    // Fallback: search in main properties list
+    if (myProps.length === 0) {
+        myProps = State.properties.filter(p => p.agentEmail === State.user.email || p.agentId === State.user.id || (p.user_id && p.user_id == State.user.id));
+    }
+
+    // Fallback: If no real properties, show demo property for preview
+    if (myProps.length === 0) {
+        myProps = [
+            { id: 9991, title: 'Demo Property 1', price: '45 Lakh', location: 'Jaipur', featured: false, image: 'https://placehold.co/100' },
+            { id: 9992, title: 'Demo Property 2', price: '1.2 Cr', location: 'Kota', featured: true, image: 'https://placehold.co/100' }
+        ];
+    }
+
+    let propListHtml = '';
+    if (myProps.length === 0) {
+        propListHtml = '<p style="text-align:center; color:#666;">No properties found to boost.</p>';
+    } else {
+        propListHtml = myProps.map(p => `
+            <div onclick="processBoost('${p.id}')" style="display:flex; gap:10px; padding:10px; border:1px solid #eee; margin-bottom:10px; border-radius:8px; cursor:pointer; align-items:center; background:${p.featured ? '#fff8e1' : 'white'};">
+                <img src="${p.image || 'https://placehold.co/100'}" style="width:60px; height:60px; object-fit:cover; border-radius:5px;">
+                <div style="flex:1;">
+                    <div style="font-weight:bold; font-size:0.9rem;">${p.title}</div>
+                    <div style="font-size:0.8rem; color:#666;">Price: ${p.price || 'N/A'}</div>
+                    ${p.featured ? '<span style="color:orange; font-size:0.7rem; font-weight:bold;"><i class="fas fa-star"></i> Featured</span>' : '<span style="color:green; font-size:0.7rem; font-weight:bold;"><i class="fas fa-arrow-up"></i> Click to Boost (₹100)</span>'}
+                </div>
+                ${!p.featured ? '<i class="fas fa-chevron-right" style="color:#ccc;"></i>' : ''}
+            </div>
+        `).join('');
+    }
+
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px; padding:0; overflow:hidden; border-radius:15px;">
+            <div style="background:linear-gradient(135deg, #FF9933, #FF7700); padding:20px; color:white; text-align:center;">
+                <h3 style="margin:0; font-size:1.3rem;"><i class="fas fa-rocket"></i> Boost Property</h3>
+                <p style="margin:5px 0 0; opacity:0.9; font-size:0.9rem;">Get 10x more visibility on Home Page</p>
+            </div>
+            
+            <div style="padding:15px; background:#f9f9f9; border-bottom:1px solid #eee;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold; color:#555;">Wallet Balance:</span>
+                    <span style="font-weight:bold; color:#138808; font-size:1.1rem;">₹ ${(State.user.wallet || 0).toLocaleString()}</span>
+                </div>
+            </div>
+
+            <div style="max-height:300px; overflow-y:auto; padding:15px;">
+                <p style="font-size:0.85rem; color:#888; margin-bottom:10px;">Select a property to boost:</p>
+                ${propListHtml}
+            </div>
+            
+            <div style="padding:15px; text-align:center; border-top:1px solid #eee;">
+                <button class="prop-btn" style="background:#555; color:white; width:100%; border-radius:10px; padding:12px;" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    `;
+};
+
+window.processBoost = function (pid) {
+    const p = State.properties.find(x => x.id == pid) || { id: pid, title: 'Demo Property', price: '0', featured: false }; // Fallback for demo
+
+    if (p.featured) {
+        alert("This property is already featured!");
+        return;
+    }
+
+    // Find actual agent object to deduct wallet
+    const agent = State.agents.find(a => a.id == State.user.id) || State.user;
+
+    if ((agent.wallet || 0) < 100) {
+        alert("Insufficient Wallet Balance! Please Recharge your wallet.");
+        return;
+    }
+
+    if (!confirm(`Confirm boost for ₹100?\n\nProperty: ${p.title}\nBalance after: ₹ ${(agent.wallet - 100)}`)) return;
+
+    // Deduct
+    agent.wallet = (agent.wallet || 0) - 100;
+
+    // Update Property Status
+    p.featured = true;
+
+    // In real scenario, update database via API
+    // saveToFirebase(); OR fetch('api/property.php?action=boost'...)
+
+    // Show Success
+    const modal = document.querySelector('.modal-content');
+    modal.innerHTML = `
+        <div style="text-align:center; padding:40px 20px;">
+            <div style="width:80px; height:80px; background:#fff8e1; color:#FF9933; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:2.5rem; animation: popIn 0.5s ease-out;">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <h3 style="color:#1a2a3a; margin-bottom:10px;">Boost Successful!</h3>
+            <div style="color:#4caf50; font-weight:700; margin-bottom:5px;">
+                <i class="fas fa-check-circle"></i> Property Featured
+            </div>
+            <p style="color:#666; margin-bottom:25px;">"${p.title}" will now appear at the top of the feed.</p>
+            <button class="login-btn" onclick="closeModal(); render();" style="background:#138808; width:auto; padding:10px 40px;">Awesome!</button>
+        </div>
+    `;
+
+    // Save Local State
+    saveToLocalStorage();
 };
 
 // --- Sell/Rent Page Management Functions ---
