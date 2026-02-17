@@ -110,8 +110,7 @@ const State = {
             { title: "LIST YOUR PROPERTY", desc: "Post your property for free", icon: "plus", bg: "#fff9f0", bgImg: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800" },
             { title: "CONTACT AGENTS", desc: "Get professional help", icon: "plus", bg: "#f1f8f3", bgImg: "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&w=800" },
             { title: "RENT A HOME", desc: "Find best rental deals", icon: "key", bg: "#e3f2fd", bgImg: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800" },
-            { title: "MORTGAGE TOOLS", desc: "Calculate your loan", icon: "calculator", bg: "#f3e5f5", bgImg: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800" },
-            { title: "BOOST PROPERTY", desc: "Get 10x more views (₹100)", icon: "rocket", bg: "#fff3e0", bgImg: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800", action: "openBoostModal()" }
+            { title: "MORTGAGE TOOLS", desc: "Calculate your loan", icon: "calculator", bg: "#f3e5f5", bgImg: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800" }
         ]
     },
     sellRentAgentPage: {
