@@ -7966,9 +7966,19 @@ window.getMembershipUI = (agent) => {
 
     // Usage Stats
     let limit = 0;
-    if (agent.currentPlan === 'Silver') limit = 3;
-    else if (agent.currentPlan === 'Gold') limit = 10;
-    else if (agent.currentPlan === 'Platinum') limit = 9999;
+    if (agent.currentPlan && agent.currentPlan !== 'Free') {
+        const plan = (State.premiumPlans || []).find(p => p.name === agent.currentPlan);
+        if (plan) limit = plan.propertyLimit || 9999;
+        else {
+            // Legacy fallbacks
+            if (agent.currentPlan === 'Silver') limit = 3; // Old Silver 
+            else if (agent.currentPlan === 'Gold') limit = 10; // Old Gold
+            else if (agent.currentPlan === 'Platinum') limit = 9999;
+            else if (agent.currentPlan === 'Starter') limit = 5;
+            else if (agent.currentPlan === 'Pro') limit = 15;
+            else if (agent.currentPlan === 'Business') limit = 50;
+        }
+    }
 
     const usagePercent = limit > 0 ? Math.min(100, Math.round((agent.listingsUsed / limit) * 100)) : 100;
 
@@ -8013,27 +8023,16 @@ window.getMembershipUI = (agent) => {
                 <div>
                      <div style="font-size:0.9rem; color:#666; margin-bottom:10px; font-weight:700;">Upgrade / Renew Plan</div>
                      <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
-                        <!-- Silver -->
-                        <div style="min-width:140px; background:linear-gradient(135deg, #E0E0E0, #F5F5F5); padding:10px; border-radius:10px; border:1px solid #ccc; text-align:center;">
-                            <div style="font-weight:800; color:#555;">SILVER</div>
-                            <div style="font-size:1.1rem; font-weight:900; margin:5px 0;">Rs. 499</div>
-                            <div style="font-size:0.75rem; color:#666; margin-bottom:8px;">3 Listings / Mo</div>
-                            <button onclick="buyMembership('Silver', 499, 3)" style="width:100%; background:#333; color:white; border:none; padding:5px; border-radius:5px; font-size:0.8rem; cursor:pointer;">Buy Now</button>
-                        </div>
-                        <!-- Gold -->
-                        <div style="min-width:140px; background:linear-gradient(135deg, #FFD700, #FDB931); padding:10px; border-radius:10px; border:1px solid #e1b12c; text-align:center;">
-                            <div style="font-weight:800; color:#856404;">GOLD</div>
-                            <div style="font-size:1.1rem; font-weight:900; margin:5px 0; color:#5f4806;">Rs. 1499</div>
-                            <div style="font-size:0.75rem; color:#6c5719; margin-bottom:8px;">10 Listings / Mo</div>
-                            <button onclick="buyMembership('Gold', 1499, 10)" style="width:100%; background:#856404; color:white; border:none; padding:5px; border-radius:5px; font-size:0.8rem; cursor:pointer;">Buy Now</button>
-                        </div>
-                        <!-- Platinum -->
-                        <div style="min-width:140px; background:linear-gradient(135deg, #2c3e50, #4ca1af); padding:10px; border-radius:10px; border:1px solid #2980b9; text-align:center; color:white;">
-                            <div style="font-weight:800;">PLATINUM</div>
-                            <div style="font-size:1.1rem; font-weight:900; margin:5px 0;">Rs. 2999</div>
-                            <div style="font-size:0.75rem; color:#eee; margin-bottom:8px;">Unlimited / Mo</div>
-                            <button onclick="buyMembership('Platinum', 2999, 9999)" style="width:100%; background:white; color:#2c3e50; border:none; padding:5px; border-radius:5px; font-size:0.8rem; cursor:pointer;">Buy Now</button>
-                        </div>
+                        ${(State.premiumPlans || []).map(p => `
+                            <div style="min-width:140px; background:white; padding:10px; border-radius:10px; border:1px solid #eee; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,0.05); position:relative; overflow:hidden;">
+                                <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:${p.color || '#138808'};"></div>
+                                <div style="font-weight:800; color:#333; margin-top:5px; font-size:0.9rem;">${p.name.toUpperCase()}</div>
+                                <div style="font-size:1.1rem; font-weight:900; margin:5px 0; color:${p.color || '#138808'};">Rs. ${p.price}</div>
+                                <div style="font-size:0.75rem; color:#666; margin-bottom:5px;">${p.propertyLimit ? p.propertyLimit + ' Listings' : 'UNLIMITED Listings'}</div>
+                                <div style="font-size:0.7rem; color:#888; margin-bottom:8px;">${p.duration} Days</div>
+                                <button onclick="buyMembership('${p.name}', ${p.price}, ${p.propertyLimit || 9999})" style="width:100%; background:${p.color || '#138808'}; color:white; border:none; padding:6px; border-radius:6px; font-size:0.8rem; cursor:pointer; font-weight:700;">Buy Now</button>
+                            </div>
+                        `).join('')}
                      </div>
                 </div>
             </div>
