@@ -1,5 +1,20 @@
 <?php
 require_once '../includes/db.php';
+
+// --- AUTO-UPDATE SCHEMA (Self-Healing) ---
+try {
+    // Ensure is_featured exists
+    $check = $pdo->query("SHOW COLUMNS FROM properties LIKE 'is_featured'");
+    if ($check->rowCount() == 0) {
+        $pdo->exec("ALTER TABLE properties ADD COLUMN is_featured TINYINT(1) DEFAULT 0");
+    }
+    // Ensure wallet_balance exists
+    $check = $pdo->query("SHOW COLUMNS FROM users LIKE 'wallet_balance'");
+    if ($check->rowCount() == 0) {
+        $pdo->exec("ALTER TABLE users ADD COLUMN wallet_balance DECIMAL(10,2) DEFAULT 0.00");
+    }
+} catch (Exception $e) { /* Silent Fail */ }
+// -----------------------------------------
 session_start();
 header('Content-Type: application/json');
 
