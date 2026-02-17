@@ -119,7 +119,12 @@ const State = {
         cards: [
             { title: "POST NEW PROPERTY", desc: "List a new house, plot or flat", icon: "plus", bg: "#ffffff", action: "showPropertyModal()" }
         ]
-    }
+    },
+    premiumPlans: [
+        { id: 1, name: "Starter", price: 499, duration: 30, credits: 500, description: "Basic plan for new agents", color: "#4CAF50" },
+        { id: 2, name: "Pro", price: 999, duration: 30, credits: 1200, description: "Most popular choice", color: "#2196F3" },
+        { id: 3, name: "Business", price: 2499, duration: 90, credits: 3000, description: "For power users", color: "#9C27B0" }
+    ]
 };
 
 // --- Offline Data (Dummy cards shown ONLY during loading) ---
@@ -2360,6 +2365,7 @@ function renderAdmin(container) {
                     <a href="#" class="side-link ${tab === 'exploreMgr' ? 'active' : ''}" onclick="setAdminTab('exploreMgr'); toggleSidebar()"><i class="fas fa-th-large"></i> Explore Pages</a>
                     <a href="#" class="side-link ${tab === 'sellRentMgr' ? 'active' : ''}" onclick="setAdminTab('sellRentMgr'); toggleSidebar()"><i class="fas fa-edit"></i> Sell/Rent Mgr</a>
                     <a href="#" class="side-link ${tab === 'walletRequests' ? 'active' : ''}" onclick="setAdminTab('walletRequests'); toggleSidebar()"><i class="fas fa-hand-holding-usd"></i> Wallet Requests ${State.walletRequests && State.walletRequests.some(r => r.status === 'pending') ? '<span style="background:red; width:8px; height:8px; border-radius:50%; display:inline-block; margin-left:5px;"></span>' : ''}</a>
+                    <a href="#" class="side-link ${tab === 'premiumPlans' ? 'active' : ''}" onclick="setAdminTab('premiumPlans'); toggleSidebar()"><i class="fas fa-gem"></i> Premium Plans</a>
                     <a href="#" class="side-link ${tab === 'settings' ? 'active' : ''}" onclick="setAdminTab('settings'); toggleSidebar()"><i class="fas fa-cogs"></i> Settings</a>
                     <a href="#" class="side-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </nav>
@@ -2847,6 +2853,65 @@ function renderAdmin(container) {
                                         ${State.settings.broadcast.message}
                                     </div>
                                     <button class="prop-btn" style="background:#f0f0f0; color:#444; width:auto; padding:8px 20px;" onclick="stopBroadcast()">Stop Showing Message</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${tab === 'premiumPlans' ? `
+                    <div class="stat-box" style="padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:15px;">
+                            <div>
+                                <h3 style="margin:0; color:#1a2a3a; font-size:1.4rem;"><i class="fas fa-gem" style="color:#FF9933;"></i> Manage Premium Plans</h3>
+                                <p style="margin:5px 0 0; color:#666; font-size:0.9rem;">Configure subscription plans and pricing for agents.</p>
+                            </div>
+                            <button class="add-property-btn" onclick="openPlanModal()" style="width:auto; padding:10px 25px;">
+                                <i class="fas fa-plus"></i> Add New Plan
+                            </button>
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+                            ${(State.premiumPlans || []).map((p) => `
+                                <div style="background:white; border:1px solid #eee; border-radius:15px; padding:0; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.05); overflow:hidden; transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <div style="height:6px; background:${p.color || '#138808'}; width:100%;"></div>
+                                    <div style="padding:20px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                                            <h4 style="margin:0; font-size:1.3rem; color:#1a2a3a; font-weight:800;">${p.name}</h4>
+                                            <div style="background:${p.color || '#138808'}15; color:${p.color || '#138808'}; padding:5px 12px; border-radius:20px; font-weight:900; font-size:0.9rem;">
+                                                ₹ ${p.price}
+                                            </div>
+                                        </div>
+                                        <p style="color:#666; font-size:0.9rem; line-height:1.5; margin-bottom:20px; min-height:40px;">${p.description}</p>
+                                        
+                                        <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px;">
+                                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:0.9rem; color:#555;">
+                                                <i class="fas fa-clock" style="color:${p.color || '#138808'};"></i> 
+                                                <strong>Duration:</strong> ${p.duration} Days
+                                            </div>
+                                            <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:#555;">
+                                                <i class="fas fa-coins" style="color:${p.color || '#138808'};"></i> 
+                                                <strong>Credits:</strong> ${p.credits} Pts
+                                            </div>
+                                        </div>
+
+                                        <div style="display:flex; gap:10px;">
+                                             <button onclick="openPlanModal(${p.id})" style="flex:1; background:#e3f2fd; color:#1565C0; border:none; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; transition:0.2s;">
+                                                <i class="fas fa-edit"></i> Edit
+                                             </button>
+                                             <button onclick="deletePlan(${p.id})" style="flex:1; background:#ffebee; color:#D32F2F; border:none; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; transition:0.2s;">
+                                                <i class="fas fa-trash"></i> Delete
+                                             </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            
+                            ${(!State.premiumPlans || State.premiumPlans.length === 0) ? `
+                                <div style="grid-column:1/-1; text-align:center; padding:40px; color:#999; background:#fafafa; border-radius:15px; border:2px dashed #ddd;">
+                                    <i class="fas fa-box-open" style="font-size:2rem; margin-bottom:10px; opacity:0.5;"></i>
+                                    <p>No Premium Plans Created Yet.</p>
+                                    <button onclick="openPlanModal()" style="color:#138808; background:none; border:none; font-weight:700; cursor:pointer;">Create First Plan</button>
                                 </div>
                             ` : ''}
                         </div>
@@ -7772,6 +7837,111 @@ window.buyMembership = async (planName, price, limit) => {
 
         // Success Message
         alert(`Congratulations! You are now a ${planName} Member.\nEnjoy adding properties!`);
+    }
+};
+
+// --- Premium Plans Management Actions ---
+
+window.openPlanModal = (id = null) => {
+    const modal = document.getElementById('modal-container');
+    const p = id ? State.premiumPlans.find(x => x.id == id) : { name: '', price: '', duration: 30, credits: 0, description: '', color: '#138808' };
+    const isEdit = !!id;
+
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px; padding:25px;">
+            <h3 style="margin-top:0; color:#1a2a3a; margin-bottom:20px;">
+                ${isEdit ? '<i class="fas fa-edit"></i> Edit Plan' : '<i class="fas fa-plus-circle"></i> Create New Plan'}
+            </h3>
+            
+            <input type="hidden" id="plan-id" value="${id || ''}">
+            
+            <div class="form-group">
+                <label>Plan Name</label>
+                <input type="text" id="plan-name" class="login-input" value="${p.name}" placeholder="e.g. Gold Plan">
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div class="form-group">
+                    <label>Price (₹)</label>
+                    <input type="number" id="plan-price" class="login-input" value="${p.price}" placeholder="e.g. 999">
+                </div>
+                <div class="form-group">
+                    <label>Duration (Days)</label>
+                    <input type="number" id="plan-duration" class="login-input" value="${p.duration}" placeholder="e.g. 30">
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <div class="form-group">
+                    <label>Credits</label>
+                    <input type="number" id="plan-credits" class="login-input" value="${p.credits}" placeholder="e.g. 500">
+                </div>
+                <div class="form-group">
+                    <label>Color Theme</label>
+                    <input type="color" id="plan-color" class="login-input" value="${p.color || '#138808'}" style="height:45px; padding:5px;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Description & Benefits</label>
+                <textarea id="plan-desc" class="login-input" style="height:80px;" placeholder="Describe plan benefits...">${p.description}</textarea>
+            </div>
+
+            <button class="login-btn" onclick="savePremiumPlan()">
+                ${isEdit ? 'Update Plan' : 'Create Plan'}
+            </button>
+            <button class="prop-btn" onclick="closeModal()" style="margin-top:10px; width:100%; border:1px solid #ddd; background:none; color:#666;">Cancel</button>
+        </div>
+    `;
+};
+
+window.savePremiumPlan = async () => {
+    const id = document.getElementById('plan-id').value;
+    const name = document.getElementById('plan-name').value;
+    const price = Number(document.getElementById('plan-price').value);
+    const duration = Number(document.getElementById('plan-duration').value);
+    const credits = Number(document.getElementById('plan-credits').value);
+    const color = document.getElementById('plan-color').value;
+    const desc = document.getElementById('plan-desc').value;
+
+    if (!name || isNaN(price) || isNaN(duration)) {
+        alert("Please fill all required fields correctly.");
+        return;
+    }
+
+    if (!State.premiumPlans) State.premiumPlans = [];
+
+    if (id) {
+        // Edit
+        const idx = State.premiumPlans.findIndex(x => x.id == id);
+        if (idx !== -1) {
+            State.premiumPlans[idx] = { ...State.premiumPlans[idx], name, price, duration, credits, color, description: desc };
+        }
+    } else {
+        // Add
+        State.premiumPlans.push({
+            id: Date.now(),
+            name, price, duration, credits, color, description: desc
+        });
+    }
+
+    showGlobalLoader("Saving Plan...");
+    await saveGlobalData();
+    hideGlobalLoader("Plan Saved!");
+    closeModal();
+    render(); // Update Admin UI
+};
+
+window.deletePlan = async (id) => {
+    if (!confirm("Are you sure you want to delete this plan? Agents currently on this plan will not be affected until expiry.")) return;
+
+    if (State.premiumPlans) {
+        State.premiumPlans = State.premiumPlans.filter(p => p.id != id);
+        showGlobalLoader("Deleting Plan...");
+        await saveGlobalData();
+        hideGlobalLoader("Plan Deleted!");
+        render();
     }
 };
 
