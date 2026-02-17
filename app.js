@@ -1218,6 +1218,22 @@ window.selectSRType = (index) => {
     const cards = State.sellRentPage?.cards || [];
     const selectedCard = cards[index];
 
+    // Check custom action
+    if (selectedCard && selectedCard.action) {
+        // Execute global function string (e.g. "openBoostModal()")
+        try {
+            const funcName = selectedCard.action.replace('()', '');
+            if (typeof window[funcName] === 'function') {
+                window[funcName]();
+            } else {
+                console.warn("Function not found:", funcName);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+        return;
+    }
+
     // Check if it's the "List Property" or "+" button
     if (selectedCard && (selectedCard.title.toLowerCase().includes('list') || selectedCard.title.toLowerCase().includes('sell') || selectedCard.title.toLowerCase().includes('add') || selectedCard.icon === 'plus')) {
         showPropertyModal();
