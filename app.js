@@ -107,10 +107,22 @@ const State = {
         heading: "Sell or Rent Your Property",
         subHeading: "Choose an option below to proceed",
         cards: [
-            { title: "LIST YOUR PROPERTY", desc: "Post your property for free", icon: "plus", bg: "#fff9f0", bgImg: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800" },
-            { title: "CONTACT AGENTS", desc: "Get professional help", icon: "plus", bg: "#f1f8f3", bgImg: "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&w=800" },
-            { title: "RENT A HOME", desc: "Find best rental deals", icon: "key", bg: "#e3f2fd", bgImg: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800" },
-            { title: "MORTGAGE TOOLS", desc: "Calculate your loan", icon: "calculator", bg: "#f3e5f5", bgImg: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800" }
+            {
+                title: "SELF LISTING (₹99)",
+                desc: "Post your property directly (Charge: ₹99)",
+                icon: "plus-circle",
+                bg: "#e8f5e9",
+                action: "startCustomerListing()",
+                bgImg: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800"
+            },
+            {
+                title: "CONTACT BHUMIDEKHO",
+                desc: "Let us help you sell/rent your property",
+                icon: "headset",
+                bg: "#e3f2fd",
+                action: "openContactAdminModal()",
+                bgImg: "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&w=800"
+            }
         ]
     },
     sellRentAgentPage: {
@@ -4601,6 +4613,34 @@ window.processPropertySubmit = async function () {
         return;
     }
 
+    // Customer Payment Logic (Charge Rs. 99 for Self Listing)
+    if (State.user.role === 'customer' && !window.editingPropId) {
+        const customer = State.customers.find(c => c.id === State.user.id);
+        if (!customer) return alert("Customer not found."); // Should not happen if logged in
+
+        if ((customer.wallet || 0) < 99) {
+            alert("Insufficient Wallet Balance! Listing Charge: Rs. 99.\nPlease recharge your wallet.");
+            return;
+        }
+
+        if (!confirm("Confirm Listing Charge: Rs. 99 will be deducted from your wallet.\nProceed?")) return;
+
+        // Deduct
+        customer.wallet = (customer.wallet || 0) - 99;
+
+        // Record Transaction
+        if (!State.walletTransactions) State.walletTransactions = [];
+        State.walletTransactions.push({
+            id: Date.now() + 1, // +1 to ensure unique if fast
+            customerId: customer.id,
+            amount: 99,
+            type: 'debit',
+            remark: 'Property Listing Fees (Rs. 99)',
+            date: new Date().toLocaleString(),
+            status: 'success'
+        });
+    }
+
     window.isRealTaskRunning = true;
     showGlobalLoader("प्रॉपर्टी अपलोड की जा रही है... (Images: " + window.tempPropertyImages.length + ")");
 
@@ -5844,6 +5884,22 @@ window.openCustomerWalletModal = () => {
             </div>
             
             <div style="margin-bottom:25px;">
+                <h4 style="margin-bottom:15px; color:#1a2a3a;">Add Money</h4>
+                <div class="form-group" style="display:flex; gap:10px; flex-wrap:wrap;">
+                     <button onclick="document.getElementById('cw-amount').value='100'" style="padding:8px 15px; border:1px solid #ddd; background:white; border-radius:20px; font-size:0.9rem;">+100</button>
+                     <button onclick="document.getElementById('cw-amount').value='500'" style="padding:8px 15px; border:1px solid #ddd; background:white; border-radius:20px; font-size:0.9rem;">+500</button>
+                     <button onclick="document.getElementById('cw-amount').value='1000'" style="padding:8px 15px; border:1px solid #ddd; background:white; border-radius:20px; font-size:0.9rem;">+1000</button>
+                </div>
+                 <div class="form-group">
+                    <label>Amount (Rs.)</label>
+                    <input type="number" id="cw-add-amount" class="login-input" placeholder="Enter amount to add">
+                </div>
+                <button class="login-btn" onclick="alert('Payment Gateway Integration Pending.\nPlease contact Admin for manual recharge.')" style="background:#138808; width:100%;">
+                    <i class="fas fa-wallet"></i> Add Money
+                </button>
+            </div>
+
+            <div style="margin-bottom:25px; border-top:1px solid #eee; padding-top:20px;">
                 <h4 style="margin-bottom:15px; color:#1a2a3a;">Request Withdrawal</h4>
                 <div class="form-group">
                     <label>Amount (Rs.)</label>
@@ -8793,3 +8849,88 @@ window.buyMembership = (planName, price, limit, duration) => {
 };
 
 
+
+// =========================================================================
+// CUSTOMER LISTING & CONTACT
+// =========================================================================
+window.startCustomerListing = () => {
+    if (!State.user || State.user.role !== 'customer') return alert("Access Denied");
+    const customer = State.customers.find(c => c.id === State.user.id);
+    if (!customer) return;
+
+    if ((customer.wallet || 0) < 99) {
+        if (confirm("Insufficient Balance! Listing charges are Rs. 99.\nDo you want to add money?")) {
+            openCustomerWalletModal();
+        }
+        return;
+    }
+    // Proceed to open modal
+    // Reset editing state
+    window.editingPropId = null;
+    window.tempFormData = {};
+    window.tempPropertyImages = [];
+    window.propertyFormStep = 0;
+
+    // Open Modal
+    showPropertyModal();
+};
+
+window.openContactAdminModal = () => {
+    const modal = document.getElementById('modal-container');
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px; padding:25px;">
+             <h3 style="margin-top:0; color:#1a2a3a; border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
+                <i class="fas fa-headset" style="color:#138808;"></i> Contact BhumiDekho
+            </h3>
+            
+            <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px;">
+                <div style="margin-bottom:10px; font-size:1.1rem; color:#333;">
+                    <i class="fas fa-phone-alt" style="color:#138808; width:20px;"></i>
+                    <strong>${State.settings.contactInfo.phone || '+91 98765 43210'}</strong>
+                </div>
+                 <div style="margin-bottom:5px; font-size:1rem; color:#666;">
+                    <i class="fas fa-envelope" style="color:#138808; width:20px;"></i>
+                    ${State.settings.contactInfo.email || 'support@bhumidekho.com'}
+                </div>
+            </div>
+
+            <p style="font-size:0.9rem; color:#666; margin-bottom:15px;">
+                Enter your property details below. Our team will contact you shortly.
+            </p>
+
+            <div class="form-group">
+                <textarea id="contact-prop-desc" rows="5" class="login-input" placeholder="E.g. I have a 2BHK flat in Indirapuram for sale. Expected price 50L..."></textarea>
+            </div>
+
+            <button class="login-btn" onclick="submitContactQuery()" style="width:100%; background:#138808;">
+                Submit Request
+            </button>
+             <button class="prop-btn" onclick="closeModal()" style="margin-top:10px; width:100%; border:1px solid #ddd; background:none; color:#666;">Cancel</button>
+        </div>
+    `;
+};
+
+window.submitContactQuery = async () => {
+    const desc = document.getElementById('contact-prop-desc').value.trim();
+    if (!desc) return alert("Please enter details.");
+
+    showGlobalLoader("Sending Request...");
+
+    // Save to State (ensure array exists)
+    if (!State.contactQueries) State.contactQueries = [];
+    State.contactQueries.push({
+        id: Date.now(),
+        userId: State.user.id,
+        userName: State.user.name,
+        userPhone: State.user.phone,
+        message: desc,
+        date: new Date().toLocaleString(),
+        status: 'pending'
+    });
+
+    await saveGlobalData();
+    hideGlobalLoader("Sent Successfully!");
+    closeModal();
+    alert("Thank you! Our team will contact you soon.");
+};
