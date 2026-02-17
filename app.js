@@ -5677,13 +5677,13 @@ async function requestWithdrawal(id) {
     if (amountStr === null) return; // User cancelled prompt
 
     if (!amountStr.trim() || isNaN(amountStr) || parseInt(amountStr) <= 0) {
-        return alert("à¤•à¥ƒà¤ªà¤¯à¤¾ à¤à¤• à¤¸à¤¹à¥€ à¤°à¤¾à¤¶à¤¿ (Amount) à¤¦à¤°à¥à¤œ à¤•à¤°à¥‡à¤‚!");
+        return alert("Please enter a valid amount!");
     }
 
     const amount = parseInt(amountStr);
     if (amount > a.wallet) return alert("Insufficient balance");
 
-    showGlobalLoader("à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤…à¤¨à¥à¤°à¥‹à¤§ à¤­à¥‡à¤œà¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
+    showGlobalLoader("Processing Withdrawal Request...");
 
     // Deduct immediately
     a.wallet -= amount;
@@ -5712,7 +5712,7 @@ async function requestWithdrawal(id) {
     });
 
     await saveGlobalData();
-    hideGlobalLoader("à¤…à¤¨à¥à¤°à¥‹à¤§ à¤¸à¤«à¤²!");
+    hideGlobalLoader("Request Successful!");
     render();
     setTimeout(() => alert("Withdrawal request sent! Amount deducted from wallet and held for approval."), 200);
 }
@@ -5764,14 +5764,14 @@ function addAdminBalance() {
     if (password === null) return; // User cancelled
 
     if (password !== "Ajay@6341#") {
-        return alert("à¤—à¤²à¤¤ à¤ªà¤¾à¤¸à¤µà¤°à¥à¤¡! Access Denied.");
+        return alert("Incorrect Password! Access Denied.");
     }
 
     const amountStr = prompt("Enter amount to add to Admin Wallet (?):");
     if (amountStr === null) return;
 
     if (!amountStr.trim() || isNaN(amountStr) || parseInt(amountStr) <= 0) {
-        return alert("à¤•à¥ƒà¤ªà¤¯à¤¾ à¤à¤• à¤¸à¤¹à¥€ à¤°à¤¾à¤¶à¤¿ (Amount) à¤¦à¤°à¥à¤œ à¤•à¤°à¥‡à¤‚!");
+        return alert("Please enter a valid amount!");
     }
 
     const amount = parseInt(amountStr);
@@ -5899,7 +5899,7 @@ window.requestCustomerWithdrawal = () => {
         return alert("Insufficient balance!");
     }
 
-    showGlobalLoader("à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤…à¤¨à¥à¤°à¥‹à¤§ à¤­à¥‡à¤œà¤¾ à¤œà¤¾ à¤°à¤¹à¤¾ à¤¹à¥ˆ...");
+    showGlobalLoader("Sending withdrawal request...");
 
     // Deduct from customer wallet immediately
     customer.wallet -= amount;
@@ -5931,7 +5931,7 @@ window.requestCustomerWithdrawal = () => {
 
     // Save and show success
     saveGlobalData().then(() => {
-        hideGlobalLoader("à¤¨à¤¿à¤•à¤¾à¤¸à¥€ à¤…à¤¨à¥à¤°à¥‹à¤§ à¤¸à¤«à¤²!");
+        hideGlobalLoader("Request Successful!");
         setTimeout(() => {
             alert("Withdrawal request submitted successfully!");
             closeModal();
