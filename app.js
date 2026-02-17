@@ -4249,10 +4249,11 @@ window.renderPropertyForm = (initial = false) => {
     modal.innerHTML = `
         <div style="
             background: white;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            border-radius: 15px;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 0;
             overflow: hidden;
             display: flex;
             flex-direction: column;
