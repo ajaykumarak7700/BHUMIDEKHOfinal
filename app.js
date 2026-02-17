@@ -121,9 +121,9 @@ const State = {
         ]
     },
     premiumPlans: [
-        { id: 1, name: "Starter", price: 499, duration: 30, credits: 500, description: "Basic plan for new agents", color: "#4CAF50" },
-        { id: 2, name: "Pro", price: 999, duration: 30, credits: 1200, description: "Most popular choice", color: "#2196F3" },
-        { id: 3, name: "Business", price: 2499, duration: 90, credits: 3000, description: "For power users", color: "#9C27B0" }
+        { id: 1, name: "Starter", price: 499, duration: 30, credits: 500, propertyLimit: 5, description: "Basic plan for new agents", color: "#4CAF50" },
+        { id: 2, name: "Pro", price: 999, duration: 30, credits: 1200, propertyLimit: 15, description: "Most popular choice", color: "#2196F3" },
+        { id: 3, name: "Business", price: 2499, duration: 90, credits: 3000, propertyLimit: 50, description: "For power users", color: "#9C27B0" }
     ]
 };
 
@@ -2892,6 +2892,10 @@ function renderAdmin(container) {
                                             <div style="display:flex; align-items:center; gap:10px; font-size:0.9rem; color:#555;">
                                                 <i class="fas fa-coins" style="color:${p.color || '#138808'};"></i> 
                                                 <strong>Credits:</strong> ${p.credits} Pts
+                                            </div>
+                                            <div style="display:flex; align-items:center; gap:10px; margin-top:8px; font-size:0.9rem; color:#555;">
+                                                <i class="fas fa-home" style="color:${p.color || '#138808'};"></i> 
+                                                <strong>Limit:</strong> ${p.propertyLimit || 'Unlimited'} Props
                                             </div>
                                         </div>
 
@@ -7878,9 +7882,13 @@ window.openPlanModal = (id = null) => {
                     <input type="number" id="plan-credits" class="login-input" value="${p.credits}" placeholder="e.g. 500">
                 </div>
                 <div class="form-group">
-                    <label>Color Theme</label>
-                    <input type="color" id="plan-color" class="login-input" value="${p.color || '#138808'}" style="height:45px; padding:5px;">
+                    <label>Prop. Limit</label>
+                    <input type="number" id="plan-limit" class="login-input" value="${p.propertyLimit || ''}" placeholder="Empty = Unlimited">
                 </div>
+            </div>
+            <div class="form-group">
+                <label>Color Theme</label>
+                <input type="color" id="plan-color" class="login-input" value="${p.color || '#138808'}" style="height:45px; padding:5px; width:100%;">
             </div>
 
             <div class="form-group">
@@ -7902,6 +7910,7 @@ window.savePremiumPlan = async () => {
     const price = Number(document.getElementById('plan-price').value);
     const duration = Number(document.getElementById('plan-duration').value);
     const credits = Number(document.getElementById('plan-credits').value);
+    const propertyLimit = document.getElementById('plan-limit').value ? Number(document.getElementById('plan-limit').value) : null;
     const color = document.getElementById('plan-color').value;
     const desc = document.getElementById('plan-desc').value;
 
@@ -7916,13 +7925,13 @@ window.savePremiumPlan = async () => {
         // Edit
         const idx = State.premiumPlans.findIndex(x => x.id == id);
         if (idx !== -1) {
-            State.premiumPlans[idx] = { ...State.premiumPlans[idx], name, price, duration, credits, color, description: desc };
+            State.premiumPlans[idx] = { ...State.premiumPlans[idx], name, price, duration, credits, propertyLimit, color, description: desc };
         }
     } else {
         // Add
         State.premiumPlans.push({
             id: Date.now(),
-            name, price, duration, credits, color, description: desc
+            name, price, duration, credits, propertyLimit, color, description: desc
         });
     }
 
