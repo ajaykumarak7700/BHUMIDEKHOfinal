@@ -7859,7 +7859,7 @@ window.openPlanModal = (id = null) => {
 
     modal.style.display = 'flex';
     modal.innerHTML = `
-        <div class="modal-content scale-in" style="max-width:400px; padding:25px;">
+        <div class="modal-content scale-in" style="max-width:400px; padding:25px; max-height:85vh; overflow-y:auto;">
             <h3 style="margin-top:0; color:#1a2a3a; margin-bottom:20px;">
                 ${isEdit ? '<i class="fas fa-edit"></i> Edit Plan' : '<i class="fas fa-plus-circle"></i> Create New Plan'}
             </h3>
