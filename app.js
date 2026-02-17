@@ -8663,7 +8663,7 @@ window.openPaymentModal = (planName, price, limit, duration) => {
                 <i class="fas fa-wallet"></i> Wallet Balance: <strong>Rs. ${(agent.wallet || 0).toLocaleString()}</strong>
             </div>
 
-            <button class="login-btn" onclick="processMembershipPurchase()" style="width:100%; background:#138808; font-size:1.1rem; padding:12px;">
+            <button id="pay-plan-btn" class="login-btn" onclick="processMembershipPurchase()" style="width:100%; background:#138808; font-size:1.1rem; padding:12px;">
                 Pay & Activate
             </button>
              <button class="prop-btn" onclick="closeModal()" style="margin-top:10px; width:100%; border:1px solid #ddd; background:none; color:#666;">Cancel</button>
@@ -8733,6 +8733,15 @@ window.processMembershipPurchase = async () => {
 
     if (!confirm(`Confirm Payment of Rs. ${finalPrice} for ${planName}?`)) return;
 
+    // UI Feedback
+    const btn = document.getElementById('pay-plan-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+    }
+    closeModal();
+    showGlobalLoader("Activating Plan...");
+
     // Deduct
     agent.wallet = (agent.wallet || 0) - finalPrice;
 
@@ -8755,7 +8764,7 @@ window.processMembershipPurchase = async () => {
         status: 'success'
     });
 
-    // Unhide properties if expired
+    // Unhide properties
     if (State.properties) {
         State.properties.forEach(p => {
             if (p.agentId === agent.id && p.status === 'hidden' && p.disableReason === 'Plan Expired') {
@@ -8766,11 +8775,10 @@ window.processMembershipPurchase = async () => {
     }
 
     await saveGlobalData();
-    closeModal();
+    hideGlobalLoader("Plan Activated!");
     render();
 
-    // Success Modal
-    alert(`Success! ${planName} Plan Activated for ${duration} days.`);
+    setTimeout(() => alert(`Success! ${planName} Plan Activated for ${duration} days.`), 100);
 };
 
 // Override original buyMembership to open Modal
