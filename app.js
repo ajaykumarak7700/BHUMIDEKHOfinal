@@ -8573,7 +8573,7 @@ window.openCouponModal = (id = null) => {
 
 window.saveCoupon = async () => {
     const id = document.getElementById('coupon-id').value;
-    const code = document.getElementById('coupon-code').value.toUpperCase();
+    const code = document.getElementById('coupon-code').value.trim().toUpperCase();
     const type = document.getElementById('coupon-type').value;
     const value = Number(document.getElementById('coupon-value').value);
     const maxDiscount = document.getElementById('coupon-max').value ? Number(document.getElementById('coupon-max').value) : 0;
@@ -8676,13 +8676,20 @@ window.applyCoupon = () => {
     const msg = document.getElementById('coupon-msg');
 
     if (!codeInput || !msg) return;
-    const code = codeInput.value.toUpperCase();
+    const code = codeInput.value.trim().toUpperCase();
 
-    const coupon = (State.coupons || []).find(c => c.code === code && c.active);
+    const coupon = (State.coupons || []).find(c => c.code === code);
 
     if (!coupon) {
         msg.style.color = 'red';
-        msg.innerText = "Invalid or inactive coupon code";
+        msg.innerText = "Invalid coupon code";
+        window.tempPurchase.finalPrice = window.tempPurchase.price;
+        window.tempPurchase.coupon = null;
+        document.getElementById('payment-discount-row').style.display = 'none';
+        document.getElementById('payment-total').innerText = `Rs. ${window.tempPurchase.price}`;
+    } else if (!coupon.active) {
+        msg.style.color = 'red';
+        msg.innerText = "Coupon is inactive/expired";
         window.tempPurchase.finalPrice = window.tempPurchase.price;
         window.tempPurchase.coupon = null;
         document.getElementById('payment-discount-row').style.display = 'none';
