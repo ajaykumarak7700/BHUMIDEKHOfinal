@@ -4102,7 +4102,7 @@ window.renderPropertyForm = (initial = false) => {
             `;
         } else if (['Plot', 'Agricultural Land'].includes(cat)) {
             extraFields = `
-                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                 <div style="display:grid; grid-template-columns:1fr; gap:10px;">
                     <div class="form-group">
                         <label>Facing Direction</label>
                         <select id="p-facing" class="login-input" onchange="window.tempFormData['p-facing']=this.value" style="padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; background:white;">
@@ -4123,7 +4123,7 @@ window.renderPropertyForm = (initial = false) => {
              `;
         } else if (cat === 'Commercial') {
             extraFields = `
-                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                 <div style="display:grid; grid-template-columns:1fr; gap:10px;">
                     <div class="form-group">
                         <label>Floor No.</label>
                         <input id="p-floor" value="${val('p-floor')}" placeholder="e.g. Ground Floor">
@@ -4142,7 +4142,7 @@ window.renderPropertyForm = (initial = false) => {
 
         contentHtml = `
                 ${stepsIndicator}
-                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                 <div style="display:grid; grid-template-columns:1fr; gap:10px;">
                     <div class="form-group">
                         <div class="label-edit-wrap"><input class="editable-label" id="l-cat" value="Category" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
                         <select id="p-cat">
@@ -4179,7 +4179,7 @@ window.renderPropertyForm = (initial = false) => {
     else if (step === 3) {
         contentHtml = `
                 ${stepsIndicator}
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div style="display:grid; grid-template-columns:1fr; gap:10px;">
                     <div class="form-group">
                         <div class="label-edit-wrap"><input class="editable-label" id="l-price" value="Total Price" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
                         <input id="p-price" value="${window.tempFormData['p-price'] || ''}" required placeholder="e.g. 50 Lakh">
