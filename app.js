@@ -209,6 +209,7 @@ function saveToFirebase() {
         otherPage: State.otherPage,
         sellRentPage: State.sellRentPage,
         premiumPlans: State.premiumPlans,
+        coupons: State.coupons || [],
         messages: State.messages || {}
     };
 
@@ -279,6 +280,7 @@ function loadFromFirebase(callback) {
                 if (data.otherPage) State.otherPage = data.otherPage;
                 if (data.sellRentPage) State.sellRentPage = data.sellRentPage;
                 if (data.premiumPlans) State.premiumPlans = data.premiumPlans;
+                if (data.coupons) State.coupons = data.coupons;
 
                 if (data.properties) {
                     State.properties = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
@@ -702,7 +704,8 @@ function saveToLocalStorage() {
             messages: State.messages,
             otherPage: State.otherPage,
             sellRentPage: State.sellRentPage,
-            premiumPlans: State.premiumPlans
+            premiumPlans: State.premiumPlans,
+            coupons: State.coupons
         }));
 
         // --- OPTIMIZATION START: Cache Properties Locally ---
@@ -788,6 +791,7 @@ function loadGlobalData() {
             if (parsed.otherPage) State.otherPage = parsed.otherPage;
             if (parsed.sellRentPage) State.sellRentPage = parsed.sellRentPage;
             if (parsed.premiumPlans) State.premiumPlans = parsed.premiumPlans;
+            if (parsed.coupons) State.coupons = parsed.coupons;
         } else {
             throw new Error("No saved state");
         }
@@ -2372,6 +2376,7 @@ function renderAdmin(container) {
                     <a href="#" class="side-link ${tab === 'sellRentMgr' ? 'active' : ''}" onclick="setAdminTab('sellRentMgr'); toggleSidebar()"><i class="fas fa-edit"></i> Sell/Rent Mgr</a>
                     <a href="#" class="side-link ${tab === 'walletRequests' ? 'active' : ''}" onclick="setAdminTab('walletRequests'); toggleSidebar()"><i class="fas fa-hand-holding-usd"></i> Wallet Requests ${State.walletRequests && State.walletRequests.some(r => r.status === 'pending') ? '<span style="background:red; width:8px; height:8px; border-radius:50%; display:inline-block; margin-left:5px;"></span>' : ''}</a>
                     <a href="#" class="side-link ${tab === 'premiumPlans' ? 'active' : ''}" onclick="setAdminTab('premiumPlans'); toggleSidebar()"><i class="fas fa-gem"></i> Premium Plans</a>
+                    <a href="#" class="side-link ${tab === 'coupons' ? 'active' : ''}" onclick="setAdminTab('coupons'); toggleSidebar()"><i class="fas fa-tags"></i> Coupons</a>
                     <a href="#" class="side-link ${tab === 'settings' ? 'active' : ''}" onclick="setAdminTab('settings'); toggleSidebar()"><i class="fas fa-cogs"></i> Settings</a>
                     <a href="#" class="side-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
                 </nav>
@@ -2933,6 +2938,57 @@ function renderAdmin(container) {
                                     <button onclick="openPlanModal()" style="color:#138808; background:none; border:none; font-weight:700; cursor:pointer;">Create First Plan</button>
                                 </div>
                             ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${tab === 'coupons' ? `
+                    <div class="stat-box" style="padding:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:15px;">
+                            <div>
+                                <h3 style="margin:0; color:#1a2a3a; font-size:1.4rem;"><i class="fas fa-tags" style="color:#FF9933;"></i> Manage Coupons</h3>
+                                <p style="margin:5px 0 0; color:#666; font-size:0.9rem;">Create discount codes for agents.</p>
+                            </div>
+                            <button class="add-property-btn" onclick="openCouponModal()" style="width:auto; padding:10px 25px;">
+                                <i class="fas fa-plus"></i> Create Coupon
+                            </button>
+                        </div>
+                        
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; min-width:600px;">
+                                <thead style="background:#f8f9fa;">
+                                    <tr>
+                                        <th style="padding:15px; text-align:left;">Code</th>
+                                        <th style="padding:15px; text-align:left;">Discount</th>
+                                        <th style="padding:15px; text-align:left;">Max Limit</th>
+                                        <th style="padding:15px; text-align:left;">Status</th>
+                                        <th style="padding:15px; text-align:right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(State.coupons || []).map(c => `
+                                        <tr style="border-bottom:1px solid #eee;">
+                                            <td style="padding:15px; font-weight:800; color:#1a2a3a; font-family:monospace; font-size:1.1rem;">${c.code}</td>
+                                            <td style="padding:15px; color:#138808; font-weight:700;">${c.type === 'percentage' ? c.value + '%' : 'Rs. ' + c.value}</td>
+                                            <td style="padding:15px; color:#666;">${c.maxDiscount ? 'Rs. ' + c.maxDiscount : '-'}</td>
+                                            <td style="padding:15px;">
+                                                <span style="padding:4px 10px; border-radius:15px; font-size:0.75rem; font-weight:700; background:${c.active ? '#e8f5e9' : '#ffebee'}; color:${c.active ? '#2e7d32' : '#D32F2F'};">
+                                                    ${c.active ? 'ACTIVE' : 'INACTIVE'}
+                                                </span>
+                                            </td>
+                                            <td style="padding:15px; text-align:right;">
+                                                <button onclick="toggleCouponStatus(${c.id})" style="background:${c.active ? '#ffebee' : '#e8f5e9'}; color:${c.active ? '#D32F2F' : '#138808'}; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; margin-right:5px; font-size:0.8rem; font-weight:700;">
+                                                    ${c.active ? 'Deactivate' : 'Activate'}
+                                                </button>
+                                                <button onclick="deleteCoupon(${c.id})" style="background:none; color:#D32F2F; border:none; cursor:pointer; font-size:0.9rem;" title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                    ${(!State.coupons || State.coupons.length === 0) ? `<tr><td colspan="5" style="text-align:center; padding:30px; color:#999;">No coupons created yet.</td></tr>` : ''}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 ` : ''}
@@ -8471,7 +8527,253 @@ window.confirmWalletRequestProcess = async function (id, action) {
 };
 
 // =========================================================================
-// AGENT PROPERTY FEATURING (BOOST)
+// COUPON MANAGEMENT & PAYMENT MODAL
 // =========================================================================
+
+window.openCouponModal = (id = null) => {
+    const modal = document.getElementById('modal-container');
+    const c = id ? State.coupons.find(x => x.id == id) : { code: '', type: 'percentage', value: 0, maxDiscount: 0, active: true };
+    const isEdit = !!id;
+
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px; padding:25px;">
+            <h3 style="margin-top:0; color:#1a2a3a; margin-bottom:20px;">
+                ${isEdit ? '<i class="fas fa-edit"></i> Edit Coupon' : '<i class="fas fa-plus-circle"></i> Create New Coupon'}
+            </h3>
+            <input type="hidden" id="coupon-id" value="${id || ''}">
+            <div class="form-group">
+                <label>Coupon Code</label>
+                <input type="text" id="coupon-code" class="login-input" value="${c.code}" placeholder="e.g. WELCOME50" style="text-transform:uppercase;">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                 <div class="form-group">
+                    <label>Type</label>
+                    <select id="coupon-type" class="login-input" onchange="document.getElementById('coupon-symbol').innerText = this.value === 'percentage' ? '%' : 'Rs.'">
+                        <option value="percentage" ${c.type === 'percentage' ? 'selected' : ''}>Percentage (%)</option>
+                        <option value="flat" ${c.type === 'flat' ? 'selected' : ''}>Flat Amount (Rs)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Value (<span id="coupon-symbol">${c.type === 'percentage' ? '%' : 'Rs.'}</span>)</label>
+                    <input type="number" id="coupon-value" class="login-input" value="${c.value}" placeholder="e.g. 10">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Max Discount (Optional for %)</label>
+                <input type="number" id="coupon-max" class="login-input" value="${c.maxDiscount || ''}" placeholder="e.g. 100">
+            </div>
+            <button class="login-btn" onclick="saveCoupon()">
+                ${isEdit ? 'Update Coupon' : 'Create Coupon'}
+            </button>
+            <button class="prop-btn" onclick="closeModal()" style="margin-top:10px; width:100%; border:1px solid #ddd; background:none; color:#666;">Cancel</button>
+        </div>
+    `;
+};
+
+window.saveCoupon = async () => {
+    const id = document.getElementById('coupon-id').value;
+    const code = document.getElementById('coupon-code').value.toUpperCase();
+    const type = document.getElementById('coupon-type').value;
+    const value = Number(document.getElementById('coupon-value').value);
+    const maxDiscount = document.getElementById('coupon-max').value ? Number(document.getElementById('coupon-max').value) : 0;
+
+    if (!code || isNaN(value)) return alert("Please fill code and value!");
+
+    if (!State.coupons) State.coupons = [];
+
+    if (id) {
+        const idx = State.coupons.findIndex(x => x.id == id);
+        if (idx !== -1) State.coupons[idx] = { ...State.coupons[idx], code, type, value, maxDiscount };
+    } else {
+        if (State.coupons.find(c => c.code === code)) return alert("Coupon code already exists!");
+        State.coupons.push({ id: Date.now(), code, type, value, maxDiscount, active: true });
+    }
+    await saveGlobalData();
+    closeModal();
+    render();
+};
+
+window.deleteCoupon = async (id) => {
+    if (!confirm("Delete this coupon?")) return;
+    State.coupons = State.coupons.filter(c => c.id != id);
+    await saveGlobalData();
+    render();
+};
+
+window.toggleCouponStatus = async (id) => {
+    const c = State.coupons.find(x => x.id == id);
+    if (c) {
+        c.active = !c.active;
+        await saveGlobalData();
+        render();
+    }
+};
+
+// --- Agent Payment Modal -----------------
+
+window.openPaymentModal = (planName, price, limit, duration) => {
+    const modal = document.getElementById('modal-container');
+    const agent = State.agents.find(a => a.id === State.user.id);
+
+    // Store temp data
+    window.tempPurchase = { planName, price, limit, duration, finalPrice: price, coupon: null };
+
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:400px; padding:25px;">
+             <h3 style="margin-top:0; color:#1a2a3a; border-bottom:1px solid #eee; padding-bottom:15px; margin-bottom:20px;">
+                <i class="fas fa-shopping-cart" style="color:#138808;"></i> Order Summary
+            </h3>
+            
+            <div style="background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span style="color:#666;">Plan</span>
+                    <strong style="color:#333;">${planName}</strong>
+                </div>
+                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span style="color:#666;">Validity</span>
+                    <strong style="color:#333;">${duration} Days</strong>
+                </div>
+                 <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:1.1rem;">
+                    <span style="color:#666;">Price</span>
+                    <strong style="color:#333;">Rs. ${price}</strong>
+                </div>
+                <div id="payment-discount-row" style="display:none; justify-content:space-between; margin-bottom:10px; color:#138808;">
+                    <span>Discount</span>
+                    <strong id="payment-discount-val">- Rs. 0</strong>
+                </div>
+                <div style="border-top:1px dashed #ccc; margin:10px 0;"></div>
+                 <div style="display:flex; justify-content:space-between; font-size:1.3rem;">
+                    <span style="color:#333; font-weight:700;">Total</span>
+                    <strong style="color:#138808;" id="payment-total">Rs. ${price}</strong>
+                </div>
+            </div>
+
+            <div class="form-group" style="position:relative;">
+                <label>Have a coupon code?</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="apply-coupon-code" class="login-input" placeholder="Enter Coupon" style="text-transform:uppercase;">
+                    <button onclick="applyCoupon()" style="background:#333; color:white; border:none; padding:0 20px; border-radius:5px; cursor:pointer; font-weight:700;">Apply</button>
+                </div>
+                <div id="coupon-msg" style="font-size:0.8rem; margin-top:5px; height:15px;"></div>
+            </div>
+
+            <div style="background:#e3f2fd; padding:10px; border-radius:8px; margin-bottom:20px; font-size:0.9rem; color:#0d47a1;">
+                <i class="fas fa-wallet"></i> Wallet Balance: <strong>Rs. ${(agent.wallet || 0).toLocaleString()}</strong>
+            </div>
+
+            <button class="login-btn" onclick="processMembershipPurchase()" style="width:100%; background:#138808; font-size:1.1rem; padding:12px;">
+                Pay & Activate
+            </button>
+             <button class="prop-btn" onclick="closeModal()" style="margin-top:10px; width:100%; border:1px solid #ddd; background:none; color:#666;">Cancel</button>
+        </div>
+     `;
+};
+
+window.applyCoupon = () => {
+    const codeInput = document.getElementById('apply-coupon-code');
+    const msg = document.getElementById('coupon-msg');
+
+    if (!codeInput || !msg) return;
+    const code = codeInput.value.toUpperCase();
+
+    const coupon = (State.coupons || []).find(c => c.code === code && c.active);
+
+    if (!coupon) {
+        msg.style.color = 'red';
+        msg.innerText = "Invalid or inactive coupon code";
+        window.tempPurchase.finalPrice = window.tempPurchase.price;
+        window.tempPurchase.coupon = null;
+        document.getElementById('payment-discount-row').style.display = 'none';
+        document.getElementById('payment-total').innerText = `Rs. ${window.tempPurchase.price}`;
+    } else {
+        // Calculate Discount
+        let discount = 0;
+        if (coupon.type === 'percentage') {
+            discount = (window.tempPurchase.price * coupon.value) / 100;
+            if (coupon.maxDiscount && discount > coupon.maxDiscount) discount = coupon.maxDiscount;
+        } else {
+            discount = coupon.value;
+        }
+
+        // Ensure discount doesn't exceed price
+        if (discount > window.tempPurchase.price) discount = window.tempPurchase.price;
+
+        window.tempPurchase.finalPrice = window.tempPurchase.price - discount;
+        window.tempPurchase.coupon = coupon.code;
+
+        msg.style.color = 'green';
+        msg.innerText = `Coupon Applied! You saved Rs. ${discount}`;
+
+        // Update UI
+        document.getElementById('payment-discount-row').style.display = 'flex';
+        document.getElementById('payment-discount-val').innerText = `- Rs. ${Math.round(discount)}`;
+        document.getElementById('payment-total').innerText = `Rs. ${Math.round(window.tempPurchase.finalPrice)}`;
+    }
+};
+
+window.processMembershipPurchase = async () => {
+    const { planName, finalPrice, limit, duration, coupon } = window.tempPurchase;
+    const agent = State.agents.find(a => a.id === State.user.id);
+
+    if ((agent.wallet || 0) < finalPrice) {
+        alert(`Insufficient Balance!\nYou need Rs. ${finalPrice} but have only Rs. ${agent.wallet || 0}.\nPlease recharge your wallet.`);
+        closeModal();
+        setAgentTab('wallet');
+        return;
+    }
+
+    if (!confirm(`Confirm Payment of Rs. ${finalPrice} for ${planName}?`)) return;
+
+    // Deduct
+    agent.wallet = (agent.wallet || 0) - finalPrice;
+
+    // Activate
+    agent.currentPlan = planName;
+    agent.planExpiry = Date.now() + (duration * 24 * 60 * 60 * 1000);
+    agent.listingsUsed = 0;
+
+    if (agent.status === 'blocked' || agent.currentPlan === 'Expired') agent.status = 'approved';
+
+    // Record Transaction
+    if (!State.walletTransactions) State.walletTransactions = [];
+    State.walletTransactions.push({
+        id: Date.now(),
+        agentId: agent.id,
+        amount: finalPrice,
+        type: 'debit',
+        remark: `Purchased ${planName} Plan (${duration} Days)${coupon ? ' with Coupon ' + coupon : ''}`,
+        date: new Date().toLocaleString(),
+        status: 'success'
+    });
+
+    // Unhide properties if expired
+    if (State.properties) {
+        State.properties.forEach(p => {
+            if (p.agentId === agent.id && p.status === 'hidden' && p.disableReason === 'Plan Expired') {
+                p.status = 'approved';
+                delete p.disableReason;
+            }
+        });
+    }
+
+    await saveGlobalData();
+    closeModal();
+    render();
+
+    // Success Modal
+    alert(`Success! ${planName} Plan Activated for ${duration} days.`);
+};
+
+// Override original buyMembership to open Modal
+window.buyMembership = (planName, price, limit, duration) => {
+    const agent = State.agents.find(a => a.id === State.user.id);
+    if (agent.currentPlan === planName && agent.planExpiry > Date.now()) {
+        alert("You already have this active plan!");
+        return;
+    }
+    openPaymentModal(planName, price, limit, duration);
+};
 
 
