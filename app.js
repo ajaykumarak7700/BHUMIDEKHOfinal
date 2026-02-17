@@ -2912,6 +2912,9 @@ function renderAdmin(container) {
                                              <button onclick="togglePlanFeature(${p.id})" style="flex:0 0 auto; background:${p.isFeatured ? '#FFF3E0' : '#f5f5f5'}; color:${p.isFeatured ? '#FF9800' : '#ccc'}; border:none; padding:10px; border-radius:8px; cursor:pointer; " title="Toggle Feature">
                                                 <i class="fas fa-star"></i>
                                              </button>
+                                             <button onclick="togglePlanVisibility(${p.id})" style="flex:0 0 auto; background:${p.isHidden ? '#ffebee' : '#e8f5e9'}; color:${p.isHidden ? '#D32F2F' : '#138808'}; border:none; padding:10px; border-radius:8px; cursor:pointer;" title="${p.isHidden ? 'Enable Plan' : 'Disable Plan'}">
+                                                <i class="fas fa-${p.isHidden ? 'eye-slash' : 'eye'}"></i>
+                                             </button>
                                              <button onclick="openPlanModal(${p.id})" style="flex:1; background:#e3f2fd; color:#1565C0; border:none; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; transition:0.2s;">
                                                 <i class="fas fa-edit"></i> Edit
                                              </button>
@@ -7975,6 +7978,15 @@ window.togglePlanFeature = async (id) => {
     }
 };
 
+window.togglePlanVisibility = async (id) => {
+    const plan = State.premiumPlans.find(p => p.id === id);
+    if (plan) {
+        plan.isHidden = !plan.isHidden; // Toggle
+        await saveGlobalData();
+        render();
+    }
+};
+
 window.getMembershipUI = (agent) => {
     const isExpired = agent.planExpiry && Date.now() > agent.planExpiry;
     const daysLeft = agent.planExpiry ? Math.ceil((agent.planExpiry - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
@@ -8038,7 +8050,7 @@ window.getMembershipUI = (agent) => {
                 <div>
                      <div style="font-size:0.9rem; color:#666; margin-bottom:10px; font-weight:700;">Upgrade / Renew Plan</div>
                      <div style="display:flex; gap:15px; overflow-x:auto; padding:10px 5px; scroll-behavior:smooth;">
-                        ${(State.premiumPlans || []).sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)).map(p => `
+                        ${(State.premiumPlans || []).filter(p => !p.isHidden).sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)).map(p => `
                             <div style="min-width:260px; background:white; padding:20px; border-radius:15px; border:${p.isFeatured ? '2px solid ' + (p.color || '#138808') : '1px solid #eee'}; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.08); position:relative; overflow:hidden; transform:scale(${p.isFeatured ? 1.02 : 1}); transition:transform 0.2s;">
                                 ${p.isFeatured ? '<div style="position:absolute; top:0; right:0; background:#FF9800; color:white; font-size:0.6rem; font-weight:900; padding:3px 10px; border-bottom-left-radius:8px;">POPULAR</div>' : ''}
                                 <div style="position:absolute; top:0; left:0; width:100%; height:6px; background:${p.color || '#138808'};"></div>
