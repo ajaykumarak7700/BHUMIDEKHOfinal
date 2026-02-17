@@ -4155,7 +4155,7 @@ window.renderPropertyForm = (initial = false) => {
                         <div class="label-edit-wrap"><input class="editable-label" id="l-area" value="Property Size / Area" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
                         <div style="display:flex; gap:5px;">
                             <input id="p-area" value="${window.tempFormData['p-area'] || ''}" required placeholder="Size" style="flex:1;">
-                            <select id="p-area-unit" style="width:100px; padding:10px; border:1px solid #ddd; border-radius:10px; background:white;" onchange="window.tempFormData['p-area-unit']=this.value">
+                            <select id="p-area-unit" style="width:80px; padding:8px 2px; border:1px solid #ddd; border-radius:10px; background:white; font-size:0.9rem;" onchange="window.tempFormData['p-area-unit']=this.value">
                                 <option value="Sq.ft" ${window.tempFormData['p-area-unit'] === 'Sq.ft' ? 'selected' : ''}>Sq.ft</option>
                                 <option value="Katha" ${window.tempFormData['p-area-unit'] === 'Katha' ? 'selected' : ''}>Katha</option>
                                 <option value="Bigha" ${window.tempFormData['p-area-unit'] === 'Bigha' ? 'selected' : ''}>Bigha</option>
@@ -4188,7 +4188,7 @@ window.renderPropertyForm = (initial = false) => {
                         <div class="label-edit-wrap"><input class="editable-label" id="l-sqft" value="Price per Unit" readonly><i class="fas fa-pen label-edit-icon" onclick="enableLabelEdit(this)"></i></div>
                         <div style="display:flex; gap:5px;">
                             <input id="p-sqft" value="${window.tempFormData['p-sqft'] || ''}" placeholder="Rate" style="flex:1;">
-                            <select id="p-unit-type" style="width:100px; padding:10px; border:1px solid #ddd; border-radius:10px; background:white;" onchange="window.tempFormData['p-unit-type']=this.value">
+                            <select id="p-unit-type" style="width:80px; padding:8px 2px; border:1px solid #ddd; border-radius:10px; background:white; font-size:0.9rem;" onchange="window.tempFormData['p-unit-type']=this.value">
                                 <option value="Sq.ft" ${window.tempFormData['p-unit-type'] === 'Sq.ft' ? 'selected' : ''}>Sq.ft</option>
                                 <option value="Katha" ${window.tempFormData['p-unit-type'] === 'Katha' ? 'selected' : ''}>Katha</option>
                                 <option value="Bigha" ${window.tempFormData['p-unit-type'] === 'Bigha' ? 'selected' : ''}>Bigha</option>
