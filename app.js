@@ -3827,17 +3827,26 @@ window.showPropertyModal = (propId = null) => {
                 }
 
                 // 2. Check Listing Limits
-                let limit = 0; // Free Plan default (Strict: 0 listings as per request)
-                if (agent.currentPlan === 'Silver') limit = 3;
-                else if (agent.currentPlan === 'Gold') limit = 10;
-                else if (agent.currentPlan === 'Platinum') limit = 9999;
+                // 2. Check Listing Limits
+                let limit = 0; // Free Plan default
 
-                // Allow 1 listing for completely new agents (optional demo friendliness) or stick to strict 0?
-                // Request says: "premimum member bane tabhi add kar paye" -> Strict 0 for Free.
+                if (agent.currentPlan && agent.currentPlan !== 'Free') {
+                    const plan = (State.premiumPlans || []).find(p => p.name === agent.currentPlan);
+                    if (plan) limit = plan.propertyLimit !== undefined && plan.propertyLimit !== null ? plan.propertyLimit : 9999;
+                    else {
+                        // Legacy / Fallback logic for old plans
+                        if (agent.currentPlan === 'Silver') limit = 3;
+                        else if (agent.currentPlan === 'Gold') limit = 15;
+                        else if (agent.currentPlan === 'Platinum') limit = 9999;
+                        else if (agent.currentPlan === 'Starter') limit = 5;
+                        else if (agent.currentPlan === 'Pro') limit = 15;
+                        else if (agent.currentPlan === 'Business') limit = 50;
+                    }
+                }
 
                 if (agent.listingsUsed >= limit) {
                     if (limit === 0) {
-                        alert("Premium Membership Required!\nYou need to be a Premium Member to add properties.\n\nSilver Plan (Rs.499): 3 Listings/Month");
+                        alert("Premium Membership Required!\nYou need an active Premium Plan to post properties.");
                     } else {
                         alert(`Limit Reached! (${agent.listingsUsed}/${limit})\nYou have used all listings in your ${agent.currentPlan} Plan.\nPlease upgrade to add more.`);
                     }
