@@ -7800,7 +7800,11 @@ window.saveAgentPlan = async (agentId) => {
 // AGENT SELF-MEMBERSHIP PURCHASE
 // =========================================================================
 
-window.buyMembership = async (planName, price, limit) => {
+// =========================================================================
+// AGENT SELF-MEMBERSHIP PURCHASE
+// =========================================================================
+
+window.buyMembership = async (planName, price, limit, duration = 30) => {
     const agent = State.agents.find(a => a.id === State.user.id);
     if (!agent) return;
 
@@ -7815,13 +7819,13 @@ window.buyMembership = async (planName, price, limit) => {
         return;
     }
 
-    if (confirm(`Confirm Purchase?\nPlan: ${planName}\nPrice: Rs. ${price}\nValidity: 30 Days`)) {
+    if (confirm(`Confirm Purchase?\nPlan: ${planName}\nPrice: Rs. ${price}\nValidity: ${duration} Days`)) {
         // Deduct Balance
         agent.wallet -= price;
 
         // Update Plan
         agent.currentPlan = planName;
-        agent.planExpiry = Date.now() + (30 * 24 * 60 * 60 * 1000); // 30 Days
+        agent.planExpiry = Date.now() + (duration * 24 * 60 * 60 * 1000);
         agent.listingsUsed = 0; // Reset usage for new plan
 
         // Ensure Approved Status if blocked due to expiry
@@ -7846,7 +7850,7 @@ window.buyMembership = async (planName, price, limit) => {
             agentId: agent.id,
             amount: price,
             type: 'debit',
-            remark: `Purchased ${planName} Plan`,
+            remark: `Purchased ${planName} Plan (${duration} Days)`,
             date: new Date().toLocaleString(),
             status: 'success'
         });
@@ -7855,7 +7859,7 @@ window.buyMembership = async (planName, price, limit) => {
         render(); // Re-render to show new status
 
         // Success Message
-        alert(`Congratulations! You are now a ${planName} Member.\nEnjoy adding properties!`);
+        alert(`Congratulations! You are now a ${planName} Member.\nYour plan is active for ${duration} days.`);
     }
 };
 
@@ -8075,7 +8079,7 @@ window.getMembershipUI = (agent) => {
                                     </div>
                                 ` : '<div style="margin-bottom:20px;"></div>'}
 
-                                <button onclick="buyMembership('${p.name}', ${p.price}, ${p.propertyLimit || 9999})" style="width:100%; background:${p.color || '#138808'}; color:white; border:none; padding:12px; border-radius:10px; font-size:1rem; cursor:pointer; font-weight:800; box-shadow:0 4px 10px rgba(0,0,0,0.15); transition:0.2s;">
+                                <button onclick="buyMembership('${p.name}', ${p.price}, ${p.propertyLimit || 9999}, ${p.duration || 30})" style="width:100%; background:${p.color || '#138808'}; color:white; border:none; padding:16px; border-radius:12px; font-size:1.15rem; cursor:pointer; font-weight:800; box-shadow:0 4px 15px rgba(0,0,0,0.2); transition:0.2s;">
                                     BUY PLAN
                                 </button>
                             </div>
