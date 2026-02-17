@@ -8051,16 +8051,33 @@ window.getMembershipUI = (agent) => {
                      <div style="font-size:0.9rem; color:#666; margin-bottom:10px; font-weight:700;">Upgrade / Renew Plan</div>
                      <div style="display:flex; gap:15px; overflow-x:auto; padding:10px 5px; scroll-behavior:smooth;">
                         ${(State.premiumPlans || []).filter(p => !p.isHidden).sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)).map(p => `
-                            <div style="min-width:260px; background:white; padding:20px; border-radius:15px; border:${p.isFeatured ? '2px solid ' + (p.color || '#138808') : '1px solid #eee'}; text-align:center; box-shadow:0 5px 15px rgba(0,0,0,0.08); position:relative; overflow:hidden; transform:scale(${p.isFeatured ? 1.02 : 1}); transition:transform 0.2s;">
-                                ${p.isFeatured ? '<div style="position:absolute; top:0; right:0; background:#FF9800; color:white; font-size:0.6rem; font-weight:900; padding:3px 10px; border-bottom-left-radius:8px;">POPULAR</div>' : ''}
-                                <div style="position:absolute; top:0; left:0; width:100%; height:6px; background:${p.color || '#138808'};"></div>
-                                <div style="font-weight:900; color:#333; margin-top:5px; font-size:1.1rem; letter-spacing:0.5px;">${p.name.toUpperCase()}</div>
-                                <div style="font-size:1.6rem; font-weight:900; margin:10px 0; color:${p.color || '#138808'};">Rs. ${p.price}</div>
-                                <div style="background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:15px;">
-                                    <div style="font-size:0.9rem; color:#444; font-weight:700; margin-bottom:5px;">${p.propertyLimit ? p.propertyLimit + ' Listings' : 'UNLIMITED Listings'}</div>
-                                    <div style="font-size:0.8rem; color:#666;">Validity: ${p.duration} Days</div>
+                            <div style="min-width:320px; background:white; padding:30px; border-radius:20px; border:${p.isFeatured ? '3px solid ' + (p.color || '#138808') : '1px solid #E0E0E0'}; text-align:center; box-shadow:0 8px 25px rgba(0,0,0,0.08); position:relative; overflow:hidden; transform:scale(${p.isFeatured ? 1.02 : 1}); transition:transform 0.2s; margin:10px 0;">
+                                ${p.isFeatured ? '<div style="position:absolute; top:0; right:0; background:#FF9800; color:white; font-size:0.75rem; font-weight:900; padding:5px 15px; border-bottom-left-radius:10px; z-index:2; box-shadow: -2px 2px 5px rgba(0,0,0,0.1);">MOST POPULAR</div>' : ''}
+                                <div style="position:absolute; top:0; left:0; width:100%; height:8px; background:${p.color || '#138808'};"></div>
+                                
+                                <div style="font-weight:900; color:#333; margin-top:5px; font-size:1.4rem; letter-spacing:0.5px; text-transform:uppercase;">${p.name}</div>
+                                <div style="font-size:2.2rem; font-weight:900; margin:15px 0; color:${p.color || '#138808'};">Rs. ${p.price}</div>
+                                
+                                <div style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px dashed #ddd;">
+                                    <div style="font-size:1.1rem; color:#333; font-weight:800; margin-bottom:8px;">
+                                        <i class="fas fa-home" style="color:${p.color || '#138808'}; margin-right:5px;"></i>
+                                        ${p.propertyLimit ? p.propertyLimit + ' Listings' : 'UNLIMITED Listings'}
+                                    </div>
+                                    <div style="font-size:0.95rem; color:#666; font-weight:600;">
+                                        <i class="fas fa-clock" style="color:#888; margin-right:5px;"></i>
+                                        Validity: ${p.duration} Days
+                                    </div>
                                 </div>
-                                <button onclick="buyMembership('${p.name}', ${p.price}, ${p.propertyLimit || 9999})" style="width:100%; background:${p.color || '#138808'}; color:white; border:none; padding:12px; border-radius:8px; font-size:0.95rem; cursor:pointer; font-weight:800; box-shadow:0 4px 10px rgba(0,0,0,0.1);">Buy Plan</button>
+
+                                ${(p.description && p.description.length > 5) ? `
+                                    <div style="font-size:0.9rem; color:#666; margin-bottom:25px; line-height:1.5; min-height:45px; display:flex; align-items:center; justify-content:center; font-style:italic;">
+                                        "${p.description}"
+                                    </div>
+                                ` : '<div style="margin-bottom:25px;"></div>'}
+
+                                <button onclick="buyMembership('${p.name}', ${p.price}, ${p.propertyLimit || 9999})" style="width:100%; background:${p.color || '#138808'}; color:white; border:none; padding:16px; border-radius:12px; font-size:1.15rem; cursor:pointer; font-weight:800; box-shadow:0 4px 15px rgba(0,0,0,0.2); transition:0.2s;">
+                                    BUY PLAN
+                                </button>
                             </div>
                         `).join('')}
                      </div>
