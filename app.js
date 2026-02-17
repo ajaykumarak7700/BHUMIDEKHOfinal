@@ -207,6 +207,8 @@ function saveToFirebase() {
         customers: State.customers || [],
         properties: State.properties || [],
         otherPage: State.otherPage,
+        sellRentPage: State.sellRentPage,
+        premiumPlans: State.premiumPlans,
         messages: State.messages || {}
     };
 
@@ -275,6 +277,8 @@ function loadFromFirebase(callback) {
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
                 if (data.otherPage) State.otherPage = data.otherPage;
+                if (data.sellRentPage) State.sellRentPage = data.sellRentPage;
+                if (data.premiumPlans) State.premiumPlans = data.premiumPlans;
 
                 if (data.properties) {
                     State.properties = Array.isArray(data.properties) ? data.properties : Object.values(data.properties);
@@ -697,7 +701,8 @@ function saveToLocalStorage() {
             walletTransactions: State.walletTransactions,
             messages: State.messages,
             otherPage: State.otherPage,
-            sellRentPage: State.sellRentPage
+            sellRentPage: State.sellRentPage,
+            premiumPlans: State.premiumPlans
         }));
 
         // --- OPTIMIZATION START: Cache Properties Locally ---
@@ -782,6 +787,7 @@ function loadGlobalData() {
             if (parsed.messages) State.messages = parsed.messages;
             if (parsed.otherPage) State.otherPage = parsed.otherPage;
             if (parsed.sellRentPage) State.sellRentPage = parsed.sellRentPage;
+            if (parsed.premiumPlans) State.premiumPlans = parsed.premiumPlans;
         } else {
             throw new Error("No saved state");
         }
