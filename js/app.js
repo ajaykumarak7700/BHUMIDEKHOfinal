@@ -10,6 +10,7 @@ let currentFilters = {
 };
 let currentPropId = null;
 let userRole = '';
+let currentUserId = null;
 
 // Prevent accidental refresh/close when submitting
 window.addEventListener('beforeunload', (e) => {
@@ -262,6 +263,7 @@ async function loadFeed(reset = false) {
 
         if (data.status === 'success') {
             userRole = data.role;
+            currentUserId = data.user_id;
             if (data.data.length > 0) {
                 renderProperties(data.data);
                 feedOffset += 10;
@@ -301,7 +303,24 @@ function renderProperties(props) {
         const typeLabel = (typeof t === 'function' ? t('prop_' + (p.type ? p.type.toLowerCase() : '')) : p.type) || p.type || 'Property';
         const viewDetailsLabel = typeof t === 'function' ? t('view_details') : 'View Property';
 
+        // --- FEATURED & BOOST LOGIC ---
+        // Featured Badge
+        const featuredBadge = (p.is_featured == 1)
+            ? `<div style="position:absolute; top:10px; right:10px; background:linear-gradient(45deg, #FFD700, #FFA500); color:#000; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:12px; z-index:5; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><ion-icon name="star" style="vertical-align:middle;"></ion-icon> Featured</div>`
+            : '';
+
+        // Boost Button (Only for Owner Agent & Not already featured)
+        let boostBtn = '';
+        // DEBUG LOGGING
+        // console.log(`Prop ${p.id}: Role=${userRole}, CurUser=${currentUserId}, PropOwner=${p.user_id}, Featured=${p.is_featured}`);
+
+        if (userRole === 'agent' && currentUserId && p.user_id == currentUserId && p.is_featured != 1) {
+            boostBtn = `<button class="btn-boost" onclick="boostProperty(event, ${p.id})" style="width:100%; margin-top:8px; background:linear-gradient(45deg, #FFD700, #FF8C00); color:white; border:none; padding:8px; border-radius:6px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><ion-icon name="rocket-outline"></ion-icon> Boost Property (₹100)</button>`;
+        }
+
+
         div.innerHTML = `
+            ${featuredBadge}
             <div class="card-badge">${escapeHtml(typeLabel)}</div>
             <div class="card-like-btn" onclick="toggleLike(this, ${p.id})"><ion-icon name="heart-outline"></ion-icon></div>
             ${statusBadge}
@@ -318,6 +337,7 @@ function renderProperties(props) {
                 </div>
 
                 <button class="card-action-btn" id="btn-detail-${p.id}">${viewDetailsLabel}</button>
+                ${boostBtn}
             </div>
         `;
 
@@ -325,6 +345,41 @@ function renderProperties(props) {
 
         document.getElementById(`btn-detail-${p.id}`).onclick = () => openModal(p);
     });
+}
+
+// Boost Property Action
+async function boostProperty(e, id) {
+    e.stopPropagation(); // Prevent card click
+
+    if (!confirm("Boost this property for ₹100? It will be featured on the Home Page.")) return;
+
+    const btn = e.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<ion-icon name="sync-outline" class="spin"></ion-icon> Processing...';
+    btn.disabled = true;
+
+    const fd = new FormData();
+    fd.append('action', 'boost');
+    fd.append('id', id);
+
+    try {
+        const res = await fetch('api/property.php', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            alert(data.message);
+            loadFeed(true); // Refund to show updated status
+        } else {
+            alert(data.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Connection Failed');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }
 
 function toggleLike(btn, id) {
@@ -764,4 +819,3 @@ window.submitAdminEditV2 = async (id) => {
         }
     } catch(e) {console.error(e); alert('Failed to connect.'); }
 };
-                            ```

@@ -309,16 +309,17 @@
         async function loadFeed() {
             const res = await fetch('api/property.php?action=get_feed');
             const data = await res.json();
-            const feed = document.getElementById('property-feed');
-            feed.innerHTML = '';
+            const role = data.role || '';
+            const userId = data.user_id || null;
             
+            // DEBUG: Show user info at top of feed
+            feed.innerHTML = `<div style="background:#333; color:white; padding:5px; font-size:10px; text-align:center; margin-bottom:10px;">
+                Debug: Role=${role}, MyID=${userId}, Count=${data.data.length}
+            </div>`;
+
             data.data.forEach(p => {
                 // Determine display type
                 let displayType = p.type || 'Property';
-                // Try to translate type if it's one of the known ones
-                // Since api returns English "Plot", "House", etc.
-                // We use helper if available.
-                // But p.type might be "Plot". t('prop_plot') -> "प्लॉट"
                 let translatedType = p.type ? (t('prop_' + p.type.toLowerCase()) || p.type) : 'Property';
 
                 // Video and Photo labels
@@ -326,8 +327,25 @@
                 let photosLabel = t('photos');
                 let viewDetailsLabel = t('view_details');
 
+                // --- FEATURED & BOOST LOGIC ---
+                // Featured Badge
+                const featuredBadge = (p.is_featured == 1)
+                    ? `<div style="position:absolute; top:10px; right:12px; background:linear-gradient(45deg, #FFD700, #FFA500); color:#000; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:12px; z-index:5; box-shadow:0 2px 4px rgba(0,0,0,0.2);"><i class="fas fa-star"></i> Featured</div>`
+                    : '';
+
+                // Boost Button (Only for Owner Agent & Not already featured)
+                let boostBtn = '';
+                // Check Boost Condition
+                const canBoost = (role.toLowerCase() === 'agent' && userId && p.user_id == userId && p.is_featured != 1);
+                // console.log(`Prop ${p.id}: Owner=${p.user_id}, My=${userId}, Role=${role}, Featured=${p.is_featured}, CanBoost=${canBoost}`);
+
+                if (canBoost) {
+                    boostBtn = `<button class="btn" onclick="boostProperty(event, ${p.id})" style="width:100%; margin-top:8px; background:linear-gradient(45deg, #FFD700, #FF8C00); color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:5px;"><i class="fas fa-rocket"></i> Boost Property (₹100)</button>`;
+                }
+
                 feed.innerHTML += `
                 <div class="prop-card" onclick="openDetailProp(${p.id}, '${escapeHtml(p.title)}', '${p.price}', '${escapeHtml(p.image_path)}', '${escapeHtml(p.city||'')}', '${escapeHtml(p.type||'')}', '${escapeHtml(p.area||'')}', '${escapeHtml(p.description||'')}', '${p.contact_mobile||''}', '${p.map_link||''}', '${p.contact_whatsapp||''}', '${p.agent_name}')">
+                    ${featuredBadge}
                     <div class="like-btn-overlay" onclick="event.stopPropagation(); alert('Liked!')">
                         <i class="far fa-heart"></i>
                     </div>
@@ -340,6 +358,7 @@
                             <span>${p.video_link ? '<i class="fas fa-video" style="color:red;"></i> ' + videoLabel : ''}</span>
                         </div>
                         <button class="btn btn-primary" style="margin-top: 10px;">${viewDetailsLabel}</button>
+                        ${boostBtn}
                     </div>
                 </div>`;
             });
@@ -377,6 +396,30 @@
         
         function escapeHtml(text) {
             return text ? text.replace(/'/g, "\\'") : '';
+        }
+        async function boostProperty(e, id) {
+            e.stopPropagation(); 
+            if(!confirm("Boost this property for ₹100?")) return;
+
+            const btn = e.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Processing...';
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('action', 'boost');
+            fd.append('id', id);
+
+            try {
+                const res = await fetch('api/property.php', { method: 'POST', body: fd });
+                const data = await res.json();
+                alert(data.message);
+                if (data.status === 'success') loadFeed();
+                else { btn.innerHTML = originalText; btn.disabled = false; }
+            } catch (err) {
+                alert('Connection Failed');
+                btn.innerHTML = originalText; btn.disabled = false;
+            }
         }
     </script>
 </body>

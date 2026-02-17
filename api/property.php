@@ -75,11 +75,11 @@ if ($action === 'add') {
         $params = [$term, $term, $term, $term];
     }
     
-    $sql .= " ORDER BY p.created_at DESC LIMIT 50 OFFSET $offset";
+    $sql .= " ORDER BY p.is_featured DESC, p.created_at DESC LIMIT 50 OFFSET $offset";
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    echo json_encode(['status' => 'success', 'data' => $stmt->fetchAll(), 'role' => $_SESSION['role']??'guest']);
+    echo json_encode(['status' => 'success', 'data' => $stmt->fetchAll(), 'role' => $_SESSION['role']??'guest', 'user_id' => $_SESSION['user_id'] ?? null]);
 
 } elseif ($action === 'edit_contact') {
     // Admin Only: Override Contact Details
@@ -152,6 +152,73 @@ if ($action === 'add') {
     $stmt->execute([$status, $id]);
     echo json_encode(['status' => 'success']);
 
+} elseif ($action === 'boost') {
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['status' => 'error', 'message' => 'Login required']);
+        exit;
+    }
+
+    // Role Check (Optional, user said "Agent")
+    if (($_SESSION['role'] ?? '') !== 'agent') {
+        echo json_encode(['status' => 'error', 'message' => 'Only agents can boost properties']);
+        exit;
+    }
+    
+    $propId = $_POST['id'];
+    $userId = $_SESSION['user_id'];
+    $amount = 100;
+
+    // Check Ownership & Status
+    $stmt = $pdo->prepare("SELECT user_id, is_featured FROM properties WHERE id = ?");
+    $stmt->execute([$propId]);
+    $prop = $stmt->fetch();
+
+    if (!$prop) {
+        echo json_encode(['status' => 'error', 'message' => 'Property not found']);
+        exit;
+    }
+    
+    if ($prop['user_id'] != $userId) {
+        echo json_encode(['status' => 'error', 'message' => 'You do not own this property']);
+        exit;
+    }
+
+    if ($prop['is_featured']) {
+        echo json_encode(['status' => 'error', 'message' => 'Already featured']);
+        exit;
+    }
+
+    // Check Wallet
+    $stmt = $pdo->prepare("SELECT wallet_balance FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+
+    if (($user['wallet_balance'] ?? 0) < $amount) {
+        echo json_encode(['status' => 'error', 'message' => 'Low Balance! Recharge Wallet.']);
+        exit;
+    }
+
+    // Transaction
+    $pdo->beginTransaction();
+    try {
+        // Deduct
+        $stmt = $pdo->prepare("UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?");
+        $stmt->execute([$amount, $userId]);
+
+        // Record
+        $stmt = $pdo->prepare("INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, 'debit', ?)");
+        $stmt->execute([$userId, $amount, "Featured Property Boost: " . $propId]);
+
+        // Feature
+        $stmt = $pdo->prepare("UPDATE properties SET is_featured=1 WHERE id=?");
+        $stmt->execute([$propId]);
+        
+        $pdo->commit();
+        echo json_encode(['status' => 'success', 'message' => 'Boosted Successfully! -₹100']);
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        echo json_encode(['status' => 'error', 'message' => 'Transaction Failed']);
+    }
 } elseif ($action === 'delete') {
     if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
         echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
