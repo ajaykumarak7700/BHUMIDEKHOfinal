@@ -3419,8 +3419,8 @@ function renderAdmin(container) {
                                     <tr style="border-bottom:1px solid #eee;">
                                         <td style="padding:15px; color:#999; font-size:0.85rem;">#${r.id.toString().slice(-6)}</td>
                                         <td style="padding:15px;">
-                                            <div style="font-weight:700; color:#1a2a3a;">${r.agentName || 'Unknown'}</div>
-                                            <div style="font-size:0.8rem; color:#666;">ID: ${r.agentId}</div>
+                                            <div style="font-weight:700; color:#1a2a3a;">${r.agentName || 'Unknown'} <span style="font-size:0.7rem; background:${r.role === 'customer' ? '#e3f2fd' : '#e8f5e9'}; color:${r.role === 'customer' ? '#1565c0' : '#2e7d32'}; padding:2px 6px; border-radius:4px;">${r.role === 'customer' ? 'CUST' : 'AGENT'}</span></div>
+                                            <div style="font-size:0.8rem; color:#666;">ID: ${r.role === 'customer' ? (r.customerId || r.agentId) : (r.agentId || 'NA')}</div>
                                         </td>
                                         <td style="padding:15px; font-weight:800; color:#138808;">Rs. ${r.amount}</td>
                                         <td style="padding:15px;">
@@ -8687,9 +8687,12 @@ window.submitPaymentRequest = async () => {
 
         // Save Request to State WITH compressed proof (small enough for Firebase)
         if (!State.walletRequests) State.walletRequests = [];
+        const isCustomer = State.user.role === 'customer';
         State.walletRequests.push({
             id: reqId,
-            agentId: State.user.id,
+            agentId: !isCustomer ? State.user.id : undefined,
+            customerId: isCustomer ? State.user.id : undefined,
+            role: State.user.role,
             agentName: State.user.name,
             amount: parseInt(amount),
             proof: compressedBase64,
@@ -9015,8 +9018,14 @@ window.processWalletReqByRef = async function (reqIdStr, action) {
 
     if (action === 'approve') {
         // Update wallet in frontend state
-        let user = (State.agents || []).find(a => String(a.id) === String(req.agentId));
-        if (!user) user = (State.customers || []).find(c => String(c.id) === String(req.agentId));
+        // Update wallet in frontend state
+        let user;
+        if (req.role === 'customer' || req.customerId) {
+            user = (State.customers || []).find(c => String(c.id) === String(req.customerId || req.agentId));
+        } else {
+            user = (State.agents || []).find(a => String(a.id) === String(req.agentId));
+        }
+
         if (user) user.wallet = (user.wallet || 0) + req.amount;
 
         // Sync to PHP
