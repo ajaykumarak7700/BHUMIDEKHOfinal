@@ -6085,28 +6085,7 @@ window.requestCustomerWithdrawal = () => {
     openCustomerWalletModal(); // Refresh modal to show history
     showAlert('modal-container', 'Request Sent Successfully!', 'success');
 };
-State.walletTransactions.push({
-    id: reqId,
-    customerId: customer.id,
-    amount: amount,
-    type: 'debit',
-    remark: 'Withdrawal Request',
-    status: 'pending', // Pending approval
-    date: new Date().toLocaleString()
-});
 
-// --- SYNC TO PHP ---
-const fd = new FormData();
-fd.append('action', 'request_withdrawal');
-fd.append('amount', amount);
-fetch('api/wallet.php', { method: 'POST', body: fd }).catch(console.error);
-// -------------------
-
-saveGlobalData();
-closeModal();
-openCustomerWalletModal(); // Refresh modal to show history
-showAlert('modal-container', 'Request Sent Successfully!', 'success');
-};
 
 
 window.deleteCustomer = (id) => {
