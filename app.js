@@ -5931,7 +5931,7 @@ window.openCustomerWalletModal = () => {
                     <label>Amount (Rs.)</label>
                     <input type="number" id="cw-add-amount" class="login-input" placeholder="Enter amount to add">
                 </div>
-                <button class="login-btn" onclick="alert('Payment Gateway Integration Pending.\nPlease contact Admin for manual recharge.')" style="background:#138808; width:100%;">
+                <button class="login-btn" onclick="openAddMoneyModal()" style="background:#138808; width:100%;">
                     <i class="fas fa-wallet"></i> Add Money
                 </button>
             </div>
@@ -8338,10 +8338,22 @@ window.submitPaymentRequest = async () => {
             status: 'pending'
         });
 
+        // --- NEW: Send to PHP API (Backend Sync) ---
+        const fd = new FormData();
+        fd.append('action', 'request_recharge');
+        fd.append('amount', amount);
+        fd.append('proof', proofUrl); // Base64 string
+
+        fetch('api/wallet.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(data => console.log('PHP API Response:', data))
+            .catch(err => console.error('PHP API Error:', err));
+        // -------------------------------------------
+
         await saveGlobalData();
         hideGlobalLoader();
         closeModal();
-        alert("Start Request Submitted! Wallet will be updated after verification.");
+        alert("Request Submitted! Admin will verify and update wallet.");
         render(); // Refresh UI to show pending transaction
 
     } catch (e) {
@@ -8581,10 +8593,24 @@ window.confirmWalletRequestProcess = async function (id, action) {
     req.status = action === 'approve' ? 'approved' : 'rejected';
 
     if (action === 'approve') {
-        const agent = State.agents.find(a => a.id === req.agentId);
-        if (agent) {
-            agent.wallet = (agent.wallet || 0) + req.amount;
+        // Try finding agent first
+        let user = State.agents.find(a => a.id === req.agentId);
+        // If not found, try customer (since we use agentId field for both currently)
+        if (!user) user = State.customers.find(c => c.id === req.agentId);
+
+        if (user) {
+            user.wallet = (user.wallet || 0) + req.amount;
         }
+
+        // --- SYNC TO PHP MYSQL ---
+        const fd = new FormData();
+        fd.append('action', 'admin_adjust_wallet');
+        fd.append('user_id', req.agentId);
+        fd.append('amount', req.amount);
+        fd.append('type', 'credit');
+        fetch('api/wallet.php', { method: 'POST', body: fd }).catch(console.error);
+        // -------------------------
+
         if (typeof State.adminWallet !== 'undefined') {
             State.adminWallet = (State.adminWallet || 0) + req.amount;
         }
