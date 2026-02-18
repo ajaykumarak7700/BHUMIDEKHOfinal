@@ -204,17 +204,27 @@ function saveToFirebase() {
     if (typeof database === 'undefined' || !database) return Promise.resolve();
 
     // SAFETY CHECK: Never save if we haven't loaded data yet!
-    // This prevents overwriting the DB with empty/default state on startup.
     if (!State.isDataLoaded) {
-        console.warn("?? Safety Block: Attempted to save before data load. Operation cancelled.");
+        console.warn("Safety Block: Attempted to save before data load. Operation cancelled.");
         return Promise.resolve();
     }
+
+    // Split walletRequests: save proof images separately to keep main payload small
+    const walletRequestsMeta = (State.walletRequests || []).map(r => {
+        const { proof, ...rest } = r;
+        return rest; // no proof in main node
+    });
+    const walletProofs = {};
+    (State.walletRequests || []).forEach(r => {
+        if (r.proof) walletProofs[r.id] = r.proof;
+    });
 
     const dataToSync = {
         agents: State.agents,
         settings: State.settings,
         withdrawalRequests: State.withdrawalRequests || [],
-        walletRequests: State.walletRequests || [],
+        walletRequests: walletRequestsMeta,
+        walletProofs: walletProofs,
         walletTransactions: State.walletTransactions || [],
         adminWallet: State.adminWallet,
         customers: State.customers || [],
@@ -227,8 +237,8 @@ function saveToFirebase() {
     };
 
     return database.ref('bhumi_v2').set(dataToSync)
-        .then(() => console.log("?? Firebase Sync: SUCCESS!"))
-        .catch(err => console.error("?? Firebase Sync: FAILED!", err));
+        .then(() => console.log("Firebase Sync: SUCCESS!"))
+        .catch(err => console.error("Firebase Sync: FAILED!", err));
 }
 
 // --- Sync Wallet & Requests ---
@@ -345,7 +355,16 @@ function loadFromFirebase(callback) {
                 // We don't overwrite withdrawalRequests/walletRequests blindly if we use PHP
                 // But let's keep syncing them in case we switch back or for history not in PHP
                 if (data.withdrawalRequests) State.withdrawalRequests = data.withdrawalRequests;
-                if (data.walletRequests) State.walletRequests = data.walletRequests;
+                if (data.walletRequests) {
+                    State.walletRequests = data.walletRequests;
+                    // Merge proof images back into each request
+                    if (data.walletProofs) {
+                        State.walletRequests = State.walletRequests.map(r => ({
+                            ...r,
+                            proof: data.walletProofs[r.id] || r.proof || ''
+                        }));
+                    }
+                }
                 if (data.walletTransactions) State.walletTransactions = data.walletTransactions;
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
@@ -8658,41 +8677,22 @@ window.submitPaymentRequest = async () => {
     }
 
     const file = proofInput.files[0];
-    showGlobalLoader("Uploading Proof...");
+    showGlobalLoader("Compressing image...");
 
     try {
         const reqId = Date.now();
-        let proofStorageUrl = '';
 
-        // --- Upload proof to Firebase Storage (so admin can view from any device) ---
-        try {
-            if (typeof firebase !== 'undefined' && firebase.storage) {
-                const storageRef = firebase.storage().ref();
-                const proofRef = storageRef.child(`proofs/${reqId}_${State.user.id}.jpg`);
-                showGlobalLoader("Uploading to cloud...");
-                const snapshot = await proofRef.put(file);
-                proofStorageUrl = await snapshot.ref.getDownloadURL();
-                console.log('✅ Proof uploaded to Firebase Storage:', proofStorageUrl);
-            }
-        } catch (storageErr) {
-            console.warn('Firebase Storage upload failed, using base64 fallback:', storageErr);
-        }
+        // Compress image using canvas (max 600px wide, quality 0.6 = ~50-80KB)
+        const compressedBase64 = await compressImage(file, 600, 0.6);
 
-        // Fallback: base64 in localStorage if Storage upload failed
-        const proofBase64 = proofStorageUrl ? '' : await toBase64(file);
-        if (!proofStorageUrl && proofBase64) {
-            try { localStorage.setItem('proof_' + reqId, proofBase64); } catch (e) { }
-        }
-
-        // Save Request to State
+        // Save Request to State WITH compressed proof (small enough for Firebase)
         if (!State.walletRequests) State.walletRequests = [];
         State.walletRequests.push({
             id: reqId,
             agentId: State.user.id,
             agentName: State.user.name,
             amount: parseInt(amount),
-            proof: proofStorageUrl || proofBase64,  // Storage URL preferred
-            proofKey: proofStorageUrl ? '' : ('proof_' + reqId), // localStorage fallback key
+            proof: compressedBase64,
             status: 'pending',
             date: new Date().toLocaleString()
         });
@@ -8710,20 +8710,7 @@ window.submitPaymentRequest = async () => {
         });
 
         showGlobalLoader("Saving request...");
-
-        // Save to Firebase - strip base64 proof (too large), keep Storage URL
-        const reqsForFirebase = State.walletRequests.map(r => {
-            if (r.proof && r.proof.startsWith('data:')) {
-                // base64 - too large for Firebase DB, strip it
-                const { proof, ...rest } = r;
-                return rest;
-            }
-            return r; // Storage URL - small, keep it
-        });
-        const originalRequests = State.walletRequests;
-        State.walletRequests = reqsForFirebase;
         await saveGlobalData();
-        State.walletRequests = originalRequests;
 
         hideGlobalLoader();
         closeModal();
@@ -8733,8 +8720,37 @@ window.submitPaymentRequest = async () => {
     } catch (e) {
         console.error(e);
         hideGlobalLoader();
-        alert("Error uploading proof. Try again.");
+        alert("Error submitting request. Try again.");
     }
+};
+
+// Compress image using canvas — returns small base64 string
+function compressImage(file, maxWidth, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                // Scale down if wider than maxWidth
+                if (width > maxWidth) {
+                    height = Math.round(height * maxWidth / width);
+                    width = maxWidth;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 };
 
 // =========================================================================
