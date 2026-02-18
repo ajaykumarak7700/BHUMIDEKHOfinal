@@ -290,7 +290,8 @@ function loadFromFirebase(callback) {
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
                 if (data.otherPage) State.otherPage = data.otherPage;
-                if (data.sellRentPage) State.sellRentPage = data.sellRentPage;
+                if (data.otherPage) State.otherPage = data.otherPage;
+                // if (data.sellRentPage) State.sellRentPage = data.sellRentPage; // Force local config for 2 buttons
                 if (data.premiumPlans) State.premiumPlans = data.premiumPlans;
                 if (data.coupons) State.coupons = data.coupons;
 
@@ -801,7 +802,8 @@ function loadGlobalData() {
             State.adminWallet = parsed.adminWallet !== undefined ? parsed.adminWallet : 100000;
             if (parsed.messages) State.messages = parsed.messages;
             if (parsed.otherPage) State.otherPage = parsed.otherPage;
-            if (parsed.sellRentPage) State.sellRentPage = parsed.sellRentPage;
+            if (parsed.otherPage) State.otherPage = parsed.otherPage;
+            // if (parsed.sellRentPage) State.sellRentPage = parsed.sellRentPage; // Force local config for 2 buttons
             if (parsed.premiumPlans) State.premiumPlans = parsed.premiumPlans;
             if (parsed.coupons) State.coupons = parsed.coupons;
         } else {
@@ -1596,6 +1598,41 @@ window.submitKYC = async () => {
 
 window.enableKYCEdit = () => { State.kycEditMode = true; render(); };
 window.cancelKYCEdit = () => { State.kycEditMode = false; render(); };
+
+
+window.startCustomerListing = function () {
+    if (!State.user) {
+        alert("Please login first!");
+        navigate('login');
+        return;
+    }
+
+    // Find current wallet balance logic
+    let balance = 0;
+    if (State.user.role === 'customer') {
+        const cust = State.customers.find(c => c.id === State.user.id);
+        balance = cust ? (cust.wallet || 0) : 0;
+    } else {
+        // Agent or other
+        const ag = State.agents.find(a => a.id === State.user.id);
+        balance = ag ? (ag.wallet || 0) : 0;
+    }
+
+    const required = 99;
+    if (balance < required) {
+        alert(`Insufficient Balance! You need ₹${required}. Your balance: ₹${balance}. Please add money to wallet.`);
+        return;
+    }
+
+    if (confirm(`Listing costs ₹${required}. Proceed to add property details?`)) {
+        window.location.href = 'add_prop.php';
+    }
+};
+
+window.openContactAdminModal = function () {
+    alert("Please contact our support team at: " + (State.settings.contactInfo.phone || "9876543210"));
+    // Or implement a callback request modal here if needed
+};
 
 window.handleProfilePhotoUpload = async (input) => {
     if (input.files && input.files[0]) {
