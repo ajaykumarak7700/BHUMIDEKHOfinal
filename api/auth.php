@@ -50,6 +50,7 @@ if ($action === 'signup') {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['name'] = $user['name'];
+        $_SESSION['wallet'] = $user['wallet_balance'] ?? 0;
         echo json_encode(['status' => 'success', 'role' => $user['role'], 'message' => 'Login successful']);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Invalid credentials']);

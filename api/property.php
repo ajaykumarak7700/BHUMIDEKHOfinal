@@ -26,39 +26,82 @@ if ($action === 'add') {
         exit;
     }
 
-    $title = $_POST['title'];
-    $desc = $_POST['desc'];
-    $price = $_POST['price'];
-    $city = $_POST['city'];
-    $type = $_POST['type'];
-    $area = $_POST['area'];
-    $address = $_POST['address'];
-    $video = $_POST['video_link'] ?? '';
-    $map = $_POST['map_link'] ?? '';
-    
-    // Get User's Phone for Default Contact
-    $stmtUser = $pdo->prepare("SELECT mobile FROM users WHERE id = ?");
-    $stmtUser->execute([$_SESSION['user_id']]);
-    $userRow = $stmtUser->fetch();
-    $contact = $userRow['mobile'];
+    // 1. Wallet Check
+    $userId = $_SESSION['user_id'];
+    $cost = 99;
 
-    // Image Upload
-    $imagePath = '';
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $fileName = uniqid() . '.' . $ext;
-        $target = '../uploads/' . $fileName;
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-            $imagePath = $fileName;
-        }
+    $stmt = $pdo->prepare("SELECT wallet_balance FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+
+    if (($user['wallet_balance'] ?? 0) < $cost) {
+        echo json_encode(['status' => 'error', 'message' => 'Insufficient Balance! Please recharge.']);
+        exit;
     }
 
-    $sql = "INSERT INTO properties (user_id, title, description, price, city, type, area, location, address, video_link, map_link, image_path, contact_mobile, contact_whatsapp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    if ($stmt->execute([$_SESSION['user_id'], $title, $desc, $price, $city, $type, $area, $city, $address, $video, $map, $imagePath, $contact, $contact])) {
-        echo json_encode(['status' => 'success']);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'DB Error']);
+    // 2. Transaction Start
+    $pdo->beginTransaction();
+    try {
+        // Deduct Money
+        $stmt = $pdo->prepare("UPDATE users SET wallet_balance = wallet_balance - ? WHERE id = ?");
+        $stmt->execute([$cost, $userId]);
+
+        // Log Transaction
+        $stmt = $pdo->prepare("INSERT INTO transactions (user_id, amount, type, description) VALUES (?, ?, 'debit', ?)");
+        $stmt->execute([$userId, $cost, "Property Listing Fee"]);
+
+        // Insert Property
+        $title = $_POST['title'];
+        $desc = $_POST['description']; // Changed from 'desc' to 'description' based on JS FormData
+        $price = $_POST['price'];
+        $city = $_POST['city'];
+        $type = $_POST['type'];
+        $area = $_POST['area'];
+        $address = $_POST['address'];
+        $video = $_POST['video_link'] ?? '';
+        $map = $_POST['map_link'] ?? '';
+        
+        // Get User's Phone for Default Contact
+        $stmtUser = $pdo->prepare("SELECT mobile FROM users WHERE id = ?");
+        $stmtUser->execute([$userId]);
+        $userRow = $stmtUser->fetch();
+        $contact = $userRow['mobile'];
+
+        // Image Upload
+        $imagePath = '';
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
+            $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $fileName = uniqid() . '.' . $ext;
+            $target = '../uploads/' . $fileName;
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
+                $imagePath = $fileName;
+            }
+        }
+
+        $sql = "INSERT INTO properties (user_id, title, description, price, city, type, area, location, address, video_link, map_link, image_path, contact_mobile, contact_whatsapp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $pdo->prepare($sql);
+        // Note: Using $city for location as per original code or fix? Original used $city for location too?
+        // Original: if ($stmt->execute([$_SESSION['user_id'], $title, $desc, $price, $city, $type, $area, $city, $address, $video, $map, $imagePath, $contact, $contact]))
+        // Wait, original code might have bug using $city for location?
+        // Let's check original.
+        // Line 58: execute([$_SESSION['user_id'], $title, $desc, $price, $city, $type, $area, $city, $address, $video, $map, $imagePath, $contact, $contact])
+        // It used $city for location column. But JS sends `location` field!
+        // JS line 470: formData.append('location', $('#prop-location').value);
+        // So I should use $_POST['location'] for location column!
+        $location = $_POST['location'] ?? $city;
+
+        if ($stmt->execute([$userId, $title, $desc, $price, $city, $type, $area, $location, $address, $video, $map, $imagePath, $contact, $contact])) {
+            $pdo->commit();
+            // Update session if possible (though PHP session vars don't auto update from DB, we should manually sync for next page load)
+            $_SESSION['wallet'] = ($user['wallet_balance'] - $cost);
+            echo json_encode(['status' => 'success', 'message' => 'Property Listed Successfully! (₹99 deducted)']);
+        } else {
+            throw new Exception("Insert Failed");
+        }
+
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        echo json_encode(['status' => 'error', 'message' => 'Transaction Failed: ' . $e->getMessage()]);
     }
 
 } elseif ($action === 'get_feed') {

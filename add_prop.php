@@ -1,7 +1,13 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'agent') {
+if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'agent' && $_SESSION['role'] !== 'user')) {
     header("Location: index.php");
+    exit;
+}
+
+// Balance Check for direct URL access
+if (($_SESSION['wallet'] ?? 0) < 99) {
+    echo "<script>alert('Insufficient Wallet Balance (₹99 required). Please recharge.'); window.location.href='index.php';</script>";
     exit;
 }
 ?>

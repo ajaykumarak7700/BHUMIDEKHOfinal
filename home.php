@@ -54,8 +54,8 @@ if (!isset($_SESSION['user_id'])) {
             <ion-icon name="home" class="nav-icon"></ion-icon>
             <span>Home</span>
         </div>
-        <?php if ($_SESSION['role'] === 'agent'): ?>
-        <div class="nav-item" onclick="location.href='add_prop.php'">
+        <?php if ($_SESSION['role'] === 'agent' || $_SESSION['role'] === 'user'): ?>
+        <div class="nav-item" onclick="checkWalletAndOpen()">
             <ion-icon name="add-circle" class="nav-icon"></ion-icon>
             <span>Add</span>
         </div>
@@ -109,6 +109,22 @@ if (!isset($_SESSION['user_id'])) {
                 }
             });
         });
+
+        function checkWalletAndOpen() {
+            // Get wallet balance from session
+            const balance = <?php echo isset($_SESSION['wallet']) ? $_SESSION['wallet'] : 0; ?>;
+            const required = 99;
+
+            if (balance < required) {
+                alert(`Insufficient Balance! You need ₹${required} to list a property. Your balance is ₹${balance}. Please add money.`);
+                // redirection to wallet/add money page could be added here
+                return;
+            }
+
+            if (confirm(`Listing a property costs ₹${required}. Amount will be deducted upon submission. Proceed?`)) {
+                window.location.href = 'add_prop.php';
+            }
+        }
     </script>
 </body>
 </html>
