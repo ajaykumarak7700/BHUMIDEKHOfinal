@@ -1196,6 +1196,7 @@ function render() {
         case 'login': renderLogin(tempContainer); break;
         case 'admin': renderAdmin(tempContainer); break;
         case 'agent': renderAgent(tempContainer); break;
+        case 'customer': renderCustomer(tempContainer); break;
         case 'details': renderDetails(tempContainer); break;
         case 'signup': renderSignup(tempContainer); break;
         case 'profile': renderProfile(tempContainer); break;
@@ -2286,7 +2287,7 @@ function handleLogin(role) {
                     State.likes = cust.likes;
                     await saveGlobalData();
                     hideGlobalLoader("लॉगिन सफल!");
-                    navigate('home');
+                    navigate('customer');
                 } else {
                     hideGlobalLoader(null);
                     setTimeout(() => {
@@ -3687,6 +3688,261 @@ function renderAgent(container) {
 }
 
 window.setAgentTab = (tab) => { State.agentTab = tab; render(); };
+
+// =========================================================================
+// CUSTOMER DASHBOARD
+// =========================================================================
+function renderCustomer(container) {
+    if (!State.user || State.user.role !== 'customer') return navigate('login');
+    const tab = State.customerTab || 'wallet';
+    const customer = State.customers.find(c => c.id === State.user.id) || { name: State.user.name, wallet: 0 };
+
+    // Customer's transactions and withdrawal requests
+    const myTxns = (State.walletTransactions || []).filter(t => t.agentId === customer.id || t.customerId === customer.id);
+    const myWithdrawals = (State.withdrawalRequests || []).filter(r => r.customerId === customer.id);
+    const myRecharges = (State.walletRequests || []).filter(r => r.agentId === customer.id);
+
+    container.innerHTML = `
+        <div class="dashboard-layout">
+            <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+            <aside class="sidebar agent" style="background:linear-gradient(180deg, #1a2a3a 0%, #0d1b2a 100%);">
+                <div class="logo-simple" style="margin-bottom:30px; color:white; font-size:1.4rem; font-weight:900;">
+                    <i class="fas fa-user-circle"></i> My Account
+                </div>
+                <nav class="side-nav">
+                    <a href="#" class="side-link ${tab === 'wallet' ? 'active' : ''}" onclick="setCustomerTab('wallet'); toggleSidebar()">
+                        <i class="fas fa-wallet"></i> Wallet
+                    </a>
+                    <a href="#" class="side-link ${tab === 'history' ? 'active' : ''}" onclick="setCustomerTab('history'); toggleSidebar()">
+                        <i class="fas fa-history"></i> History
+                    </a>
+                    <a href="#" class="side-link ${tab === 'profile' ? 'active' : ''}" onclick="setCustomerTab('profile'); toggleSidebar()">
+                        <i class="fas fa-user"></i> Profile
+                    </a>
+                    <a href="#" class="side-link" onclick="navigate('home')">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                    <a href="#" class="side-link" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </nav>
+            </aside>
+
+            <main class="dash-main">
+                <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <i class="fas fa-bars mobile-menu-btn" style="display:none; margin-right:15px; font-size:1.5rem; cursor:pointer;" onclick="toggleSidebar()"></i>
+                        <div style="position:relative; width:60px; height:60px; flex-shrink:0;">
+                            ${customer.photo
+            ? `<img src="${customer.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:3px solid #FF9933; box-shadow:0 4px 15px rgba(0,0,0,0.1);">`
+            : `<div style="width:100%; height:100%; background:#fff3e0; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#FF9933; font-size:1.8rem; font-weight:800; border:3px solid #FF9933;">${customer.name ? customer.name.charAt(0).toUpperCase() : 'C'}</div>`
+        }
+                        </div>
+                        <div>
+                            <h1 style="font-size:1.4rem; color:#1a2a3a; margin:0;">Welcome, ${State.user.name} 👋</h1>
+                            <p style="font-size:0.8rem; color:#666; margin:4px 0 0;">Customer Account</p>
+                        </div>
+                    </div>
+                </header>
+
+                ${tab === 'wallet' ? `
+                    <div style="max-width:600px;">
+                        <!-- Balance Card -->
+                        <div style="background:linear-gradient(135deg, #FF9933 0%, #FF5722 100%); padding:30px; border-radius:20px; color:white; text-align:center; box-shadow:0 10px 30px rgba(255,153,51,0.4); margin-bottom:25px;">
+                            <i class="fas fa-wallet" style="font-size:2.5rem; margin-bottom:12px; opacity:0.9;"></i>
+                            <div style="font-size:0.9rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Available Balance</div>
+                            <div style="font-size:3rem; font-weight:900; margin-bottom:20px;">Rs. ${(customer.wallet || 0).toLocaleString()}</div>
+                            <div style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+                                <button onclick="openAddMoneyModal()" style="background:white; color:#FF5722; border:none; padding:14px 30px; border-radius:50px; font-weight:800; font-size:1rem; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.15); display:flex; align-items:center; gap:8px; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                    <i class="fas fa-plus-circle"></i> Add Money
+                                </button>
+                                <button onclick="openCustomerWithdrawModal()" style="background:rgba(255,255,255,0.2); color:white; border:2px solid rgba(255,255,255,0.6); padding:14px 30px; border-radius:50px; font-weight:800; font-size:1rem; cursor:pointer; display:flex; align-items:center; gap:8px; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                    <i class="fas fa-arrow-circle-down"></i> Withdraw
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Stats -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:25px;">
+                            <div style="background:white; padding:20px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); border-left:4px solid #138808; text-align:center;">
+                                <div style="font-size:1.8rem; font-weight:900; color:#138808;">${myRecharges.filter(r => r.status === 'approved').length}</div>
+                                <div style="font-size:0.8rem; color:#666; margin-top:4px;">Recharges Done</div>
+                            </div>
+                            <div style="background:white; padding:20px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); border-left:4px solid #D32F2F; text-align:center;">
+                                <div style="font-size:1.8rem; font-weight:900; color:#D32F2F;">${myWithdrawals.filter(r => r.status === 'pending').length}</div>
+                                <div style="font-size:0.8rem; color:#666; margin-top:4px;">Pending Withdrawals</div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Transactions -->
+                        <div style="background:white; border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                                <h3 style="color:#1a2a3a; margin:0;">Recent Activity</h3>
+                                <button onclick="setCustomerTab('history')" style="background:none; border:none; color:#FF9933; font-weight:700; cursor:pointer; font-size:0.85rem;">View All →</button>
+                            </div>
+                            ${[...myTxns, ...myWithdrawals.map(r => ({ id: r.id, amount: r.amount, type: 'withdrawal', status: r.status, date: r.date, remark: 'Withdrawal Request' }))]
+                .sort((a, b) => b.id - a.id).slice(0, 5)
+                .map(t => `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f5f5f5;">
+                                    <div style="display:flex; align-items:center; gap:12px;">
+                                        <div style="width:40px; height:40px; border-radius:50%; background:${t.type === 'credit' ? '#e8f5e9' : '#ffebee'}; display:flex; align-items:center; justify-content:center;">
+                                            <i class="fas fa-${t.type === 'credit' ? 'arrow-down' : 'arrow-up'}" style="color:${t.type === 'credit' ? '#138808' : '#D32F2F'};"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight:700; color:#1a2a3a; font-size:0.9rem;">${t.remark || t.type.toUpperCase()}</div>
+                                            <div style="font-size:0.75rem; color:#999;">${t.date || ''}</div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <div style="font-weight:800; color:${t.type === 'credit' ? '#138808' : '#D32F2F'}; font-size:1rem;">${t.type === 'credit' ? '+' : '-'}Rs. ${(t.amount || 0).toLocaleString()}</div>
+                                        <div style="font-size:0.7rem; font-weight:700; color:${t.status === 'approved' || t.status === 'success' ? '#138808' : (t.status === 'rejected' || t.status === 'failed' ? '#D32F2F' : '#FF9933')}">${(t.status || '').toUpperCase()}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${myTxns.length === 0 && myWithdrawals.length === 0 ? `
+                                <div style="text-align:center; padding:30px; color:#999;">
+                                    <i class="fas fa-inbox" style="font-size:2rem; margin-bottom:10px; opacity:0.4;"></i>
+                                    <div>No transactions yet</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${tab === 'history' ? `
+                    <div style="max-width:600px;">
+                        <h2 style="color:#1a2a3a; margin-bottom:20px;">Transaction History</h2>
+                        
+                        <!-- Recharge Requests -->
+                        <div style="background:white; border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05); margin-bottom:20px;">
+                            <h4 style="color:#138808; margin-bottom:15px;"><i class="fas fa-plus-circle"></i> Recharge Requests</h4>
+                            ${myRecharges.length > 0 ? myRecharges.sort((a, b) => b.id - a.id).map(r => `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f8f9fa; border-radius:10px; margin-bottom:8px; border-left:4px solid ${r.status === 'approved' ? '#138808' : (r.status === 'rejected' ? '#D32F2F' : '#FF9933')};">
+                                    <div>
+                                        <div style="font-weight:700; color:#1a2a3a;">Rs. ${(r.amount || 0).toLocaleString()}</div>
+                                        <div style="font-size:0.75rem; color:#999;">${r.date || ''}</div>
+                                    </div>
+                                    <span style="padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${r.status === 'approved' ? '#e8f5e9' : (r.status === 'rejected' ? '#ffebee' : '#fff3e0')}; color:${r.status === 'approved' ? '#2e7d32' : (r.status === 'rejected' ? '#D32F2F' : '#e65100')};">${(r.status || 'pending').toUpperCase()}</span>
+                                </div>
+                            `).join('') : '<div style="text-align:center; padding:20px; color:#999;">No recharge requests</div>'}
+                        </div>
+
+                        <!-- Withdrawal Requests -->
+                        <div style="background:white; border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
+                            <h4 style="color:#D32F2F; margin-bottom:15px;"><i class="fas fa-arrow-circle-down"></i> Withdrawal Requests</h4>
+                            ${myWithdrawals.length > 0 ? myWithdrawals.sort((a, b) => b.id - a.id).map(r => `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#f8f9fa; border-radius:10px; margin-bottom:8px; border-left:4px solid ${r.status === 'approved' ? '#138808' : (r.status === 'rejected' ? '#D32F2F' : '#FF9933')};">
+                                    <div>
+                                        <div style="font-weight:700; color:#1a2a3a;">Rs. ${(r.amount || 0).toLocaleString()}</div>
+                                        <div style="font-size:0.75rem; color:#999;">${r.date || ''}</div>
+                                        ${r.remark ? `<div style="font-size:0.7rem; color:#666; font-style:italic;">${r.remark}</div>` : ''}
+                                    </div>
+                                    <span style="padding:4px 12px; border-radius:50px; font-size:0.75rem; font-weight:800; background:${r.status === 'approved' ? '#e8f5e9' : (r.status === 'rejected' ? '#ffebee' : '#fff3e0')}; color:${r.status === 'approved' ? '#2e7d32' : (r.status === 'rejected' ? '#D32F2F' : '#e65100')};">${(r.status || 'pending').toUpperCase()}</span>
+                                </div>
+                            `).join('') : '<div style="text-align:center; padding:20px; color:#999;">No withdrawal requests</div>'}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${tab === 'profile' ? `
+                    <div style="max-width:500px;">
+                        <div style="background:white; border-radius:20px; box-shadow:0 5px 20px rgba(0,0,0,0.08); overflow:hidden;">
+                            <div style="background:linear-gradient(135deg, #FF9933, #FF5722); padding:30px; text-align:center; color:white;">
+                                <div style="position:relative; width:100px; height:100px; margin:0 auto 15px;">
+                                    ${customer.photo
+                ? `<img src="${customer.photo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:4px solid white;">`
+                : `<div style="width:100%; height:100%; background:rgba(255,255,255,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:800; border:4px solid white;">${customer.name ? customer.name.charAt(0).toUpperCase() : 'C'}</div>`
+            }
+                                    <label for="cust-photo-upload" style="position:absolute; bottom:0; right:0; background:#1a2a3a; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:2px solid white;">
+                                        <i class="fas fa-camera" style="font-size:0.7rem; color:white;"></i>
+                                    </label>
+                                    <input type="file" id="cust-photo-upload" accept="image/*" style="display:none;" onchange="handleProfilePhotoUpload(this)">
+                                </div>
+                                <h2 style="margin:0;">${customer.name}</h2>
+                                <p style="opacity:0.9; margin-top:5px;">CUSTOMER</p>
+                            </div>
+                            <div style="padding:25px;">
+                                <div style="margin-bottom:15px; padding:15px; background:#f8f9fa; border-radius:10px;">
+                                    <div style="font-size:0.75rem; color:#999; margin-bottom:4px;">Mobile Number</div>
+                                    <div style="font-weight:700; color:#1a2a3a;">${customer.phone || 'N/A'}</div>
+                                </div>
+                                <div style="margin-bottom:15px; padding:15px; background:#f8f9fa; border-radius:10px;">
+                                    <div style="font-size:0.75rem; color:#999; margin-bottom:4px;">Email</div>
+                                    <div style="font-weight:700; color:#1a2a3a;">${customer.email || 'N/A'}</div>
+                                </div>
+                                <div style="margin-bottom:20px; padding:15px; background:#fff3e0; border-radius:10px; border:1px solid #ffe0b2;">
+                                    <div style="font-size:0.75rem; color:#e65100; margin-bottom:4px;">Wallet Balance</div>
+                                    <div style="font-weight:900; color:#FF5722; font-size:1.5rem;">Rs. ${(customer.wallet || 0).toLocaleString()}</div>
+                                </div>
+                                <button class="login-btn" onclick="setCustomerTab('wallet')" style="background:#FF9933; margin-bottom:10px;">
+                                    <i class="fas fa-wallet"></i> Manage Wallet
+                                </button>
+                                <button class="login-btn" onclick="logout()" style="background:#D32F2F;">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+            </main>
+        </div>
+    `;
+}
+
+window.setCustomerTab = (tab) => { State.customerTab = tab; render(); };
+
+window.openCustomerWithdrawModal = () => {
+    const customer = State.customers.find(c => c.id === State.user.id);
+    if (!customer) return;
+    const modal = document.getElementById('modal-container');
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:380px;">
+            <h3 style="margin-bottom:20px; color:#D32F2F;"><i class="fas fa-arrow-circle-down"></i> Request Withdrawal</h3>
+            <div style="background:#fff3e0; padding:15px; border-radius:10px; margin-bottom:20px;">
+                <div style="font-size:0.85rem; color:#e65100;">Available Balance</div>
+                <div style="font-size:1.8rem; font-weight:900; color:#FF5722;">Rs. ${(customer.wallet || 0).toLocaleString()}</div>
+            </div>
+            <div class="form-group">
+                <label>Amount to Withdraw (Rs.)</label>
+                <input type="number" id="cust-withdraw-amount" class="login-input" placeholder="Enter amount" max="${customer.wallet || 0}">
+            </div>
+            <div class="form-group">
+                <label>Bank / UPI Details</label>
+                <input type="text" id="cust-withdraw-detail" class="login-input" placeholder="UPI ID or Bank Account Number">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="login-btn" onclick="submitCustomerWithdrawal()" style="background:#D32F2F; flex:1;">Submit Request</button>
+                <button class="prop-btn" onclick="closeModal()" style="background:none; color:#666; flex:1;">Cancel</button>
+            </div>
+        </div>
+    `;
+};
+
+window.submitCustomerWithdrawal = () => {
+    const customer = State.customers.find(c => c.id === State.user.id);
+    if (!customer) return;
+    const amountStr = document.getElementById('cust-withdraw-amount').value;
+    const detail = document.getElementById('cust-withdraw-detail').value;
+    if (!amountStr || isNaN(amountStr) || parseInt(amountStr) <= 0) return alert('Please enter a valid amount!');
+    const amount = parseInt(amountStr);
+    if (amount > (customer.wallet || 0)) return alert('Insufficient balance!');
+    if (!detail.trim()) return alert('Please enter your bank/UPI details!');
+
+    showGlobalLoader('Sending request...');
+    customer.wallet -= amount;
+    if (!State.withdrawalRequests) State.withdrawalRequests = [];
+    const reqId = Date.now();
+    State.withdrawalRequests.push({ id: reqId, customerId: customer.id, customerName: customer.name, amount, date: new Date().toLocaleString(), status: 'pending', remark: 'Bank/UPI: ' + detail });
+    if (!State.walletTransactions) State.walletTransactions = [];
+    State.walletTransactions.push({ id: reqId, customerId: customer.id, amount, type: 'debit', remark: 'Withdrawal Request', status: 'pending', date: new Date().toLocaleString() });
+    saveGlobalData();
+    hideGlobalLoader();
+    closeModal();
+    alert('Withdrawal request submitted! Admin will process it soon.');
+    render();
+};
+
 
 window.toggleSidebar = () => {
     const sidebar = document.querySelector('.sidebar');
