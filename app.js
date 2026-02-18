@@ -3389,16 +3389,16 @@ function renderAdmin(container) {
                             <tbody>
                                 ${(State.walletRequests || []).length === 0 ?
                 '<tr><td colspan="6" style="padding:30px; text-align:center; color:#999;">No recharge requests found.</td></tr>' :
-                (State.walletRequests || []).sort((a, b) => b.id - a.id).map(r => `
+                (State.walletRequests || []).sort((a, b) => b.id - a.id).map((r, idx) => `
                                     <tr style="border-bottom:1px solid #eee;">
                                         <td style="padding:15px; color:#999; font-size:0.85rem;">#${r.id.toString().slice(-6)}</td>
                                         <td style="padding:15px;">
-                                            <div style="font-weight:700; color:#1a2a3a;">${r.agentName}</div>
+                                            <div style="font-weight:700; color:#1a2a3a;">${r.agentName || 'Unknown'}</div>
                                             <div style="font-size:0.8rem; color:#666;">ID: ${r.agentId}</div>
                                         </td>
                                         <td style="padding:15px; font-weight:800; color:#138808;">Rs. ${r.amount}</td>
                                         <td style="padding:15px;">
-                                            <a href="#" onclick="openImageModal('${r.proof}')" style="color:#1976D2; text-decoration:underline; font-size:0.9rem;">View Proof</a>
+                                            <a href="#" onclick="openImageModal('${r.proof || ''}')" style="color:#1976D2; text-decoration:underline; font-size:0.9rem;">View Proof</a>
                                         </td>
                                         <td style="padding:15px;">
                                             <span style="padding:5px 10px; border-radius:20px; font-size:0.8rem; font-weight:700; 
@@ -3409,8 +3409,8 @@ function renderAdmin(container) {
                                         </td>
                                         <td style="padding:15px;">
                                             ${r.status === 'pending' ? `
-                                                <button onclick="approveWalletRequest(${r.id})" style="background:#2e7d32; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; margin-right:5px; font-size:0.8rem;">Approve</button>
-                                                <button onclick="rejectWalletRequest(${r.id})" style="background:#c62828; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:0.8rem;">Reject</button>
+                                                <button onclick="openWalletReqModalByIndex(${idx}, 'approve')" style="background:#2e7d32; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; margin-right:5px; font-size:0.8rem;">Approve</button>
+                                                <button onclick="openWalletReqModalByIndex(${idx}, 'reject')" style="background:#c62828; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:0.8rem;">Reject</button>
                                             ` : '<span style="color:#999; font-size:0.8rem;">No Action</span>'}
                                         </td>
                                     </tr>
@@ -8640,6 +8640,111 @@ window.confirmProcessWithdrawal = async (reqId, status) => {
 };
 
 // --- Wallet Request Processing (Recharge Approval/Rejection) ---
+// Index-based modal opener - bypasses all id type issues
+window.openWalletReqModalByIndex = function (idx, action) {
+    // Get the same sorted array that was used to render the table
+    const sorted = (State.walletRequests || []).slice().sort((a, b) => b.id - a.id);
+    const req = sorted[idx];
+    if (!req) {
+        alert('Request not found. Please click Refresh and try again.');
+        return;
+    }
+    showWalletReqModal(req, action);
+};
+
+window.showWalletReqModal = function (req, action) {
+    const modal = document.getElementById('modal-container');
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content scale-in" style="max-width:380px;">
+            <h3 style="margin-bottom:20px; color:${action === 'approve' ? '#138808' : '#D32F2F'};">
+                ${action === 'approve' ? '✅ Approve' : '❌ Reject'} Recharge Request
+            </h3>
+            <div style="background:#f5f5f5; padding:15px; border-radius:10px; margin-bottom:15px;">
+                <p><strong>User:</strong> ${req.agentName || 'Unknown'}</p>
+                <p><strong>Amount:</strong> Rs. ${req.amount}</p>
+                <p><strong>Date:</strong> ${req.date || ''}</p>
+                ${req.proof ? `<p><a href="${req.proof}" target="_blank" style="color:#1976D2;">View Proof Screenshot</a></p>` : ''}
+            </div>
+            <div class="form-group">
+                <label>Remark (Optional)</label>
+                <textarea id="wal-req-remark" class="login-input" style="height:80px;" placeholder="${action === 'approve' ? 'e.g. Received via UPI' : 'e.g. Payment not received'}">${action === 'approve' ? 'Manual Recharge (Approved)' : 'Manual Recharge (Rejected)'}</textarea>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="login-btn" onclick="processWalletReqByRef('${req.id}', '${action}')" style="background:${action === 'approve' ? '#138808' : '#D32F2F'}; flex:1;">${action === 'approve' ? 'Approve' : 'Reject'}</button>
+                <button class="prop-btn" onclick="closeModal()" style="background:none; color:#666; flex:1;">Cancel</button>
+            </div>
+        </div>
+    `;
+};
+
+// Process using string id stored in data-attribute - no type issues
+window.processWalletReqByRef = async function (reqIdStr, action) {
+    const remark = document.getElementById('wal-req-remark').value;
+    // Find by string comparison to avoid any type issues
+    const req = (State.walletRequests || []).find(r => String(r.id) === String(reqIdStr));
+    if (!req) {
+        alert('Error: Request not found. Please refresh.');
+        return;
+    }
+
+    showGlobalLoader(action === 'approve' ? 'Approving...' : 'Rejecting...');
+    req.status = action === 'approve' ? 'approved' : 'rejected';
+
+    if (action === 'approve') {
+        // Update wallet in frontend state
+        let user = (State.agents || []).find(a => String(a.id) === String(req.agentId));
+        if (!user) user = (State.customers || []).find(c => String(c.id) === String(req.agentId));
+        if (user) user.wallet = (user.wallet || 0) + req.amount;
+
+        // Sync to PHP
+        if (req.isPhp) {
+            try {
+                const fd = new FormData();
+                fd.append('action', 'approve_recharge');
+                fd.append('req_id', req.id);
+                fd.append('status', 'approved');
+                await fetch('api/wallet.php', { method: 'POST', body: fd });
+            } catch (e) { console.error('PHP sync error:', e); }
+        }
+    } else {
+        // Reject - update PHP status
+        if (req.isPhp) {
+            try {
+                const fd = new FormData();
+                fd.append('action', 'approve_recharge');
+                fd.append('req_id', req.id);
+                fd.append('status', 'rejected');
+                await fetch('api/wallet.php', { method: 'POST', body: fd });
+            } catch (e) { console.error('PHP sync error:', e); }
+        }
+    }
+
+    // Update/create transaction record
+    if (!State.walletTransactions) State.walletTransactions = [];
+    let txn = State.walletTransactions.find(t => String(t.id) === String(req.id));
+    if (txn) {
+        txn.status = action === 'approve' ? 'success' : 'failed';
+        txn.remark = remark;
+    } else {
+        State.walletTransactions.push({
+            id: req.id,
+            agentId: req.agentId,
+            amount: req.amount,
+            type: 'credit',
+            remark: remark || (action === 'approve' ? 'Recharge Approved' : 'Recharge Rejected'),
+            date: new Date().toLocaleString(),
+            status: action === 'approve' ? 'success' : 'failed'
+        });
+    }
+
+    await saveGlobalData();
+    hideGlobalLoader();
+    closeModal();
+    alert(`Request ${action === 'approve' ? 'Approved ✅' : 'Rejected ❌'}!`);
+    render();
+};
+
 window.approveWalletRequest = function (id) {
     openWalletRequestModal(id, 'approve');
 };
