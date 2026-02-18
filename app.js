@@ -2708,6 +2708,12 @@ function renderAdmin(container) {
                 ` : ''}
 
                 ${tab === 'withdrawals' ? `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 style="color:#1a2a3a; font-size:1.5rem; font-weight:700;">Withdrawal Requests</h2>
+                        <button onclick="window.syncWalletDataFromPHP()" style="background:#1976D2; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
                     <div class="stat-box" style="padding:0; overflow-x:auto;">
                         <table style="width:100%; border-collapse:collapse; min-width:800px;">
                             <thead style="background:#f8f9fa;">
@@ -3363,6 +3369,9 @@ function renderAdmin(container) {
                 ${tab === 'walletRequests' ? `
                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                         <h2 style="color:#1a2a3a; font-size:1.5rem; font-weight:700;">Wallet Requests</h2>
+                        <button onclick="window.syncWalletDataFromPHP()" style="background:#1976D2; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
                     </div>
                     
                     <div style="background:white; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); overflow:hidden;">
@@ -3415,7 +3424,15 @@ function renderAdmin(container) {
     `;
 }
 
-window.setAdminTab = (t) => { State.adminTab = t; render(); };
+window.setAdminTab = (t) => {
+    State.adminTab = t;
+    // Auto-sync from PHP when admin opens wallet-related tabs
+    if ((t === 'walletRequests' || t === 'withdrawals') && State.user && State.user.role === 'admin') {
+        window.syncWalletDataFromPHP();
+    } else {
+        render();
+    }
+};
 window.updateAdminSearch = (v) => { State.adminSearch = v; render(); };
 
 window.updateDisplayOrder = async function (id, order) {
