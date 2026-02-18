@@ -209,11 +209,11 @@
                         <span data-i18n="admin">Admin</span>
                     </div>
                  <?php else: ?>
-                    <div class="nav-item" onclick="navTo('login', this)"> <!-- Profile Placeholder -->
-                        <i class="fas fa-user"></i>
-                        <span data-i18n="profile">Profile</span>
+                    <div class="nav-item" onclick="checkWalletAndOpen()">
+                        <i class="fas fa-plus-circle"></i>
+                        <span data-i18n="add_property">Add Property</span>
                     </div>
-                 <?php endif; ?>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="nav-item" onclick="openLoginModal()">
                     <i class="fas fa-user"></i>
@@ -221,6 +221,25 @@
                 </div>
             <?php endif; ?>
         </nav>
+
+        <script>
+        function checkWalletAndOpen() {
+            // Get wallet balance. Session might not have it if user was logged in before update.
+            // If so, we assume 0 unless refreshed, but let's try to be smart.
+            let balance = <?php echo isset($_SESSION['wallet']) ? $_SESSION['wallet'] : 0; ?>;
+            const required = 99;
+
+            // Simple check
+            if (balance < required) {
+                alert(`Insufficient Balance! You need ₹${required} to list a property. Your balance is ₹${balance}. Please verify or add money (re-login if balance is incorrect).`);
+                return;
+            }
+
+            if (confirm(`Listing a property costs ₹${required}. Amount will be deducted upon submission. Proceed?`)) {
+                window.location.href = 'add_prop.php';
+            }
+        }
+        </script>
 
     </div>
 
