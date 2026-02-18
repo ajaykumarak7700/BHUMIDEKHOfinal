@@ -214,6 +214,7 @@ function saveToFirebase() {
         agents: State.agents,
         settings: State.settings,
         withdrawalRequests: State.withdrawalRequests || [],
+        walletRequests: State.walletRequests || [],
         walletTransactions: State.walletTransactions || [],
         adminWallet: State.adminWallet,
         customers: State.customers || [],
@@ -344,6 +345,7 @@ function loadFromFirebase(callback) {
                 // We don't overwrite withdrawalRequests/walletRequests blindly if we use PHP
                 // But let's keep syncing them in case we switch back or for history not in PHP
                 if (data.withdrawalRequests) State.withdrawalRequests = data.withdrawalRequests;
+                if (data.walletRequests) State.walletRequests = data.walletRequests;
                 if (data.walletTransactions) State.walletTransactions = data.walletTransactions;
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
