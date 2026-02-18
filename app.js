@@ -8385,50 +8385,58 @@ window.submitPaymentRequest = async () => {
     showGlobalLoader("Uploading Proof...");
 
     try {
-        const proofUrl = await toBase64(file); // Reuse existing helper
+        const proofUrl = await toBase64(file);
 
-        // Save Request
+        // Generate unique request ID
+        const reqId = Date.now();
+
+        // Store proof image SEPARATELY in localStorage (not in Firebase - too large!)
+        // Firebase has size limits, base64 images cause save failures
+        try {
+            localStorage.setItem('proof_' + reqId, proofUrl);
+        } catch (e) {
+            console.warn('Could not save proof to localStorage:', e);
+        }
+
+        // Save Request to State (WITHOUT the large base64 image)
         if (!State.walletRequests) State.walletRequests = [];
-
         State.walletRequests.push({
-            id: Date.now(),
+            id: reqId,
             agentId: State.user.id,
             agentName: State.user.name,
             amount: parseInt(amount),
-            proof: proofUrl,
+            proofKey: 'proof_' + reqId,  // Reference to localStorage key
+            proof: proofUrl,             // Keep in memory for current session
             status: 'pending',
             date: new Date().toLocaleString()
         });
 
-        // Also add to local transactions as pending
+        // Also add to transactions as pending
         if (!State.walletTransactions) State.walletTransactions = [];
         State.walletTransactions.push({
-            id: Date.now(),
+            id: reqId,
             agentId: State.user.id,
             amount: parseInt(amount),
-            type: 'credit', // It's a credit request
+            type: 'credit',
             remark: 'Manual Recharge (Pending)',
             date: new Date().toLocaleString(),
             status: 'pending'
         });
 
-        // --- NEW: Send to PHP API (Backend Sync) ---
-        const fd = new FormData();
-        fd.append('action', 'request_recharge');
-        fd.append('amount', amount);
-        fd.append('proof', proofUrl); // Base64 string
-
-        fetch('api/wallet.php', { method: 'POST', body: fd })
-            .then(res => res.json())
-            .then(data => console.log('PHP API Response:', data))
-            .catch(err => console.error('PHP API Error:', err));
-        // -------------------------------------------
-
+        // Save to Firebase - but strip proof image first to avoid size limit
+        const reqsForFirebase = State.walletRequests.map(r => {
+            const { proof, ...rest } = r; // Remove base64 proof from Firebase payload
+            return rest;
+        });
+        const originalRequests = State.walletRequests;
+        State.walletRequests = reqsForFirebase;
         await saveGlobalData();
+        State.walletRequests = originalRequests; // Restore with proof for current session
+
         hideGlobalLoader();
         closeModal();
         alert("Request Submitted! Admin will verify and update wallet.");
-        render(); // Refresh UI to show pending transaction
+        render();
 
     } catch (e) {
         console.error(e);
