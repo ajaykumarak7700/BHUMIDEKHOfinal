@@ -230,37 +230,42 @@ function saveToFirebase() {
         .catch(err => console.error("?? Firebase Sync: FAILED!", err));
 }
 
-// --- NEW: Sync Wallet & Requests from PHP Backend ---
+// --- Sync Wallet & Requests ---
+// On bhumidekho.com (GitHub Pages): PHP not available, data is in Firebase (State)
+// On local XAMPP: PHP available, fetch from MySQL
 window.syncWalletDataFromPHP = async () => {
-    // Only Admin needs to fetch ALL requests. 
-    if (State.user && State.user.role === 'admin') {
-        try {
-            // 1. Recharge Requests
-            const res1 = await fetch('api/wallet.php?action=get_recharge_requests');
-            const data1 = await res1.json();
+    if (!State.user || State.user.role !== 'admin') return;
 
-            if (data1.status === 'success') {
-                const phpRecharges = data1.data.map(r => ({
-                    id: parseInt(r.id),
-                    // For recharges, UI uses agentId for both currently
-                    agentId: parseInt(r.user_id),
-                    agentName: r.name + ' (' + r.mobile + ')',
-                    amount: parseFloat(r.amount),
-                    proof: 'uploads/' + r.proof_image,
-                    status: r.status,
-                    date: new Date(r.created_at).toLocaleString(),
-                    isPhp: true
-                }));
+    let phpWorked = false;
 
-                if (!State.walletRequests) State.walletRequests = [];
-                State.walletRequests = State.walletRequests.filter(r => !r.isPhp);
-                State.walletRequests = [...State.walletRequests, ...phpRecharges];
-            }
+    try {
+        // Try PHP first with timeout (works on XAMPP/local server)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
 
-            // 2. Withdrawal Requests
+        const res1 = await fetch('api/wallet.php?action=get_recharge_requests', { signal: controller.signal });
+        clearTimeout(timeout);
+        const data1 = await res1.json();
+
+        if (data1.status === 'success') {
+            phpWorked = true;
+            const phpRecharges = data1.data.map(r => ({
+                id: parseInt(r.id),
+                agentId: parseInt(r.user_id),
+                agentName: r.name + ' (' + r.mobile + ')',
+                amount: parseFloat(r.amount),
+                proof: 'uploads/' + r.proof_image,
+                status: r.status,
+                date: new Date(r.created_at).toLocaleString(),
+                isPhp: true
+            }));
+            if (!State.walletRequests) State.walletRequests = [];
+            State.walletRequests = State.walletRequests.filter(r => !r.isPhp);
+            State.walletRequests = [...State.walletRequests, ...phpRecharges];
+
+            // Also fetch withdrawals from PHP
             const res2 = await fetch('api/wallet.php?action=get_requests');
             const data2 = await res2.json();
-
             if (data2.status === 'success') {
                 const phpWithdrawals = data2.data.map(r => {
                     const isCustomer = r.role === 'customer';
@@ -268,7 +273,6 @@ window.syncWalletDataFromPHP = async () => {
                         id: parseInt(r.id),
                         agentId: !isCustomer ? parseInt(r.user_id) : undefined,
                         customerId: isCustomer ? parseInt(r.user_id) : undefined,
-                        // Provide fallback name if not found in list (though backend sends it)
                         agentName: r.name + ' (' + r.mobile + ')',
                         customerName: r.name + ' (' + r.mobile + ')',
                         amount: parseFloat(r.amount),
@@ -277,19 +281,19 @@ window.syncWalletDataFromPHP = async () => {
                         isPhp: true
                     };
                 });
-
                 if (!State.withdrawalRequests) State.withdrawalRequests = [];
                 State.withdrawalRequests = State.withdrawalRequests.filter(r => !r.isPhp);
                 State.withdrawalRequests = [...State.withdrawalRequests, ...phpWithdrawals];
             }
-
-            console.log("Synced Wallet Data from PHP");
-            render(); // Refresh UI
-
-        } catch (e) {
-            console.error("PHP Sync Error:", e);
+            console.log('Synced from PHP/MySQL. Requests:', State.walletRequests.length);
         }
+    } catch (e) {
+        // PHP not available (GitHub Pages live site) - Firebase data already in State
+        console.warn('PHP unavailable (live site). Using Firebase data. Requests in State:', (State.walletRequests || []).length);
     }
+
+    // Always render - whether data came from PHP or Firebase
+    render();
 };
 
 function loadFromFirebase(callback) {
