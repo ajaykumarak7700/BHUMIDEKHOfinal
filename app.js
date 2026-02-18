@@ -3762,47 +3762,34 @@ function renderCustomer(container) {
                             </div>
                         </div>
 
-                        <!-- Quick Stats -->
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:25px;">
-                            <div style="background:white; padding:20px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); border-left:4px solid #138808; text-align:center;">
-                                <div style="font-size:1.8rem; font-weight:900; color:#138808;">${myRecharges.filter(r => r.status === 'approved').length}</div>
-                                <div style="font-size:0.8rem; color:#666; margin-top:4px;">Recharges Done</div>
-                            </div>
-                            <div style="background:white; padding:20px; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.05); border-left:4px solid #D32F2F; text-align:center;">
-                                <div style="font-size:1.8rem; font-weight:900; color:#D32F2F;">${myWithdrawals.filter(r => r.status === 'pending').length}</div>
-                                <div style="font-size:0.8rem; color:#666; margin-top:4px;">Pending Withdrawals</div>
-                            </div>
-                        </div>
-
-                        <!-- Recent Transactions -->
+                        <!-- Full Transaction History (agent style) -->
                         <div style="background:white; border-radius:15px; padding:20px; box-shadow:0 5px 15px rgba(0,0,0,0.05);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                                <h3 style="color:#1a2a3a; margin:0;">Recent Activity</h3>
-                                <button onclick="setCustomerTab('history')" style="background:none; border:none; color:#FF9933; font-weight:700; cursor:pointer; font-size:0.85rem;">View All →</button>
-                            </div>
-                            ${[...myTxns, ...myWithdrawals.map(r => ({ id: r.id, amount: r.amount, type: 'withdrawal', status: r.status, date: r.date, remark: 'Withdrawal Request' }))]
-                .sort((a, b) => b.id - a.id).slice(0, 5)
+                            <h3 style="margin-bottom:15px; color:#1a2a3a;">Transaction History</h3>
+                            ${[
+                ...(myTxns),
+                ...(myWithdrawals.map(r => ({ id: r.id, customerId: r.customerId, amount: r.amount, type: 'debit', status: r.status, date: r.date, remark: r.remark || 'Withdrawal Request' }))),
+                ...(myRecharges.map(r => ({ id: r.id, agentId: r.agentId, amount: r.amount, type: 'credit', status: r.status, date: r.date, remark: 'Recharge Request' })))
+            ]
+                .filter((t, i, arr) => arr.findIndex(x => x.id === t.id && x.type === t.type) === i) // deduplicate
+                .sort((a, b) => b.id - a.id)
                 .map(t => `
-                                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f5f5f5;">
-                                    <div style="display:flex; align-items:center; gap:12px;">
-                                        <div style="width:40px; height:40px; border-radius:50%; background:${t.type === 'credit' ? '#e8f5e9' : '#ffebee'}; display:flex; align-items:center; justify-content:center;">
-                                            <i class="fas fa-${t.type === 'credit' ? 'arrow-down' : 'arrow-up'}" style="color:${t.type === 'credit' ? '#138808' : '#D32F2F'};"></i>
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid #f0f0f0;">
+                                    <div>
+                                        <div style="font-weight:700; color:#1a2a3a;">
+                                            ${t.type === 'credit' ? '<span style="color:#138808;">+ Rs. ' + (t.amount || 0).toLocaleString() + '</span>' : '<span style="color:#D32F2F;">- Rs. ' + (t.amount || 0).toLocaleString() + '</span>'}
                                         </div>
-                                        <div>
-                                            <div style="font-weight:700; color:#1a2a3a; font-size:0.9rem;">${t.remark || t.type.toUpperCase()}</div>
-                                            <div style="font-size:0.75rem; color:#999;">${t.date || ''}</div>
-                                        </div>
+                                        <div style="font-size:0.75rem; color:#999;">${t.date || ''} • ${t.type.toUpperCase()}</div>
+                                        ${t.remark ? `<div style="font-size:0.7rem; color:#666; font-style:italic;">"${t.remark}"</div>` : ''}
                                     </div>
-                                    <div style="text-align:right;">
-                                        <div style="font-weight:800; color:${t.type === 'credit' ? '#138808' : '#D32F2F'}; font-size:1rem;">${t.type === 'credit' ? '+' : '-'}Rs. ${(t.amount || 0).toLocaleString()}</div>
-                                        <div style="font-size:0.7rem; font-weight:700; color:${t.status === 'approved' || t.status === 'success' ? '#138808' : (t.status === 'rejected' || t.status === 'failed' ? '#D32F2F' : '#FF9933')}">${(t.status || '').toUpperCase()}</div>
-                                    </div>
+                                    <span style="font-size:0.75rem; font-weight:800; color:${t.status === 'approved' || t.status === 'success' ? '#138808' : (t.status === 'rejected' || t.status === 'failed' ? '#D32F2F' : '#FF9933')}">
+                                        ${t.status ? t.status.toUpperCase() : 'PENDING'}
+                                    </span>
                                 </div>
                             `).join('')}
-                            ${myTxns.length === 0 && myWithdrawals.length === 0 ? `
+                            ${(myTxns.length === 0 && myWithdrawals.length === 0 && myRecharges.length === 0) ? `
                                 <div style="text-align:center; padding:30px; color:#999;">
                                     <i class="fas fa-inbox" style="font-size:2rem; margin-bottom:10px; opacity:0.4;"></i>
-                                    <div>No transactions yet</div>
+                                    <div>No transaction history found.</div>
                                 </div>
                             ` : ''}
                         </div>
