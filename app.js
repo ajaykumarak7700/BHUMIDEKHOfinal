@@ -3405,7 +3405,7 @@ function renderAdmin(container) {
                                         </td>
                                         <td style="padding:15px; font-weight:800; color:#138808;">Rs. ${r.amount}</td>
                                         <td style="padding:15px;">
-                                            <a href="#" onclick="openImageModal('${r.proof || ''}')" style="color:#1976D2; text-decoration:underline; font-size:0.9rem;">View Proof</a>
+                                            <a href="#" onclick="viewProofImage('${r.proof || ''}', '${r.proofKey || ''}')" style="color:#1976D2; text-decoration:underline; font-size:0.9rem;">View Proof</a>
                                         </td>
                                         <td style="padding:15px;">
                                             <span style="padding:5px 10px; border-radius:20px; font-size:0.8rem; font-weight:700; 
@@ -7273,6 +7273,39 @@ window.openImageModal = (src) => {
     `;
 };
 
+// Smart proof viewer - tries multiple sources
+window.viewProofImage = (proofUrl, proofKey) => {
+    // 1. Try direct proof URL/base64 (in-memory, same session)
+    let imgSrc = proofUrl || '';
+
+    // 2. If no direct proof, try localStorage via proofKey
+    if (!imgSrc && proofKey) {
+        try {
+            imgSrc = localStorage.getItem(proofKey) || '';
+        } catch (e) { }
+    }
+
+    // 3. If still nothing, show message
+    if (!imgSrc) {
+        const modal = document.getElementById('modal-container');
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content scale-in" style="max-width:380px; text-align:center;">
+                <i class="fas fa-image" style="font-size:3rem; color:#ddd; margin-bottom:15px;"></i>
+                <h3 style="color:#1a2a3a; margin-bottom:10px;">Proof Not Available</h3>
+                <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">
+                    Payment screenshot is stored on the user's device.<br>
+                    <strong>Ask user to share the screenshot directly.</strong>
+                </p>
+                <button class="login-btn" onclick="closeModal()" style="background:#1a2a3a;">OK</button>
+            </div>
+        `;
+        return;
+    }
+
+    openImageModal(imgSrc);
+};
+
 
 
 
@@ -8641,28 +8674,38 @@ window.submitPaymentRequest = async () => {
     showGlobalLoader("Uploading Proof...");
 
     try {
-        const proofUrl = await toBase64(file);
-
-        // Generate unique request ID
         const reqId = Date.now();
+        let proofStorageUrl = '';
 
-        // Store proof image SEPARATELY in localStorage (not in Firebase - too large!)
-        // Firebase has size limits, base64 images cause save failures
+        // --- Upload proof to Firebase Storage (so admin can view from any device) ---
         try {
-            localStorage.setItem('proof_' + reqId, proofUrl);
-        } catch (e) {
-            console.warn('Could not save proof to localStorage:', e);
+            if (typeof firebase !== 'undefined' && firebase.storage) {
+                const storageRef = firebase.storage().ref();
+                const proofRef = storageRef.child(`proofs/${reqId}_${State.user.id}.jpg`);
+                showGlobalLoader("Uploading to cloud...");
+                const snapshot = await proofRef.put(file);
+                proofStorageUrl = await snapshot.ref.getDownloadURL();
+                console.log('✅ Proof uploaded to Firebase Storage:', proofStorageUrl);
+            }
+        } catch (storageErr) {
+            console.warn('Firebase Storage upload failed, using base64 fallback:', storageErr);
         }
 
-        // Save Request to State (WITHOUT the large base64 image)
+        // Fallback: base64 in localStorage if Storage upload failed
+        const proofBase64 = proofStorageUrl ? '' : await toBase64(file);
+        if (!proofStorageUrl && proofBase64) {
+            try { localStorage.setItem('proof_' + reqId, proofBase64); } catch (e) { }
+        }
+
+        // Save Request to State
         if (!State.walletRequests) State.walletRequests = [];
         State.walletRequests.push({
             id: reqId,
             agentId: State.user.id,
             agentName: State.user.name,
             amount: parseInt(amount),
-            proofKey: 'proof_' + reqId,  // Reference to localStorage key
-            proof: proofUrl,             // Keep in memory for current session
+            proof: proofStorageUrl || proofBase64,  // Storage URL preferred
+            proofKey: proofStorageUrl ? '' : ('proof_' + reqId), // localStorage fallback key
             status: 'pending',
             date: new Date().toLocaleString()
         });
@@ -8679,15 +8722,21 @@ window.submitPaymentRequest = async () => {
             status: 'pending'
         });
 
-        // Save to Firebase - but strip proof image first to avoid size limit
+        showGlobalLoader("Saving request...");
+
+        // Save to Firebase - strip base64 proof (too large), keep Storage URL
         const reqsForFirebase = State.walletRequests.map(r => {
-            const { proof, ...rest } = r; // Remove base64 proof from Firebase payload
-            return rest;
+            if (r.proof && r.proof.startsWith('data:')) {
+                // base64 - too large for Firebase DB, strip it
+                const { proof, ...rest } = r;
+                return rest;
+            }
+            return r; // Storage URL - small, keep it
         });
         const originalRequests = State.walletRequests;
         State.walletRequests = reqsForFirebase;
         await saveGlobalData();
-        State.walletRequests = originalRequests; // Restore with proof for current session
+        State.walletRequests = originalRequests;
 
         hideGlobalLoader();
         closeModal();
@@ -8934,7 +8983,7 @@ window.showWalletReqModal = function (req, action) {
                 <p><strong>User:</strong> ${req.agentName || 'Unknown'}</p>
                 <p><strong>Amount:</strong> Rs. ${req.amount}</p>
                 <p><strong>Date:</strong> ${req.date || ''}</p>
-                ${req.proof ? `<p><a href="${req.proof}" target="_blank" style="color:#1976D2;">View Proof Screenshot</a></p>` : ''}
+                ${(req.proof || req.proofKey) ? `<p><a href="#" onclick="viewProofImage('${req.proof || ''}','${req.proofKey || ''}')" style="color:#1976D2; font-weight:700;">📷 View Proof Screenshot</a></p>` : '<p style="color:#999; font-size:0.85rem;">No proof image available</p>'}
             </div>
             <div class="form-group">
                 <label>Remark (Optional)</label>
