@@ -82,7 +82,7 @@ if ($action === 'get_balance') {
     }
 } elseif ($action === 'get_requests') {
     if ($_SESSION['role'] !== 'admin') exit;
-    $stmt = $pdo->query("SELECT w.*, u.name, u.mobile FROM withdrawal_requests w JOIN users u ON w.user_id = u.id WHERE w.status = 'pending'");
+    $stmt = $pdo->query("SELECT w.*, u.name, u.mobile, u.role FROM withdrawal_requests w JOIN users u ON w.user_id = u.id WHERE w.status = 'pending'");
     echo json_encode(['status' => 'success', 'data' => $stmt->fetchAll()]);
 
 } elseif ($action === 'request_recharge') {
@@ -158,7 +158,7 @@ if ($action === 'get_balance') {
 } elseif ($action === 'get_recharge_requests') {
     // Admin only
     if ($_SESSION['role'] !== 'admin') exit;
-    $stmt = $pdo->query("SELECT r.*, u.name, u.mobile FROM recharge_requests r JOIN users u ON r.user_id = u.id WHERE r.status = 'pending' ORDER BY r.created_at DESC");
+    $stmt = $pdo->query("SELECT r.*, u.name, u.mobile, u.role FROM recharge_requests r JOIN users u ON r.user_id = u.id WHERE r.status = 'pending' ORDER BY r.created_at DESC");
     echo json_encode(['status' => 'success', 'data' => $stmt->fetchAll()]);
 
 } elseif ($action === 'admin_adjust_wallet') {

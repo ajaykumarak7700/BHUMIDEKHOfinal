@@ -230,43 +230,97 @@ function saveToFirebase() {
         .catch(err => console.error("?? Firebase Sync: FAILED!", err));
 }
 
+// --- NEW: Sync Wallet & Requests from PHP Backend ---
+window.syncWalletDataFromPHP = async () => {
+    // Only Admin needs to fetch ALL requests. 
+    if (State.user && State.user.role === 'admin') {
+        try {
+            // 1. Recharge Requests
+            const res1 = await fetch('api/wallet.php?action=get_recharge_requests');
+            const data1 = await res1.json();
+
+            if (data1.status === 'success') {
+                const phpRecharges = data1.data.map(r => ({
+                    id: parseInt(r.id),
+                    // For recharges, UI uses agentId for both currently
+                    agentId: parseInt(r.user_id),
+                    agentName: r.name + ' (' + r.mobile + ')',
+                    amount: parseFloat(r.amount),
+                    proof: 'uploads/' + r.proof_image,
+                    status: r.status,
+                    date: new Date(r.created_at).toLocaleString(),
+                    isPhp: true
+                }));
+
+                if (!State.walletRequests) State.walletRequests = [];
+                State.walletRequests = State.walletRequests.filter(r => !r.isPhp);
+                State.walletRequests = [...State.walletRequests, ...phpRecharges];
+            }
+
+            // 2. Withdrawal Requests
+            const res2 = await fetch('api/wallet.php?action=get_requests');
+            const data2 = await res2.json();
+
+            if (data2.status === 'success') {
+                const phpWithdrawals = data2.data.map(r => {
+                    const isCustomer = r.role === 'customer';
+                    return {
+                        id: parseInt(r.id),
+                        agentId: !isCustomer ? parseInt(r.user_id) : undefined,
+                        customerId: isCustomer ? parseInt(r.user_id) : undefined,
+                        // Provide fallback name if not found in list (though backend sends it)
+                        agentName: r.name + ' (' + r.mobile + ')',
+                        customerName: r.name + ' (' + r.mobile + ')',
+                        amount: parseFloat(r.amount),
+                        status: r.status,
+                        date: new Date(r.created_at).toLocaleString(),
+                        isPhp: true
+                    };
+                });
+
+                if (!State.withdrawalRequests) State.withdrawalRequests = [];
+                State.withdrawalRequests = State.withdrawalRequests.filter(r => !r.isPhp);
+                State.withdrawalRequests = [...State.withdrawalRequests, ...phpWithdrawals];
+            }
+
+            console.log("Synced Wallet Data from PHP");
+            render(); // Refresh UI
+
+        } catch (e) {
+            console.error("PHP Sync Error:", e);
+        }
+    }
+};
+
 function loadFromFirebase(callback) {
     if (typeof database === 'undefined' || !database) {
-        State.isLoading = false; // Stop loading if FB missing
+        State.isLoading = false;
         if (callback) callback(false);
         return;
     }
 
     // Check if we already have REAL data from cache
     const hasCachedData = State.properties.length > 0 && !State.properties[0].isOffline;
-
-    // Only show loader if we DON'T have cached data
     State.isLoading = !hasCachedData;
 
     if (hasCachedData) {
-        render(); // Immediately render cached data
+        render();
     }
 
-    // Start a timer for timeout warning (Increased to 10 seconds as requested)
     const slowNetTimer = setTimeout(() => {
-        // Only show warning if NO REAL data is loaded (neither from Cache nor Network)
-        // If we have Offline placeholders, we still consider that "no real data"
         const hasRealData = State.properties.length > 0 && !State.properties[0].isOffline;
-
         if (State.isLoading && !State.isDataLoaded && !hasRealData) {
             showSlowNetWarning("Internet slow hai, kripya intezar karein...");
         }
     }, 10000);
 
-    // Critical connection timer (10 seconds)
     const criticalNetTimer = setTimeout(() => {
         if (State.isLoading && !State.isDataLoaded) {
             State.isCriticalTimeout = true;
-            render(); // Refresh to show big warning instead of loader
+            render();
         }
     }, 10000);
 
-    // Initial check: if already offline
     if (!navigator.onLine) showSlowNetWarning("No Internet! Please check your connection.");
 
     database.ref('bhumi_v2').once('value')
@@ -275,23 +329,21 @@ function loadFromFirebase(callback) {
             clearTimeout(criticalNetTimer);
             hideSlowNetWarning();
             State.isCriticalTimeout = false;
-            State.loadingMessage = 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...'; // Reset
+            State.loadingMessage = 'आपका नजदीकी प्रॉपर्टी सर्च किया जा रहा है...';
 
             const data = snapshot.val();
-
-            // Mark data as loaded successfully, allowing future saves
             State.isDataLoaded = true;
 
             if (data) {
                 if (data.agents) State.agents = data.agents;
                 if (data.settings) State.settings = data.settings;
+                // We don't overwrite withdrawalRequests/walletRequests blindly if we use PHP
+                // But let's keep syncing them in case we switch back or for history not in PHP
                 if (data.withdrawalRequests) State.withdrawalRequests = data.withdrawalRequests;
                 if (data.walletTransactions) State.walletTransactions = data.walletTransactions;
                 if (data.adminWallet !== undefined) State.adminWallet = data.adminWallet;
                 if (data.customers) State.customers = data.customers;
                 if (data.otherPage) State.otherPage = data.otherPage;
-                if (data.otherPage) State.otherPage = data.otherPage;
-                // if (data.sellRentPage) State.sellRentPage = data.sellRentPage; // Force local config for 2 buttons
                 if (data.premiumPlans) State.premiumPlans = data.premiumPlans;
                 if (data.coupons) State.coupons = data.coupons;
 
@@ -302,17 +354,15 @@ function loadFromFirebase(callback) {
                     State.properties = [];
                 }
 
-                // --- CRITICAL: Save to LocalStorage immediately after fetch ---
-                // This ensures next reload is INSTANT
                 saveToLocalStorage();
                 console.log("?? Firebase Data Cached to LocalStorage!");
 
-                State.isLoading = false; // DATA LOADED
-                render(); // Explicitly re-render to remove skeleton and show data
+                State.isLoading = false;
+                render();
                 if (callback) callback(true);
             } else {
                 State.properties = [];
-                State.isLoading = false; // NO DATA FOUND (But loaded successfully)
+                State.isLoading = false;
                 render();
                 if (callback) callback(false);
             }
@@ -324,7 +374,7 @@ function loadFromFirebase(callback) {
             clearTimeout(criticalNetTimer);
             State.isCriticalTimeout = false;
             hideSlowNetWarning();
-            State.isLoading = false; // ERROR, STOP LOADING
+            State.isLoading = false;
             if (callback) callback(false);
         });
 }
@@ -756,6 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.log('?? Using local data (Firebase unavailable)');
             }
+            window.syncWalletDataFromPHP(); // Sync PHP Data
             setupFirebaseListener();
         });
     }, 50);
@@ -6016,26 +6067,47 @@ window.requestCustomerWithdrawal = () => {
         id: reqId,
         customerId: customer.id,
         amount: amount,
-        type: 'customer_withdrawal',
-        status: 'pending',
-        date: new Date().toLocaleString(),
-        remark: 'Withdrawal Request Initiated'
+        type: 'debit',
+        remark: 'Withdrawal Request',
+        status: 'pending', // Pending approval
+        date: new Date().toLocaleString()
     });
 
-    // Save and show success
-    saveGlobalData().then(() => {
-        hideGlobalLoader("Request Successful!");
-        setTimeout(() => {
-            alert("Withdrawal request submitted successfully!");
-            closeModal();
-            render();
-        }, 500);
-    }).catch(err => {
-        console.error(err);
-        hideGlobalLoader(null);
-        alert("Failed to submit request. Please try again.");
-    });
+    // --- SYNC TO PHP ---
+    const fd = new FormData();
+    fd.append('action', 'request_withdrawal');
+    fd.append('amount', amount);
+    fetch('api/wallet.php', { method: 'POST', body: fd }).catch(console.error);
+    // -------------------
+
+    saveGlobalData();
+    closeModal();
+    openCustomerWalletModal(); // Refresh modal to show history
+    showAlert('modal-container', 'Request Sent Successfully!', 'success');
 };
+State.walletTransactions.push({
+    id: reqId,
+    customerId: customer.id,
+    amount: amount,
+    type: 'debit',
+    remark: 'Withdrawal Request',
+    status: 'pending', // Pending approval
+    date: new Date().toLocaleString()
+});
+
+// --- SYNC TO PHP ---
+const fd = new FormData();
+fd.append('action', 'request_withdrawal');
+fd.append('amount', amount);
+fetch('api/wallet.php', { method: 'POST', body: fd }).catch(console.error);
+// -------------------
+
+saveGlobalData();
+closeModal();
+openCustomerWalletModal(); // Refresh modal to show history
+showAlert('modal-container', 'Request Sent Successfully!', 'success');
+};
+
 
 window.deleteCustomer = (id) => {
     const customer = State.customers.find(c => c.id === id);
@@ -8487,6 +8559,16 @@ window.confirmProcessWithdrawal = async (reqId, status) => {
     let transaction = State.walletTransactions ? State.walletTransactions.find(t => t.id === r.id) : null;
 
     if (status === 'approved') {
+        // --- SYNC TO PHP ---
+        if (r.isPhp) {
+            const fd = new FormData();
+            fd.append('action', 'admin_withdraw_action');
+            fd.append('req_id', r.id);
+            fd.append('status', 'approved');
+            await fetch('api/wallet.php', { method: 'POST', body: fd });
+        }
+        // -------------------
+
         if (transaction) {
             transaction.status = 'approved';
             transaction.remark = remark;
@@ -8506,6 +8588,15 @@ window.confirmProcessWithdrawal = async (reqId, status) => {
             });
         }
     } else if (status === 'rejected') {
+        // --- SYNC TO PHP ---
+        if (r.isPhp) {
+            const fd = new FormData();
+            fd.append('action', 'admin_withdraw_action');
+            fd.append('req_id', r.id);
+            fd.append('status', 'rejected');
+            await fetch('api/wallet.php', { method: 'POST', body: fd });
+        }
+        // -------------------
         // Refund back to wallet
         if (user) {
             user.wallet = (user.wallet || 0) + r.amount;
@@ -8603,17 +8694,34 @@ window.confirmWalletRequestProcess = async function (id, action) {
         }
 
         // --- SYNC TO PHP MYSQL ---
-        const fd = new FormData();
-        fd.append('action', 'admin_adjust_wallet');
-        fd.append('user_id', req.agentId);
-        fd.append('amount', req.amount);
-        fd.append('type', 'credit');
-        fetch('api/wallet.php', { method: 'POST', body: fd }).catch(console.error);
+        if (req.isPhp) {
+            const fd = new FormData();
+            fd.append('action', 'approve_recharge');
+            fd.append('req_id', req.id);
+            fd.append('status', 'approved');
+            // approve_recharge updates wallet in DB too
+            await fetch('api/wallet.php', { method: 'POST', body: fd });
+        } else {
+            // Legacy / Offline
+            const fd = new FormData();
+            fd.append('action', 'admin_adjust_wallet');
+            fd.append('user_id', req.agentId);
+            fd.append('amount', req.amount);
+            fd.append('type', 'credit');
+            fetch('api/wallet.php', { method: 'POST', body: fd }).catch(console.error);
+        }
         // -------------------------
 
         if (typeof State.adminWallet !== 'undefined') {
             State.adminWallet = (State.adminWallet || 0) + req.amount;
         }
+    } else if (action === 'reject' && req.isPhp) {
+        // Handle rejection status in PHP too
+        const fd = new FormData();
+        fd.append('action', 'approve_recharge');
+        fd.append('req_id', req.id);
+        fd.append('status', 'rejected');
+        await fetch('api/wallet.php', { method: 'POST', body: fd });
     }
 
     // Update Transaction
