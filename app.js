@@ -8512,8 +8512,11 @@ window.rejectWalletRequest_Old = async (id) => {
 
 // --- Withdrawal Processing (Customers & Agents) ---
 window.processWithdrawal = function (reqId, action) {
-    const r = (State.withdrawalRequests || []).find(x => x.id === reqId);
-    if (!r) return;
+    const r = (State.withdrawalRequests || []).find(x => parseInt(x.id) === parseInt(reqId));
+    if (!r) {
+        alert('Withdrawal request not found. Please refresh.');
+        return;
+    }
 
     const modal = document.getElementById('modal-container');
     modal.style.display = 'flex';
@@ -8539,11 +8542,14 @@ window.processWithdrawal = function (reqId, action) {
 };
 
 window.confirmProcessWithdrawal = async (reqId, status) => {
-    const r = State.withdrawalRequests.find(x => x.id === reqId);
+    const r = (State.withdrawalRequests || []).find(x => parseInt(x.id) === parseInt(reqId));
     const remark = document.getElementById('withdraw-remark').value;
 
     if (!remark) return alert("Please enter a remark.");
-    if (!r) return;
+    if (!r) {
+        alert('Request not found!');
+        return;
+    }
 
     showGlobalLoader("Processing...");
 
@@ -8643,8 +8649,13 @@ window.rejectWalletRequest = function (id) {
 };
 
 window.openWalletRequestModal = function (id, action) {
-    const req = State.walletRequests.find(r => r.id === id);
-    if (!req) return;
+    const reqId = parseInt(id);
+    const req = (State.walletRequests || []).find(r => parseInt(r.id) === reqId);
+    if (!req) {
+        console.error('Wallet request not found for id:', id, 'Available:', State.walletRequests);
+        alert('Request not found. Please refresh and try again.');
+        return;
+    }
 
     const modal = document.getElementById('modal-container');
     modal.style.display = 'flex';
@@ -8671,9 +8682,14 @@ window.openWalletRequestModal = function (id, action) {
 };
 
 window.confirmWalletRequestProcess = async function (id, action) {
-    const req = State.walletRequests.find(r => r.id === id);
+    const reqId = parseInt(id);
+    const req = (State.walletRequests || []).find(r => parseInt(r.id) === reqId);
     const remark = document.getElementById('wal-req-remark').value;
-    if (!req) return;
+    if (!req) {
+        alert('Request not found!');
+        hideGlobalLoader();
+        return;
+    }
 
     showGlobalLoader(action === 'approve' ? "Approving..." : "Rejecting...");
 
