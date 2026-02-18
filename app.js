@@ -1022,7 +1022,7 @@ function updateUIForUser() {
 
         profileAction.onclick = () => {
             // Navigate based on role
-            if (State.user.role === 'customer') navigate('profile');
+            if (State.user.role === 'customer') navigate('customer');
             else navigate(State.user.role);
         };
     } else {
@@ -1054,7 +1054,7 @@ function navigate(view, params = null) {
     window.scrollTo(0, 0);
 
     const header = document.getElementById('main-header');
-    if (header) header.style.display = (view === 'login' || view === 'admin' || view === 'agent') ? 'none' : 'block';
+    if (header) header.style.display = (view === 'login' || view === 'admin' || view === 'agent' || view === 'customer') ? 'none' : 'block';
 
     const profileAction = document.getElementById('profile-action');
     const nameSpan = document.getElementById('user-name-h');
@@ -1069,7 +1069,7 @@ function navigate(view, params = null) {
                 profileIconBox.innerHTML = `<i class="fas fa-user-circle"></i>`;
             }
             profileAction.onclick = () => {
-                if (State.user.role === 'customer') navigate('profile');
+                if (State.user.role === 'customer') navigate('customer');
                 else navigate(State.user.role);
             };
         } else {
@@ -1120,7 +1120,7 @@ function attachNavListeners() {
                 }
             }
             else if (view === 'login' && State.user) {
-                if (State.user.role === 'customer') navigate('profile');
+                if (State.user.role === 'customer') navigate('customer');
                 else navigate(State.user.role);
             }
             else navigate(view);
@@ -2287,7 +2287,7 @@ function handleLogin(role) {
                     State.likes = cust.likes;
                     await saveGlobalData();
                     hideGlobalLoader("लॉगिन सफल!");
-                    navigate('customer');
+                    navigate('home');
                 } else {
                     hideGlobalLoader(null);
                     setTimeout(() => {
