@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Requests (Firebase)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card.deposit {
+            border-left-color: #2e7d32;
+        }
+
+        .card.withdraw {
+            border-left-color: #c62828;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            margin-right: 5px;
+        }
+
+        .btn-approve {
+            background: #2e7d32;
+        }
+
+        .btn-reject {
+            background: #c62828;
+        }
+
+        h2 {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Admin Wallet Panel</h1>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+            <h2>Pending Deposits</h2>
+            <div id="deposit-list">Loading...</div>
+        </div>
+        <div>
+            <h2>Pending Withdrawals</h2>
+            <div id="withdraw-list">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        // AUTH CHECK (Optional: Secure via Rules, currently simple UI)
+        auth.onAuthStateChanged(user => {
+            if (!user) { alert('Admin Login Required'); location.href = 'index.html'; }
+            // Verify admin role via custom claims or DB check if needed
+            loadRequests();
+        });
+
+        function loadRequests() {
+            // Load Deposits
+            db.ref('requests/deposit').orderByChild('status').equalTo('pending').on('value', snap => {
+                const list = document.getElementById('deposit-list');
+                list.innerHTML = '';
+                if (!snap.exists()) { list.innerHTML = '<p>No pending deposits.</p>'; return; }
+
+                snap.forEach(child => {
+                    const r = child.val();
+                    const key = child.key;
+                    list.innerHTML += `
+                        <div class="card deposit">
+                            <strong>${r.userName || 'User'}</strong> wants to add <strong>₹${r.amount}</strong><br>
+                            <small>${new Date(r.timestamp).toLocaleString()}</small><br>
+                            <a href="${r.proofUrl}" target="_blank" style="color:blue;">View Screenshot</a>
+                            <div style="margin-top:10px;">
+                                <button class="btn btn-approve" onclick="processDeposit('${key}', '${r.userId}', ${r.amount}, true)">Approve</button>
+                                <button class="btn btn-reject" onclick="processDeposit('${key}', '${r.userId}', ${r.amount}, false)">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            // Load Withdrawals
+            db.ref('requests/withdraw').orderByChild('status').equalTo('pending').on('value', snap => {
+                const list = document.getElementById('withdraw-list');
+                list.innerHTML = '';
+                if (!snap.exists()) { list.innerHTML = '<p>No pending withdrawals.</p>'; return; }
+
+                snap.forEach(child => {
+                    const r = child.val();
+                    const key = child.key;
+                    list.innerHTML += `
+                        <div class="card withdraw">
+                            <strong>${r.userName || 'User'}</strong> wants to withdraw <strong>₹${r.amount}</strong><br>
+                            <small>UPI: ${r.upiId}</small><br>
+                            <div style="margin-top:10px;">
+                                <button class="btn btn-approve" onclick="processWithdraw('${key}', '${r.userId}', ${r.amount}, true)">Approve (Paid)</button>
+                                <button class="btn btn-reject" onclick="processWithdraw('${key}', '${r.userId}', ${r.amount}, false)">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        async function processDeposit(key, userId, amount, approved) {
+            if (!confirm(approved ? 'Approve and Add Balance?' : 'Reject Request?')) return;
+
+            const updates = {};
+            updates['requests/deposit/' + key + '/status'] = approved ? 'approved' : 'rejected';
+
+            if (approved) {
+                // Add Transaction Record
+                const txKey = db.ref('transactions/' + userId).push().key;
+                updates['transactions/' + userId + '/' + txKey] = {
+                    amount: amount,
+                    type: 'credit',
+                    description: 'Deposit Approved',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+
+                // Update Balance (Transactional)
+                // Note: updates object can't do atomic increment easily on deep paths mixed with others
+                // So we do transaction separate
+                await db.ref('users/' + userId + '/wallet_balance').transaction(current => {
+                    return (current || 0) + amount;
+                });
+            }
+
+            await db.ref().update(updates);
+        }
+
+        async function processWithdraw(key, userId, amount, approved) {
+            if (!confirm(approved ? 'Confirm Payment sent & Deduct Balance?' : 'Reject?')) return;
+
+            const updates = {};
+            updates['requests/withdraw/' + key + '/status'] = approved ? 'approved' : 'rejected';
+
+            if (approved) {
+                // Transaction Record
+                const txKey = db.ref('transactions/' + userId).push().key;
+                updates['transactions/' + userId + '/' + txKey] = {
+                    amount: amount,
+                    type: 'debit',
+                    description: 'Withdrawal Approved',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                };
+
+                // Deduct Balance
+                await db.ref('users/' + userId + '/wallet_balance').transaction(current => {
+                    if ((current || 0) < amount) throw new Error('Insufficient Funds'); // This might fail if balance low
+                    return (current || 0) - amount;
+                });
+            }
+
+            await db.ref().update(updates);
+        }
+    </script>
+</body>
+
+</html>

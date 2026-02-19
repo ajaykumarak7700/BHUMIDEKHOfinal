@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Wallet | BhumiDekho</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: #fff;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            flex: 1;
+            text-align: center;
+            color: #333;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #555;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .wallet-card {
+            background: linear-gradient(135deg, #2e7d32, #66bb6a);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .balance {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 5px 0 20px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .history-list {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .credit {
+            color: #2e7d32;
+        }
+
+        .debit {
+            color: #c62828;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 600px;
+            padding: 25px;
+            border-radius: 20px 20px 0 0;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="location.href='index.html'"><i class="fas fa-arrow-left"></i></button>
+        <h1>My Wallet (Firebase)</h1>
+    </div>
+
+    <div class="container">
+        <div class="wallet-card">
+            <div>Current Balance</div>
+            <div class="balance" id="display-balance">₹ 0.00</div>
+            <div class="btn-group">
+                <button class="action-btn" onclick="openModal('deposit-modal')"><i class="fas fa-plus"></i> Add
+                    Money</button>
+                <button class="action-btn" onclick="openModal('withdraw-modal')"><i class="fas fa-arrow-down"></i>
+                    Withdraw</button>
+            </div>
+        </div>
+
+        <h3>Recent Transactions</h3>
+        <div class="history-list" id="tx-list">
+            <div style="padding:20px; text-align:center;">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <h3>Add Money</h3>
+            <input type="number" id="dep-amount" class="form-input" placeholder="Amount (e.g. 500)">
+            <input type="file" id="dep-proof" accept="image/*" class="form-input">
+            <p style="font-size:12px; color:#555;">Pay to UPI: <strong>bhumidekho@upi</strong></p>
+            <button class="submit-btn" onclick="submitDeposit()">Submit Deposit</button>
+            <button onclick="closeModal('deposit-modal')"
+                style="width:100%; padding:10px; background:none; border:none; margin-top:5px;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdraw-modal" class="modal">
+        <div class="modal-content">
+            <h3>Withdraw Money</h3>
+            <input type="number" id="with-amount" class="form-input" placeholder="Amount">
+            <input type="text" id="with-upi" class="form-input" placeholder="Your UPI ID">
+            <button class="submit-btn" onclick="submitWithdraw()" style="background:#c62828;">Request
+                Withdrawal</button>
+            <button onclick="closeModal('withdraw-modal')"
+                style="width:100%; padding:10px; background:none; border:none; margin-top:5px;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // AUTH CHECK
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                loadWalletData(user.uid);
+            } else {
+                alert('Please Login First');
+                location.href = 'index.html'; // Assume index.html handles login now
+            }
+        });
+
+        function loadWalletData(uid) {
+            // Listen to Balance
+            db.ref('users/' + uid + '/wallet_balance').on('value', snap => {
+                const bal = snap.val() || 0;
+                document.getElementById('display-balance').innerText = '₹ ' + parseFloat(bal).toLocaleString('en-IN');
+            });
+
+            // Listen to History
+            db.ref('transactions/' + uid).limitToLast(10).on('value', snap => {
+                const list = document.getElementById('tx-list');
+                list.innerHTML = '';
+                if (!snap.exists()) { list.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">No transactions found.</div>'; return; }
+
+                const data = [];
+                snap.forEach(c => data.push(c.val()));
+                data.reverse().forEach(tx => {
+                    const isCredit = tx.type === 'credit';
+                    list.innerHTML += `
+                        <div class="history-item">
+                            <div>
+                                <div style="font-weight:500;">${tx.description}</div>
+                                <div style="font-size:12px; color:#888;">${new Date(tx.timestamp).toLocaleString()}</div>
+                            </div>
+                            <div class="${isCredit ? 'credit' : 'debit'}" style="font-weight:bold;">
+                                ${isCredit ? '+' : '-'} ₹${tx.amount}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // DEPOSIT
+        async function submitDeposit() {
+            const amt = document.getElementById('dep-amount').value;
+            const file = document.getElementById('dep-proof').files[0];
+            if (!amt || !file) return alert('Fill all fields');
+
+            const btn = event.target;
+            btn.innerText = 'Uploading...';
+            btn.disabled = true;
+
+            try {
+                // Upload Image
+                const ref = storage.ref('proofs/' + currentUser.uid + '_' + Date.now());
+                await ref.put(file);
+                const url = await ref.getDownloadURL();
+
+                // Push Request
+                await db.ref('requests/deposit').push({
+                    userId: currentUser.uid,
+                    amount: parseFloat(amt),
+                    proofUrl: url,
+                    status: 'pending',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    userName: currentUser.displayName || 'User',
+                    userMobile: currentUser.phoneNumber || 'N/A' // Need to store mobile properly on signup if phone auth used
+                });
+
+                alert('Deposit Request Sent!');
+                closeModal('deposit-modal');
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                alert('Error: ' + e.message);
+            }
+            btn.innerText = 'Submit Deposit';
+            btn.disabled = false;
+        }
+
+        // WITHDRAW
+        async function submitWithdraw() {
+            const amt = document.getElementById('with-amount').value;
+            const upi = document.getElementById('with-upi').value;
+            if (!amt || !upi) return alert('Fill all fields');
+
+            // Quick Client Check Balance (Server rules should enforce strictly)
+            const snap = await db.ref('users/' + currentUser.uid + '/wallet_balance').once('value');
+            const bal = snap.val() || 0;
+            if (parseFloat(amt) > bal) return alert('Insufficient Balance');
+
+            const btn = event.target;
+            btn.innerText = 'Processing...';
+            btn.disabled = true;
+
+            try {
+                await db.ref('requests/withdraw').push({
+                    userId: currentUser.uid,
+                    amount: parseFloat(amt),
+                    upiId: upi,
+                    status: 'pending',
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    userName: currentUser.displayName || 'User',
+                    userMobile: currentUser.phoneNumber || 'N/A'
+                });
+                alert('Withdrawal Request Sent!');
+                closeModal('withdraw-modal');
+            } catch (e) { alert('Error: ' + e.message); }
+
+            btn.innerText = 'Request Withdrawal';
+            btn.disabled = false;
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    </script>
+</body>
+
+</html>
