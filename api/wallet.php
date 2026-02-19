@@ -1,11 +1,71 @@
 <?php
-// api/wallet_v2.php
-// Complete Rewrite of Wallet Logic in Hindi/English
+// api/wallet.php
+
 session_start();
 require_once '../includes/db.php';
 header('Content-Type: application/json');
 
-// 1. Authentication Check
+// ==========================================
+// 1. AUTOMATIC DB SETUP (Hidden Logic)
+// ==========================================
+// This runs on every request to ensure tables exist without a separate setup file
+try {
+    // Enable error mode
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Create 'recharge_requests' table if missing
+    $pdo->exec("CREATE TABLE IF NOT EXISTS recharge_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        proof_image VARCHAR(255),
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        admin_note TEXT
+    )");
+
+    // Create 'withdrawal_requests' table if missing
+    $pdo->exec("CREATE TABLE IF NOT EXISTS withdrawal_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        upi_id VARCHAR(100),
+        bank_details TEXT,
+        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        admin_note TEXT
+    )");
+
+    // Create 'transactions' table if missing
+    $pdo->exec("CREATE TABLE IF NOT EXISTS transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        type ENUM('credit', 'debit') NOT NULL,
+        description VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    // Ensure 'wallet_balance' column exists in 'users' table
+    // Try adding it, if it fails (exists), catch exception silently
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN wallet_balance DECIMAL(10,2) DEFAULT 0.00");
+    } catch (Exception $e) { /* Column likely exists, continue */ }
+
+    // Create uploads folder if missing
+    if (!file_exists('../uploads')) {
+        mkdir('../uploads', 0777, true);
+    }
+
+} catch (Exception $e) {
+    // If DB connection fails entirely, stop here
+    echo json_encode(['status' => 'error', 'message' => 'Database Setup Failed: ' . $e->getMessage()]);
+    exit;
+}
+
+// ==========================================
+// 2. AUTHENTICATION CHECK
+// ========================================== 
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['status' => 'error', 'message' => 'Please Login First']);
     exit;
@@ -15,18 +75,18 @@ $user_id = $_SESSION['user_id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // ==========================================
-// USER ACTIONS (Customer/Agent)
+// 3. USER ACTIONS (Customer/Agent)
 // ==========================================
 
-// Action: Wallet Info (Balance & History)
+// Action: Get Wallet Info (Balance & History)
 if ($action === 'get_wallet') {
-    // Balance layein
+    // Fetch Balance
     $stmt = $pdo->prepare("SELECT wallet_balance FROM users WHERE id = ?");
     $stmt->execute([$user_id]);
     $balance = $stmt->fetchColumn() ?: 0.00;
 
-    // Last 10 Transactions
-    $stmt = $pdo->prepare("SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+    // Fetch Last 20 Transactions
+    $stmt = $pdo->prepare("SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 20");
     $stmt->execute([$user_id]);
     $history = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -55,9 +115,6 @@ if ($action === 'deposit_request') {
         $fileName = 'deposit_' . time() . '_' . $user_id . '.' . $ext;
         $targetDir = '../uploads/';
         
-        // Create folder if missing
-        if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
-
         if (move_uploaded_file($_FILES['proof']['tmp_name'], $targetDir . $fileName)) {
             $proofImage = $fileName;
         } else {
@@ -112,7 +169,7 @@ if ($action === 'withdraw_request') {
 }
 
 // ==========================================
-// ADMIN ACTIONS
+// 4. ADMIN ACTIONS (Secure)
 // ==========================================
 
 // Security Check for Admin
