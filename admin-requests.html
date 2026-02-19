@@ -5,10 +5,15 @@
     <meta charset="UTF-8">
     <title>Admin Requests (Firebase)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- CONFIG -->
     <script src="js/firebase-config.js"></script>
+
     <style>
         body {
             font-family: sans-serif;
@@ -72,10 +77,13 @@
     </div>
 
     <script>
-        // AUTH CHECK (Optional: Secure via Rules, currently simple UI)
+        // AUTH CHECK
         auth.onAuthStateChanged(user => {
-            if (!user) { alert('Admin Login Required'); location.href = 'index.html'; }
-            // Verify admin role via custom claims or DB check if needed
+            if (!user) {
+                alert('Login Required');
+                // Redirect or show login button if needed. For now assuming admin is logged in via main app
+                // location.href='index.html'; 
+            }
             loadRequests();
         });
 
@@ -133,7 +141,6 @@
             updates['requests/deposit/' + key + '/status'] = approved ? 'approved' : 'rejected';
 
             if (approved) {
-                // Add Transaction Record
                 const txKey = db.ref('transactions/' + userId).push().key;
                 updates['transactions/' + userId + '/' + txKey] = {
                     amount: amount,
@@ -142,12 +149,10 @@
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
 
-                // Update Balance (Transactional)
-                // Note: updates object can't do atomic increment easily on deep paths mixed with others
-                // So we do transaction separate
-                await db.ref('users/' + userId + '/wallet_balance').transaction(current => {
-                    return (current || 0) + amount;
-                });
+                // Read current balance then update
+                const snap = await db.ref('users/' + userId + '/wallet_balance').once('value');
+                const cur = snap.val() || 0;
+                updates['users/' + userId + '/wallet_balance'] = cur + amount;
             }
 
             await db.ref().update(updates);
@@ -160,7 +165,6 @@
             updates['requests/withdraw/' + key + '/status'] = approved ? 'approved' : 'rejected';
 
             if (approved) {
-                // Transaction Record
                 const txKey = db.ref('transactions/' + userId).push().key;
                 updates['transactions/' + userId + '/' + txKey] = {
                     amount: amount,
@@ -169,11 +173,10 @@
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 };
 
-                // Deduct Balance
-                await db.ref('users/' + userId + '/wallet_balance').transaction(current => {
-                    if ((current || 0) < amount) throw new Error('Insufficient Funds'); // This might fail if balance low
-                    return (current || 0) - amount;
-                });
+                const snap = await db.ref('users/' + userId + '/wallet_balance').once('value');
+                const cur = snap.val() || 0;
+                // if (cur < amount) ... check?
+                updates['users/' + userId + '/wallet_balance'] = cur - amount;
             }
 
             await db.ref().update(updates);

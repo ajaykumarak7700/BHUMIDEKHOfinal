@@ -1,17 +1,19 @@
 // FIREBASE CONFIGURATION
-// Replace this with YOUR Firebase configuration details
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDSBrVmENKDiE52iDEw9znCaxp4p8Cmamo",
+    authDomain: "bhumidekho.firebaseapp.com",
+    databaseURL: "https://bhumidekho-default-rtdb.firebaseio.com",
+    projectId: "bhumidekho",
+    storageBucket: "bhumidekho.firebasestorage.app",
+    messagingSenderId: "258412071321",
+    appId: "1:258412071321:web:1ced03961683a80c3eeb08"
 };
 
-// Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
+// Initialize only if not already initialized
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+// Export references for other scripts to use
+const auth = firebase.auth();
 const db = firebase.database();
 const storage = firebase.storage();
-const auth = firebase.auth();
