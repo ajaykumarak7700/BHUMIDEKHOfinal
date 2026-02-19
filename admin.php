@@ -38,7 +38,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     <div class="admin-nav">
         <div class="admin-tab active" onclick="switchTab('agents')">Agents</div>
         <div class="admin-tab" onclick="switchTab('properties')">Properties</div>
-        <div class="admin-tab" onclick="switchTab('withdrawals')">Withdrawals</div>
+        <div class="admin-tab" onclick="switchTab('requests')">Requests</div>
         <!-- <div class="admin-tab" onclick="switchTab('settings')">Settings</div> -->
     </div>
 
@@ -59,10 +59,19 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
         <div id="admin-prop-list"></div>
     </div>
 
-    <!-- WITHDRAWALS SECTION -->
-    <div id="withdrawals" class="content-section">
-        <h3 style="margin-bottom:15px;">Withdrawal Requests</h3>
-        <div id="withdrawal-list"></div>
+    <!-- REQUESTS SECTION -->
+    <div id="requests" class="content-section">
+        <h3 style="margin-bottom:15px;">Wallet Requests</h3>
+        <div class="stat-grid">
+            <div class="stat-card" style="text-align:left">
+                <h4 style="border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:10px;">Withdrawals</h4>
+                <div id="withdrawal-list"></div>
+            </div>
+            <div class="stat-card" style="text-align:left">
+                <h4 style="border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:10px;">Deposits</h4>
+                <div id="deposit-list"></div>
+            </div>
+        </div>
     </div>
 
     <!-- MODALS -->
@@ -119,7 +128,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
             if(tabId === 'agents') loadAgents();
             if(tabId === 'properties') loadAdminProps();
-            if(tabId === 'withdrawals') loadWithdrawals();
+            if(tabId === 'requests') loadWalletRequests();
         }
 
         // --- AGENTS ---
@@ -253,24 +262,55 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             loadAdminProps();
         }
 
-        // --- WITHDRAWALS ---
+        // --- REQUESTS ---
+        function loadWalletRequests() {
+            loadWithdrawals();
+            loadDeposits();
+        }
+
         async function loadWithdrawals() {
             const res = await fetch('api/wallet.php?action=get_requests');
             const data = await res.json();
             const list = document.getElementById('withdrawal-list');
             list.innerHTML = '';
-            if(data.data.length === 0) list.innerHTML = 'No pending requests.';
+            if(data.data.length === 0) list.innerHTML = '<p style="color:#777; font-size:13px;">No pending withdrawals.</p>';
             
             data.data.forEach(w => {
                  list.innerHTML += `
-                    <div class="list-item">
+                    <div class="list-item" style="border:1px solid #fee;">
                         <div class="item-header">
-                            <span>${w.name} (Mobile: ${w.mobile})</span>
+                            <span>${w.name}</span>
                             <span class="tag tag-pending">₹ ${w.amount}</span>
                         </div>
+                        <div style="font-size:11px; color:#555;">${w.mobile} (${w.role})</div>
                         <div style="margin-top:10px;">
                             <button onclick="withdrawAction(${w.id}, 'approved')" class="btn-sm btn-success">Approve</button>
                             <button onclick="withdrawAction(${w.id}, 'rejected')" class="btn-sm btn-danger">Reject</button>
+                        </div>
+                    </div>
+                 `;
+            });
+        }
+
+        async function loadDeposits() {
+            const res = await fetch('api/wallet.php?action=get_recharge_requests');
+            const data = await res.json();
+            const list = document.getElementById('deposit-list');
+            list.innerHTML = '';
+            if(data.data.length === 0) list.innerHTML = '<p style="color:#777; font-size:13px;">No pending deposits.</p>';
+            
+            data.data.forEach(d => {
+                 list.innerHTML += `
+                    <div class="list-item" style="border:1px solid #eef;">
+                        <div class="item-header">
+                            <span>${d.name}</span>
+                            <span class="tag tag-pending">₹ ${d.amount}</span>
+                        </div>
+                        <div style="font-size:11px; color:#555;">${d.mobile} (${d.role})</div>
+                        ${d.proof_image ? `<a href="uploads/${d.proof_image}" target="_blank" style="display:block; font-size:11px; margin-top:5px; color:blue;">View Proof</a>` : ''}
+                        <div style="margin-top:10px;">
+                            <button onclick="depositAction(${d.id}, 'approved')" class="btn-sm btn-success">Approve</button>
+                            <button onclick="depositAction(${d.id}, 'rejected')" class="btn-sm btn-danger">Reject</button>
                         </div>
                     </div>
                  `;
@@ -284,6 +324,15 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
              fd.append('status', status);
              await fetch('api/wallet.php', { method:'POST', body:fd });
              loadWithdrawals();
+        }
+
+        async function depositAction(id, status) {
+             const fd = new FormData();
+             fd.append('action', 'approve_recharge');
+             fd.append('req_id', id);
+             fd.append('status', status);
+             await fetch('api/wallet.php', { method:'POST', body:fd });
+             loadDeposits();
         }
         
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
