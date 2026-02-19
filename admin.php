@@ -264,76 +264,107 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
         // --- REQUESTS ---
         function loadWalletRequests() {
-            loadWithdrawals();
-            loadDeposits();
+
         }
 
-        async function loadWithdrawals() {
-            const res = await fetch('api/wallet.php?action=get_requests');
-            const data = await res.json();
-            const list = document.getElementById('withdrawal-list');
-            list.innerHTML = '';
-            if(data.data.length === 0) list.innerHTML = '<p style="color:#777; font-size:13px;">No pending withdrawals.</p>';
+
+
+// --- REPLACED WITH NEW FRESH LOGIC ---
+        async function loadWalletRequests() {
+            const listW = document.getElementById('withdrawal-list');
+            const listD = document.getElementById('deposit-list');
             
-            data.data.forEach(w => {
-                 list.innerHTML += `
-                    <div class="list-item" style="border:1px solid #fee;">
+            listW.innerHTML = '<div class="loader">Loading...</div>';
+            listD.innerHTML = '<div class="loader">Loading...</div>';
+
+            try {
+                const res = await fetch('api/wallet.php?action=get_all_requests');
+                const data = await res.json();
+
+                if(data.status === 'success') {
+                    renderDeposits(data.deposits);
+                    renderWithdrawals(data.withdrawals);
+                } else {
+                    listW.innerHTML = 'Error loading data';
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function renderDeposits(list) {
+            const container = document.getElementById('deposit-list');
+            container.innerHTML = '';
+            if(!list || list.length === 0) { container.innerHTML = '<p style="color:#777; font-size:12px;">No pending deposits.</p>'; return; }
+
+            list.forEach(d => {
+                container.innerHTML += `
+                    <div class="list-item" style="border-left: 4px solid #2e7d32;">
                         <div class="item-header">
-                            <span>${w.name}</span>
-                            <span class="tag tag-pending">₹ ${w.amount}</span>
+                            <strong>${d.name}</strong> 
+                            <span class="tag tag-success">+ ₹${d.amount}</span>
                         </div>
-                        <div style="font-size:11px; color:#555;">${w.mobile} (${w.role})</div>
-                        <div style="margin-top:10px;">
-                            <button onclick="withdrawAction(${w.id}, 'approved')" class="btn-sm btn-success">Approve</button>
-                            <button onclick="withdrawAction(${w.id}, 'rejected')" class="btn-sm btn-danger">Reject</button>
+                        <div style="font-size:12px; color:#555; margin-bottom:5px;">
+                            ${d.mobile} <span style="background:#eee; padding:2px 6px; border-radius:4px; font-size:10px;">${d.role}</span>
+                        </div>
+                        ${d.proof_image ? `<a href="uploads/${d.proof_image}" target="_blank" style="color:#007bff; font-size:12px; display:block; margin-bottom:10px;">View Screenshot</a>` : '<span style="color:red; font-size:12px;">No Screenshot</span>'}
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="processDeposit(${d.id}, 'approved')" class="btn-sm btn-success">Accept</button>
+                            <button onclick="processDeposit(${d.id}, 'rejected')" class="btn-sm btn-danger">Reject</button>
                         </div>
                     </div>
-                 `;
+                `;
             });
         }
 
-        async function loadDeposits() {
-            const res = await fetch('api/wallet.php?action=get_recharge_requests');
-            const data = await res.json();
-            const list = document.getElementById('deposit-list');
-            list.innerHTML = '';
-            if(data.data.length === 0) list.innerHTML = '<p style="color:#777; font-size:13px;">No pending deposits.</p>';
-            
-            data.data.forEach(d => {
-                 list.innerHTML += `
-                    <div class="list-item" style="border:1px solid #eef;">
+        function renderWithdrawals(list) {
+            const container = document.getElementById('withdrawal-list');
+            container.innerHTML = '';
+            if(!list || list.length === 0) { container.innerHTML = '<p style="color:#777; font-size:12px;">No pending withdrawals.</p>'; return; }
+
+            list.forEach(w => {
+                 container.innerHTML += `
+                    <div class="list-item" style="border-left: 4px solid #c62828;">
                         <div class="item-header">
-                            <span>${d.name}</span>
-                            <span class="tag tag-pending">₹ ${d.amount}</span>
+                            <strong>${w.name}</strong> 
+                            <span class="tag tag-pending" style="color:#c62828; background:#ffebee;">- ₹${w.amount}</span>
                         </div>
-                        <div style="font-size:11px; color:#555;">${d.mobile} (${d.role})</div>
-                        ${d.proof_image ? `<a href="uploads/${d.proof_image}" target="_blank" style="display:block; font-size:11px; margin-top:5px; color:blue;">View Proof</a>` : ''}
-                        <div style="margin-top:10px;">
-                            <button onclick="depositAction(${d.id}, 'approved')" class="btn-sm btn-success">Approve</button>
-                            <button onclick="depositAction(${d.id}, 'rejected')" class="btn-sm btn-danger">Reject</button>
+                        <div style="font-size:12px; color:#555; margin-bottom:5px;">
+                            ${w.mobile} (${w.role})
+                        </div>
+                        <div style="font-size:11px; background:#f9f9f9; padding:5px; border-radius:4px; margin-bottom:10px;">
+                            UPI: <strong>${w.upi_id || 'N/A'}</strong>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="processWithdraw(${w.id}, 'approved')" class="btn-sm btn-success">Pay & Accept</button>
+                            <button onclick="processWithdraw(${w.id}, 'rejected')" class="btn-sm btn-danger">Reject</button>
                         </div>
                     </div>
-                 `;
+                `;
             });
+        }
+
+        async function processDeposit(id, status) {
+            if(!confirm('Are you sure?')) return;
+            const fd = new FormData();
+            fd.append('action', 'process_deposit');
+            fd.append('req_id', id);
+            fd.append('status', status);
+            await fetch('api/wallet.php', { method:'POST', body:fd });
+            loadWalletRequests();
+        }
+
+        async function processWithdraw(id, status) {
+            if(!confirm('Are you sure?')) return;
+            const fd = new FormData();
+            fd.append('action', 'process_withdrawal');
+            fd.append('req_id', id);
+            fd.append('status', status);
+            await fetch('api/wallet.php', { method:'POST', body:fd });
+            loadWalletRequests();
         }
         
-        async function withdrawAction(id, status) {
-             const fd = new FormData();
-             fd.append('action', 'admin_withdraw_action');
-             fd.append('req_id', id);
-             fd.append('status', status);
-             await fetch('api/wallet.php', { method:'POST', body:fd });
-             loadWithdrawals();
-        }
 
-        async function depositAction(id, status) {
-             const fd = new FormData();
-             fd.append('action', 'approve_recharge');
-             fd.append('req_id', id);
-             fd.append('status', status);
-             await fetch('api/wallet.php', { method:'POST', body:fd });
-             loadDeposits();
-        }
+
+
         
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
         

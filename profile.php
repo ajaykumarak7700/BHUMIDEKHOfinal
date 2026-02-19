@@ -1,244 +1,256 @@
 <?php
 session_start();
-require_once 'includes/db.php';
-
+// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
 }
-
-$userState = [
-    'id' => $_SESSION['user_id'],
-    'name' => $_SESSION['name'] ?? 'User',
-    'role' => $_SESSION['role'],
-    'wallet_balance' => 0.00
-];
-
-// Fetch fresh details
-try {
-    $stmt = $pdo->prepare("SELECT name, mobile, email, wallet_balance, role FROM users WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    if($user) {
-        $userState = array_merge($userState, $user);
-    }
-} catch(Exception $e) {
-    // Silent fail
-}
-
-// Fetch transaction history
-$transactions = [];
-try {
-    $stmt = $pdo->prepare("SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 20");
-    $stmt->execute([$_SESSION['user_id']]);
-    $transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch(Exception $e) {}
-
+$user_name = $_SESSION['name'] ?? 'User';
+$user_role = $_SESSION['role'] ?? 'customer';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile - BhumiDekho</title>
+    <title>My Wallet | BhumiDekho</title>
+    <!-- Simple, Clean CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #00c853; --dark: #1b5e20; --light: #f5f5f5; --white: #ffffff; }
-        body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--light); color: #333; }
-        .header { background: var(--white); padding: 15px; display:flex; align-items:center; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
-        .header h1 { margin:0; font-size: 18px; flex:1; text-align:center; }
-        .back-btn { font-size: 20px; color: #333; cursor:pointer; background:none; border:none; }
+        body { font-family: sans-serif; background: #f4f6f8; margin: 0; padding: 0; }
+        .header { background: #fff; padding: 15px; border-bottom: 1px solid #ddd; display: flex; align-items: center; }
+        .header h1 { margin: 0; font-size: 18px; flex: 1; text-align: center; color: #333; }
+        .back-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #555; }
         
-        .profile-card { background: var(--white); padding: 20px; margin: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .avatar { width: 80px; height: 80px; background: #e8f5e9; border-radius: 50%; display:flex; align-items:center; justify-content:center; margin: 0 auto 10px; color: var(--primary); font-size: 30px; }
-        .user-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
-        .user-role { font-size: 14px; color: #666; background: #eee; padding: 2px 10px; border-radius: 10px; display:inline-block; }
+        .container { max-width: 600px; margin: 0 auto; padding: 15px; }
         
-        .wallet-card { background: linear-gradient(135deg, var(--dark), var(--primary)); color: white; padding: 20px; margin: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,128,0,0.2); }
-        .wallet-label { font-size: 14px; opacity: 0.9; }
-        .wallet-amount { font-size: 32px; font-weight: bold; margin: 5px 0 15px; }
-        .wallet-actions { display: flex; gap: 10px; }
-        .w-btn { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .w-btn.add { background: white; color: var(--primary); }
-        .w-btn.withdraw { background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(5px); }
-        
-        .section-title { padding: 0 15px; font-size: 16px; font-weight: 600; color: #555; margin-bottom: 10px; }
-        .tx-list { background: var(--white); margin: 0 15px 80px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .tx-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .tx-item:last-child { border-bottom: none; }
-        .tx-desc { font-weight: 500; font-size: 14px; }
-        .tx-date { font-size: 11px; color: #999; margin-top: 3px; }
-        .tx-amount { font-weight: bold; font-size: 15px; }
-        .credit { color: green; }
-        .debit { color: red; }
+        /* Wallet Card */
+        .wallet-card {
+            background: linear-gradient(135deg, #2e7d32, #66bb6a);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        .balance-label { font-size: 14px; opacity: 0.9; }
+        .balance { font-size: 36px; font-weight: bold; margin: 5px 0 20px; }
+        .btn-group { display: flex; gap: 15px; justify-content: center; }
+        .action-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .action-btn:hover { background: rgba(255,255,255,0.3); }
+        .action-btn.active { background: white; color: #2e7d32; }
         
         /* Modals */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: end; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: flex-end; }
         .modal.open { display: flex; }
-        .modal-content { background: white; width: 100%; padding: 20px; border-radius: 20px 20px 0 0; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-content { background: white; width: 100%; max-width: 600px; padding: 25px; border-radius: 20px 20px 0 0; animation: slideUp 0.3s; }
+        @keyframes slideUp { from {transform: translateY(100%);} to {transform: translateY(0);} }
         
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
-        .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .btn-submit { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .submit-btn { width: 100%; padding: 15px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .cancel-btn { width: 100%; padding: 15px; background: none; border: none; color: #777; margin-top: 5px; cursor: pointer; font-size: 14px; }
+        
+        /* History */
+        .history-list { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .history-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .history-item:last-child { border-bottom: none; }
+        .h-left { }
+        .h-desc { font-weight: 500; font-size: 14px; color: #333; }
+        .h-date { font-size: 12px; color: #999; margin-top: 4px; }
+        .h-amount { font-weight: bold; font-size: 15px; }
+        .credit { color: #2e7d32; }
+        .debit { color: #c62828; }
+        
+        .empty-state { padding: 30px; text-align: center; color: #999; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <button class="back-btn" onclick="location.href='index.php'"><i class="fas fa-arrow-left"></i></button>
-        <h1>My Profile</h1>
-        <button class="back-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt" style="color:#d32f2f"></i></button>
+        <h1>My Wallet</h1>
     </div>
 
-    <div class="profile-card">
-        <div class="avatar"><i class="fas fa-user"></i></div>
-        <div class="user-name"><?php echo htmlspecialchars($userState['name']); ?></div>
-        <div class="user-role"><?php echo ucfirst($userState['role']); ?></div>
-        <div style="margin-top:5px; font-size:13px; color:#777;"><?php echo $userState['mobile']; ?></div>
-    </div>
+    <div class="container">
+        <!-- Balance Card -->
+        <div class="wallet-card">
+            <div class="balance-label">Current Balance</div>
+            <div class="balance" id="display-balance">₹ 0.00</div>
+            <div class="btn-group">
+                <button class="action-btn active" onclick="openModal('deposit-modal')">
+                    <i class="fas fa-plus"></i> Add Money
+                </button>
+                <button class="action-btn" onclick="openModal('withdraw-modal')">
+                    <i class="fas fa-arrow-down"></i> Withdraw
+                </button>
+            </div>
+        </div>
 
-    <div class="wallet-card">
-        <div class="wallet-label">Available Balance</div>
-        <div class="wallet-amount">₹ <?php echo number_format($userState['wallet_balance'], 2); ?></div>
-        <div class="wallet-actions">
-            <button class="w-btn add" onclick="openModal('recharge')"><i class="fas fa-plus-circle"></i> Add Money</button>
-            <button class="w-btn withdraw" onclick="openModal('withdraw')"><i class="fas fa-arrow-down"></i> Withdraw</button>
+        <h3 style="margin: 20px 0 10px; color: #444;">Recent Transactions</h3>
+        <div class="history-list" id="tx-list">
+            <div class="empty-state">Loading...</div>
         </div>
     </div>
 
-    <div class="section-title">Recent Transactions</div>
-    <div class="tx-list">
-        <?php if(empty($transactions)): ?>
-            <div style="padding:20px; text-align:center; color:#999;">No transactions yet</div>
-        <?php else: ?>
-            <?php foreach($transactions as $tx): ?>
-                <div class="tx-item">
-                    <div>
-                        <div class="tx-desc"><?php echo htmlspecialchars($tx['description']); ?></div>
-                        <div class="tx-date"><?php echo date('d M Y, h:i A', strtotime($tx['created_at'])); ?></div>
-                    </div>
-                    <div class="tx-amount <?php echo $tx['type']; ?>">
-                        <?php echo ($tx['type'] == 'credit' ? '+' : '-'); ?> ₹<?php echo number_format($tx['amount'], 2); ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <!-- Recharge Modal -->
-    <div id="recharge-modal" class="modal">
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal">
         <div class="modal-content">
-            <h3>Add Money</h3>
-            <p style="color:#666; font-size:13px; margin-bottom:15px;">Enter amount and upload payment screenshot.</p>
+            <h2 style="margin-top:0;">Add Money (Deposit)</h2>
             <div class="form-group">
                 <label>Amount (₹)</label>
-                <input type="number" id="r-amount" class="form-control" placeholder="e.g. 500">
+                <input type="number" id="dep-amount" class="form-input" placeholder="Enter Amount (e.g. 500)">
             </div>
-            <div class="form-group">
-                <label>Payment Proof (Screenshot)</label>
-                <input type="file" id="r-proof" class="form-control" accept="image/*">
+             <div class="form-group">
+                <label>Upload Payment Screenshot</label>
+                <div style="background:#f9f9f9; padding:15px; border:1px dashed #ccc; text-align:center; border-radius:8px;">
+                    <input type="file" id="dep-proof" accept="image/*">
+                </div>
             </div>
-            <div style="padding:10px; background:#e3f2fd; border-radius:8px; margin-bottom:15px; font-size:12px;">
-                <strong>Bank Details:</strong><br>
-                UPI: bhumidekho@upi<br>
-                Pay via any UPI app and upload screenshot.
+            <div style="font-size:13px; color:#555; background:#e8f5e9; padding:10px; border-radius:8px; margin-bottom:20px;">
+                <i class="fas fa-info-circle"></i> Pay to UPI ID: <strong>bhumidekho@upi</strong> and upload the screenshot here.
             </div>
-            <button class="btn-submit" onclick="submitRecharge()">Submit Request</button>
-            <button onclick="closeModals()" style="width:100%; padding:14px; background:none; border:none; margin-top:5px; color:#666;">Cancel</button>
+            <button class="submit-btn" onclick="submitDeposit()">Submit Deposit Request</button>
+            <button class="cancel-btn" onclick="closeModal('deposit-modal')">Cancel</button>
         </div>
     </div>
 
     <!-- Withdraw Modal -->
     <div id="withdraw-modal" class="modal">
         <div class="modal-content">
-            <h3>Withdraw Money</h3>
+            <h2 style="margin-top:0;">Withdraw Money</h2>
             <div class="form-group">
                 <label>Amount (₹)</label>
-                <input type="number" id="w-amount" class="form-control" placeholder="Amount to withdraw">
+                <input type="number" id="with-amount" class="form-input" placeholder="Enter Amount to Withdraw">
             </div>
-            <p style="font-size:12px; color:#666;">Withdrawal requests are processed within 24 hours.</p>
-            <button class="btn-submit" style="background:#d32f2f;" onclick="submitWithdraw()">Request Withdrawal</button>
-            <button onclick="closeModals()" style="width:100%; padding:14px; background:none; border:none; margin-top:5px; color:#666;">Cancel</button>
+            <div class="form-group">
+                <label>UPI ID (to receive money)</label>
+                <input type="text" id="with-upi" class="form-input" placeholder="e.g. 9876543210@ybl">
+            </div>
+            <button class="submit-btn" style="background:#c62828;" onclick="submitWithdraw()">Request Withdrawal</button>
+            <button class="cancel-btn" onclick="closeModal('withdraw-modal')">Cancel</button>
         </div>
     </div>
 
     <script>
-        function openModal(type) {
-            document.getElementById(type + '-modal').classList.add('open');
-        }
-        function closeModals() {
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
-        }
-        
-        async function submitWithdraw() {
-            const amt = document.getElementById('w-amount').value;
-            if(!amt || amt <= 0) { alert('Invalid amount'); return; }
-            
-            const btn = event.target;
-            btn.disabled = true;
-            btn.innerText = 'Processing...';
-            
-            const fd = new FormData();
-            fd.append('action', 'request_withdrawal');
-            fd.append('amount', amt);
-            
+        // Load Wallet Data on Start
+        document.addEventListener('DOMContentLoaded', loadWallet);
+
+        async function loadWallet() {
             try {
-                const res = await fetch('api/wallet.php', { method:'POST', body:fd });
-                const d = await res.json();
-                if(d.status === 'success') {
-                    alert('Withdrawal Request Sent!');
+                const res = await fetch('api/wallet.php?action=get_wallet');
+                const data = await res.json();
+                
+                if(data.status === 'success') {
+                    document.getElementById('display-balance').innerText = '₹ ' + parseFloat(data.balance).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                    
+                    const list = document.getElementById('tx-list');
+                    list.innerHTML = '';
+                    
+                    if(data.history.length === 0) {
+                        list.innerHTML = '<div class="empty-state">No transactions yet.</div>';
+                    } else {
+                        data.history.forEach(tx => {
+                            const isCredit = tx.type === 'credit';
+                            const colorClass = isCredit ? 'credit' : 'debit';
+                            const sign = isCredit ? '+' : '-';
+                            list.innerHTML += `
+                                <div class="history-item">
+                                    <div class="h-left">
+                                        <div class="h-desc">${tx.description}</div>
+                                        <div class="h-date">${tx.created_at}</div>
+                                    </div>
+                                    <div class="h-amount ${colorClass}">${sign} ₹ ${parseFloat(tx.amount).toFixed(2)}</div>
+                                </div>
+                            `;
+                        });
+                    }
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        // Submit Deposit
+        async function submitDeposit() {
+            const amount = document.getElementById('dep-amount').value;
+            const proof = document.getElementById('dep-proof').files[0];
+
+            if(!amount || amount <= 0) { alert("Enter valid amount"); return; }
+            if(!proof) { alert("Please upload screenshot"); return; }
+
+            const btn = event.target;
+            btn.innerText = "Uploading...";
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('action', 'deposit_request');
+            fd.append('amount', amount);
+            fd.append('proof', proof);
+
+            try {
+                const res = await fetch('api/wallet.php', { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    alert('Success! Admin will approve soon.');
+                    closeModal('deposit-modal');
                     location.reload();
                 } else {
-                    alert(d.message);
-                    btn.disabled = false;
-                    btn.innerText = 'Request Withdrawal';
+                    alert(data.message);
                 }
-            } catch(e) { alert('Error'); btn.disabled=false; }
+            } catch(e) { alert("Connection Error"); }
+            
+            btn.innerText = "Submit Deposit Request";
+            btn.disabled = false;
         }
 
-        async function submitRecharge() {
-            const amt = document.getElementById('r-amount').value;
-            const proof = document.getElementById('r-proof').files[0];
-            
-            if(!amt || amt <= 0) { alert('Invalid amount'); return; }
-            if(!proof) { alert('Please upload proof'); return; }
-            
+        // Submit Withdraw
+        async function submitWithdraw() {
+            const amount = document.getElementById('with-amount').value;
+            const upi = document.getElementById('with-upi').value;
+
+            if(!amount || amount <= 0) { alert("Enter valid amount"); return; }
+            if(!upi) { alert("Enter UPI ID"); return; }
+
             const btn = event.target;
+            btn.innerText = "Processing...";
             btn.disabled = true;
-            btn.innerText = 'Uploading...';
-            
-            const reader = new FileReader();
-            reader.readAsDataURL(proof);
-            reader.onload = async function() {
-                const base64 = reader.result;
-                
-                const fd = new FormData();
-                fd.append('action', 'request_recharge');
-                fd.append('amount', amt);
-                fd.append('proof', base64); // Send as base64 for simplicity with existing api/wallet logic
-                
-                try {
-                    const res = await fetch('api/wallet.php', { method:'POST', body:fd });
-                    const d = await res.json();
-                    if(d.status === 'success') {
-                        alert('Deposit Request Sent!');
-                        location.reload();
-                    } else {
-                        alert(d.message);
-                        btn.disabled = false;
-                        btn.innerText = 'Submit Request';
-                    }
-                } catch(e) { alert('Error'); btn.disabled=false; }
-            };
-        }
 
-        async function handleLogout() {
-             if(!confirm('Logout?')) return;
-             const fd = new FormData(); fd.append('action', 'logout');
-             await fetch('api/auth.php', { method:'POST', body:fd });
-             location.href = 'index.php';
+            const fd = new FormData();
+            fd.append('action', 'withdraw_request');
+            fd.append('amount', amount);
+            fd.append('upi', upi);
+
+            try {
+                const res = await fetch('api/wallet.php', { method: 'POST', body: fd });
+                const data = await res.json();
+                if(data.status === 'success') {
+                    alert('Withdrawal Request Sent!');
+                    closeModal('withdraw-modal');
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            } catch(e) { alert("Connection Error"); }
+
+            btn.innerText = "Request Withdrawal";
+            btn.disabled = false;
         }
     </script>
 </body>
